@@ -1,15 +1,21 @@
 from django import forms
 from django.utils.text import slugify
-from .models import HomeCarouselNews, Category, Chronicle  
+from .models import News, Category, Chronicle, Commission, HomeContent 
 
-class HomeCarouselNewsForm(forms.ModelForm):
+
+
+class NewsForm(forms.ModelForm):
     class Meta:
-        model = HomeCarouselNews
-        fields = ['title', 'summary', 'content', 'category', 'image', 'order', 'is_active', 'pdf_file', 'show_pdf_inline', 'social_media_url']
+        model = News
+        fields = [
+            'title', 'summary', 'content', 'category', 
+            'image', 'order', 'is_active', 'pdf_file', 
+            'show_pdf_inline', 'social_media_url'
+        ]
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Título de la noticia'}),
-            'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Extracto o resumen'}),
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 6, 'placeholder': 'Contenido completo de la noticia'}),
+            'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Extracto o resumen breve'}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 6, 'placeholder': 'Contenido completo de la publicación'}),
             'category': forms.Select(attrs={'class': 'form-select'}),
             'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'order': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -18,7 +24,6 @@ class HomeCarouselNewsForm(forms.ModelForm):
             'show_pdf_inline': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'social_media_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://www.instagram.com/p/...'}),
         }
-
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
@@ -46,3 +51,26 @@ class ChronicleForm(forms.ModelForm):
             'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+
+
+class CommissionForm(forms.ModelForm):
+    class Meta:
+        model = Commission
+        fields = ['number', 'name', 'description', 'image', 'president', 'vice_president', 'vocal']
+        widgets = {
+            'number': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Ej. 1'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de la Comisión'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descripción de la comisión...'}),
+            'image': forms.FileInput(attrs={'class': 'form-control'}),
+            'president': forms.Select(attrs={'class': 'form-select'}),
+            'vice_president': forms.Select(attrs={'class': 'form-select'}),
+            'vocal': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filtrar dropdowns para mostrar solo Concejales/Directivos activos
+        councilors = HomeContent.objects.filter(content_type='COUNCILOR', is_active=True)
+        self.fields['president'].queryset = councilors
+        self.fields['vice_president'].queryset = councilors
+        self.fields['vocal'].queryset = councilors

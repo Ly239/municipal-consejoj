@@ -6,7 +6,7 @@
 {% block content %}
 {% include 'core/includes/_navbar_public.html' %}
 
-<div class="container my-5" style="max-width: 600px;">
+<div class="container my-5" style="max-width: 700px;">
     <div class="card card-concejo p-4 shadow-sm border-0">
         <h2 class="fw-bold mb-3" style="color: var(--color-dark-blue);">Editar Noticia</h2>
         
@@ -17,15 +17,35 @@
                 {{ form.title }}
             </div>
             <div class="mb-3">
+                <label class="form-label fw-bold small">Categoría</label>
+                {{ form.category }}
+            </div>
+            <div class="mb-3">
                 <label class="form-label fw-bold small">Resumen / Extracto</label>
                 {{ form.summary }}
             </div>
             <div class="mb-3">
-                <label class="form-label fw-bold small">Imagen Actual / Cambiar</label>
+                <label class="form-label fw-bold small">Contenido Completo</label>
+                {{ form.content }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold small">Imagen Destacada</label>
                 {{ form.image }}
             </div>
             <div class="mb-3">
-                <label class="form-label fw-bold small">Orden</label>
+                <label class="form-label fw-bold small">Documento PDF Adjunto</label>
+                {{ form.pdf_file }}
+            </div>
+            <div class="mb-3 form-check">
+                {{ form.show_pdf_inline }}
+                <label class="form-check-label small fw-bold">Mostrar visor PDF interactivo</label>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold small">Enlace a Red Social</label>
+                {{ form.social_media_url }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold small">Orden de visualización</label>
                 {{ form.order }}
             </div>
             <div class="mb-3 form-check">

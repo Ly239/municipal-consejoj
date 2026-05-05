@@ -1,0 +1,80 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Gestionar Legislatura - Concejo Municipal{% endblock %}
+
+{% block content %}
+{% include 'core/includes/_navbar_public.html' %}
+
+<div class="container my-5" style="max-width: 750px;">
+    <div class="card shadow-sm border-0 p-4">
+        <h3 class="fw-bold mb-4" style="color: var(--color-dark-blue);">
+            {% if object %}Editar Legislatura{% else %}Registrar Nueva Legislatura{% endif %}
+        </h3>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="id_title" class="form-label fw-bold">Título / Período *</label>
+                <input type="text" name="title" id="id_title" class="form-control" value="{{ form.title.value|default:'' }}" placeholder="Ej: Período Legislativo 2026" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="id_author" class="form-label fw-bold">Código / Identificador</label>
+                <input type="text" name="author" id="id_author" class="form-control" value="{{ form.author.value|default:'' }}" placeholder="Ej: LEG-2026">
+            </div>
+
+            <div class="mb-3">
+                <label for="id_summary" class="form-label fw-bold">Eslogan / Resumen Corto</label>
+                <textarea name="summary" id="id_summary" class="form-control" rows="2" placeholder="Eslogan o descripción sintética del período">{{ form.summary.value|default:'' }}</textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="id_content" class="form-label fw-bold">Detalles / Reseña Histórica / Integrantes</label>
+                <textarea name="content" id="id_content" class="form-control" rows="5" placeholder="Descripción detallada de la gestión u orden del día">{{ form.content.value|default:'' }}</textarea>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="id_image" class="form-label fw-bold">Foto Oficial / Logo</label>
+                    <input type="file" name="image" id="id_image" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label for="id_pdf_file" class="form-label fw-bold">Documento PDF (Gaceta / Acta)</label>
+                    <input type="file" name="pdf_file" id="id_pdf_file" class="form-control">
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="id_order" class="form-label fw-bold">Orden de Aparición</label>
+                    <input type="number" name="order" id="id_order" class="form-control" value="{{ form.order.value|default:0 }}">
+                </div>
+                <div class="col-md-6">
+                    <label for="id_status" class="form-label fw-bold">Estado</label>
+                    <select name="status" id="id_status" class="form-select">
+                        <option value="PUBLISHED" {% if form.status.value == 'PUBLISHED' or not object %}selected{% endif %}>Publicado</option>
+                        <option value="DRAFT" {% if form.status.value == 'DRAFT' %}selected{% endif %}>Borrador</option>
+                        <option value="ARCHIVED" {% if form.status.value == 'ARCHIVED' %}selected{% endif %}>Archivado</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-check mb-4">
+                <input class="form-check-input" type="checkbox" name="is_active" id="id_is_active" {% if form.is_active.value or not object %}checked{% endif %}>
+                <label class="form-check-label fw-bold" for="id_is_active">
+                    Activo (Visible en el sitio)
+                </label>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+                <a href="{% url 'core:legislatures_list' %}" class="btn btn-outline-secondary rounded-pill px-4">Cancelar</a>
+                <button type="submit" class="btn btn-primary rounded-pill px-4">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% include 'core/includes/_footer.html' %}
+{% endblock %}

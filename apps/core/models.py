@@ -12,169 +12,131 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
 """
 from django.db import models
+from django.utils import timezone
 from django.utils.text import slugify
-from common.models import BaseModel
+from django.conf import settings
 
-# MODELOS NORMALES FALTA ACTUALIZARLOS A PROXY MODELS
-class Category(models.Model):
-    """Categorías para clasificar noticias y documentos del portal."""
-    name = models.CharField(max_length=100, unique=True, verbose_name="Nombre de la Categoría")
-    slug = models.SlugField(max_length=100, unique=True)
-
-    def __str__(self):
-        return self.name
+# Asumiendo que BaseModel está definido en tu proyecto
 
 
-class HomeCarouselNews(models.Model):
-    """Noticias destacadas que se muestran en el carrusel de la página principal."""
-    title = models.CharField(max_length=200, verbose_name="Título")
-    summary = models.TextField(verbose_name="Resumen / Tráiler")
-    content = models.TextField(verbose_name="Contenido Completo", blank=True, null=True, help_text="Texto completo para la vista de detalle")
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Categoría")
-    image = models.ImageField(upload_to='news/', verbose_name="Imagen")
-    order = models.PositiveIntegerField(default=0, verbose_name="Orden")
-    is_active = models.BooleanField(default=True, verbose_name="Activo en Portada")
-    created_at = models.DateTimeField(auto_now_add=True)
-    pdf_file = models.FileField(upload_to='news_pdfs/', blank=True, null=True, verbose_name="Documento PDF de Respaldo")
-    show_pdf_inline = models.BooleanField(default=False, verbose_name="¿Mostrar PDF en visor interactivo?")
-    social_media_url = models.URLField(blank=True, null=True, verbose_name="Enlace de Red Social (Instagram, Facebook, TikTok)")
 
-    def __str__(self):
-        return self.title
+# ==============================================================================
+# 0. CLASE BASE ABSTRACTA
+# ==============================================================================
 
-
-class Chronicle(models.Model):
-    """Modelo unificado para gestionar las crónicas e historia local del municipio."""
-    title = models.CharField(max_length=200, verbose_name="Título de la Crónica")
-    slug = models.SlugField(max_length=200, unique=True, blank=True, verbose_name="Slug")
-    summary = models.TextField(verbose_name="Resumen o Bajada")
-    content = models.TextField(verbose_name="Contenido Completo")
-    image = models.ImageField(upload_to='chronicles_img/', blank=True, null=True, verbose_name="Imagen Destacada")
-    author = models.CharField(max_length=150, default="Cronista Oficial", verbose_name="Autor / Cronista")
+class BaseModel(models.Model):
+    """Clase base abstracta que aporta campos de auditoría de tiempo."""
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
-    is_active = models.BooleanField(default=True, verbose_name="¿Publicado?")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Última Actualización")
 
     class Meta:
-        verbose_name = "Crónica"
-        verbose_name_plural = "Crónicas"
-        ordering = ['-created_at']
+        abstract = True
 
-    def __str__(self):
-        return self.title
+
+# ==============================================================================
+# 1. TABLA BASE FÍSICA ÚNICA (SINGLE TABLE DESIGN)
+# ==============================================================================
+  # Ajusta la importación según donde esté tu BaseModel
+
+
+class HomeContent(BaseModel):
+    """Tabla física centralizada para la gestión de contenidos dinámicos del portal."""
+
+    class ContentTypes(models.TextChoices):
+        NEWS = 'NEWS', 'Noticia'
+        CHRONICLE = 'CHRONICLE', 'Crónica Digital'
+        CAROUSEL = 'CAROUSEL', 'Item de Carrusel'
+        ABOUT_US = 'ABOUT_US', 'Información Institucional'
+        COUNCILOR = 'COUNCILOR', 'Concejal / Directivo'
+        LEGISLATURE = 'LEGISLATURE', 'Legislatura / Período'
+        BOARD = 'BOARD', 'Junta Directiva'
+
+    class Status(models.TextChoices):
+        DRAFT = 'DRAFT', 'Borrador'
+        PUBLISHED = 'PUBLISHED', 'Publicado'
+        ARCHIVED = 'ARCHIVED', 'Archivado'
+
+    # Discriminador principal
+    content_type = models.CharField(
+        max_length=20, 
+        choices=ContentTypes.choices, 
+        default=ContentTypes.NEWS,
+        verbose_name="Tipo de Contenido"
+    )
+
+    # Campos generales
+    title = models.CharField(max_length=255, verbose_name="Título / Nombre Completo")
+    slug = models.SlugField(max_length=255, blank=True)
+    author = models.CharField(max_length=150, default="Concejo Municipal", verbose_name="Autor / Cargo o Partido")
+    summary = models.TextField(blank=True, verbose_name="Resumen / Bajada / Biografía Corta")
+    content = models.TextField(blank=True, verbose_name="Contenido Extenso / Trayectoria")
+    description = models.TextField(blank=True, verbose_name="Descripción Corta (Compatibilidad)")
+
+    # Archivos multimedia, documentos y enlaces
+    image = models.ImageField(upload_to='home/%Y/%m/', blank=True, null=True, verbose_name="Imagen / Foto Oficial")
+    attached_file = models.FileField(upload_to='home/docs/%Y/%m/', blank=True, null=True, verbose_name="Archivo Adjunto General")
+    
+    # Campos de soporte para Gacetas / Documentos PDF
+    pdf_file = models.FileField(
+        upload_to='news_pdfs/%Y/%m/',
+        blank=True,
+        null=True,
+        verbose_name="Documento PDF Adjunto",
+        help_text="Cargue aquí la Gaceta Oficial, Ordenanza o documento en PDF respaldatorio."
+    )
+    show_pdf_inline = models.BooleanField(
+        default=False,
+        verbose_name="Mostrar visor de PDF incrustado",
+        help_text="Si está marcado, el PDF se mostrará incrustado directamente en la vista."
+    )
+    social_media_url = models.URLField(blank=True, null=True, verbose_name="Enlace de Red Social / Web")
+
+    # Control de publicación, orden y visibilidad
+    publication_date = models.DateTimeField(default=timezone.now, verbose_name="Fecha de Publicación")
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PUBLISHED, verbose_name="Estado")
+    is_active = models.BooleanField(default=True, verbose_name="¿Activo?")
+    order = models.PositiveIntegerField(default=0, verbose_name="Orden de Aparición")
+
+    # Relaciones
+    category = models.ForeignKey(
+        'Category', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='contents',
+        verbose_name="Categoría"
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_home_contents',
+        verbose_name="Registrado por"
+    )
+
+    class Meta:
+        ordering = ['content_type', 'order', '-publication_date']
+        verbose_name = "Contenido del Home"
+        verbose_name_plural = "Contenidos del Home"
 
     def save(self, *args, **kwargs):
-        """Genera automáticamente un slug único basado en el título antes de guardar."""
-        if not self.slug:
+        if not self.slug and self.title:
             base_slug = slugify(self.title)
             slug = base_slug
             counter = 1
-            while Chronicle.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+            while HomeContent.objects.filter(slug=slug).exclude(pk=self.pk).exists():
                 slug = f"{base_slug}-{counter}"
                 counter += 1
             self.slug = slug
+        if not self.description and self.summary:
+            self.description = self.summary
         super().save(*args, **kwargs)
 
-
-#NOTA ACTUALIZAR CAMPOS A INGLES
-class EstructuraDirectiva(models.Model):
-  cargo = models.CharField(
-      max_length=150, verbose_name='Cargo Institucional'
-  )
-  nombre = models.CharField(max_length=150, verbose_name='Nombre del Titular')
-  descripcion = models.TextField(verbose_name='Descripción o Funciones')
-  imagen = models.ImageField(
-      upload_to='estructura_directiva/',
-      blank=True,
-      null=True,
-      verbose_name='Fotografía',
-  )
-  orden = models.PositiveIntegerField(
-      default=0, verbose_name='Orden de Visualización'
-  )
-
-  class Meta:
-    verbose_name = 'Estructura Directiva'
-    verbose_name_plural = 'Estructura Directiva'
-    ordering = ['orden']
-
-  def __str__(self):
-    return f'{self.cargo} - {self.nombre}'
-
-#NOTA ACTUALIZAR CAMPOS A INGLES
-class Legislatura(models.Model):
-  titulo = models.CharField(
-      max_length=100, verbose_name='Título (Ej. I Legislatura)'
-  )
-  periodo = models.CharField(
-      max_length=50, verbose_name='Período (Ej. 1992 - 1995)'
-  )
-  descripcion_concejales = models.TextField(
-      verbose_name='Concejales Integrantes / Datos'
-  )
-  es_actual = models.BooleanField(
-      default=False, verbose_name='¿Es la legislatura actual?'
-  )
-  orden = models.PositiveIntegerField(
-      default=0, verbose_name='Orden de Aparición'
-  )
-
-  class Meta:
-    verbose_name = 'Legislatura'
-    verbose_name_plural = 'Legislaturas'
-    ordering = ['orden']
-
-  def __str__(self):
-    return f'{self.titulo} ({self.periodo})'
-
-
-# ============================================================
-# 1. PHYSICAL SINGLE TABLE (Home Content)
-# ============================================================
-class HomeContent(BaseModel):
-    """Tabla única que almacena todo el contenido editable del Home."""
-    
-    class ContentTypes(models.TextChoices):
-        COUNCILOR = 'COUNCILOR', 'Councilor'
-        NEWS = 'NEWS', 'News'
-        CAROUSEL = 'CAROUSEL', 'Carousel'
-        ABOUT_US = 'ABOUT_US', 'About Us'
-
-    content_type = models.CharField(max_length=20, choices=ContentTypes.choices)
-    title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    image = models.ImageField(upload_to='home/%Y/%m/', blank=True, null=True)
-    order = models.PositiveIntegerField(default=0)
-    is_active = models.BooleanField(default=True)
-    publication_date = models.DateTimeField(auto_now_add=True, verbose_name="Publication Date")
-
-    class Meta:
-        ordering = ['content_type', 'order']
-        verbose_name = "Home Content"
-        verbose_name_plural = "Home Contents"
-
     def __str__(self):
-        return f"{self.get_content_type_display()}: {self.title[:30]}"
-
-
-# ============================================================
-# 2. PROXY MODELS (Modelos Fantasma)
-# ============================================================
-
-# Councilor (Concejal)
-class CouncilorManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(content_type=HomeContent.ContentTypes.COUNCILOR, is_active=True)
-
-class Councilor(HomeContent):
-    objects = CouncilorManager()
-
-    class Meta:
-        proxy = True
-        verbose_name = "Councilor"
-        verbose_name_plural = "Councilors"
+        return f"[{self.get_content_type_display()}] {self.title}"
 
     @property
     def full_name(self):
@@ -182,62 +144,217 @@ class Councilor(HomeContent):
 
     @property
     def position(self):
-        return self.description
-
-
-# News (Noticia)
-class NewsManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(content_type=HomeContent.ContentTypes.NEWS, is_active=True)
-
-class News(HomeContent):
-    objects = NewsManager()
-
-    class Meta:
-        proxy = True
-        verbose_name = "News"
-        verbose_name_plural = "News"
+        return self.author
 
     @property
     def date(self):
         return self.publication_date
 
+    @property
+    def bio(self):
+        return self.summary
 
-# Carousel (Carrusel)
-# NOTA: Este modelo NO se usa actualmente para el carrusel.
-# El carrusel toma las 3 noticias más recientes del proxy News.
-# Se mantiene por si en el futuro se necesita un carrusel personalizado.
-class CarouselManager(models.Manager):
+
+
+# Alias de compatibilidad por si en algún módulo se importa BaseContent
+BaseContent = HomeContent
+
+
+# ==============================================================================
+# 2. GESTORES PERSONALIZADOS (CUSTOM MANAGERS)
+# ==============================================================================
+
+class ContentManager(models.Manager):
+    def __init__(self, content_type, *args, **kwargs):
+        self.target_type = content_type
+        super().__init__(*args, **kwargs)
+
     def get_queryset(self):
-        return super().get_queryset().filter(content_type=HomeContent.ContentTypes.CAROUSEL, is_active=True)
+        return super().get_queryset().filter(content_type=self.target_type, is_active=True)
+
+
+# ==============================================================================
+# 3. PROXY MODELS (MODELOS FANTASMA)
+# ==============================================================================
+
+class News(HomeContent):
+    objects = ContentManager(HomeContent.ContentTypes.NEWS)
+
+    class Meta:
+        proxy = True
+        verbose_name = "Noticia"
+        verbose_name_plural = "Noticias"
+
+    def save(self, *args, **kwargs):
+        self.content_type = HomeContent.ContentTypes.NEWS
+        super().save(*args, **kwargs)
+
+
+class Chronicle(HomeContent):
+    objects = ContentManager(HomeContent.ContentTypes.CHRONICLE)
+
+    class Meta:
+        proxy = True
+        verbose_name = "Crónica Digital"
+        verbose_name_plural = "Crónicas Digitales"
+
+    def save(self, *args, **kwargs):
+        self.content_type = HomeContent.ContentTypes.CHRONICLE
+        super().save(*args, **kwargs)
+
+
+class Councilor(HomeContent):
+    objects = ContentManager(HomeContent.ContentTypes.COUNCILOR)
+
+    class Meta:
+        proxy = True
+        verbose_name = "Concejal / Directivo"
+        verbose_name_plural = "Concejales y Directiva"
+
+    def save(self, *args, **kwargs):
+        self.content_type = HomeContent.ContentTypes.COUNCILOR
+        super().save(*args, **kwargs)
+
 
 class Carousel(HomeContent):
-    objects = CarouselManager()
+    objects = ContentManager(HomeContent.ContentTypes.CAROUSEL)
 
     class Meta:
         proxy = True
-        verbose_name = "Carousel"
-        verbose_name_plural = "Carousel"
+        verbose_name = "Item de Carrusel"
+        verbose_name_plural = "Items del Carrusel"
 
-    @property
-    def image_url(self):
-        return self.image.url if self.image else None
+    def save(self, *args, **kwargs):
+        self.content_type = HomeContent.ContentTypes.CAROUSEL
+        super().save(*args, **kwargs)
 
-
-# About Us (Sobre Nosotros)
-class AboutUsManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(content_type=HomeContent.ContentTypes.ABOUT_US, is_active=True)
 
 class AboutUs(HomeContent):
-    objects = AboutUsManager()
+    objects = ContentManager(HomeContent.ContentTypes.ABOUT_US)
 
     class Meta:
         proxy = True
-        verbose_name = "About Us"
-        verbose_name_plural = "About Us"
+        verbose_name = "Información Institucional"
+        verbose_name_plural = "Información Institucional"
+
+    def save(self, *args, **kwargs):
+        self.content_type = HomeContent.ContentTypes.ABOUT_US
+        super().save(*args, **kwargs)
+
+
+class Legislature(HomeContent):
+    """Proxy Model para la gestión de Legislaturas / Períodos Legislativos."""
+    class Meta:
+        proxy = True
+        verbose_name = 'Legislatura'
+        verbose_name_plural = 'Legislaturas'
+
+
+class BoardMember(HomeContent):
+    """Proxy Model para la gestión de Integrantes de la Junta Directiva."""
+    class Meta:
+        proxy = True
+        verbose_name = 'Junta Directiva'
+        verbose_name_plural = 'Junta Directiva'
+
+# ==============================================================================
+# 4. ESTRUCTURAS AUXILIARES Y LEGISLATIVAS
+# ==============================================================================
+
+class Category(models.Model):
+    name = models.CharField(max_length=100, unique=True, verbose_name="Nombre de la Categoría")
+    slug = models.SlugField(max_length=120, unique=True, blank=True)
+    description = models.TextField(blank=True, verbose_name="Descripción")
+
+    class Meta:
+        verbose_name = "Categoría"
+        verbose_name_plural = "Categorías"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
+class Commission(models.Model):
+    """Modelo para las 15 Comisiones Permanentes de Trabajo del Concejo Municipal."""
+    number = models.PositiveIntegerField(unique=True, verbose_name="Número de Comisión")
+    name = models.CharField(max_length=250, verbose_name="Nombre de la Comisión")
+    description = models.TextField(blank=True, verbose_name="Área de Trabajo / Funciones")
+    image = models.ImageField(
+        upload_to='commissions/%Y/%m/', 
+        blank=True, 
+        null=True, 
+        verbose_name="Imagen / Foto de la Comisión"
+    )
+
+    # Vinculación directa con los concejales registrados en HomeContent
+    president = models.ForeignKey(
+        HomeContent,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        limit_choices_to={'content_type': HomeContent.ContentTypes.COUNCILOR},
+        related_name='commissions_as_president',
+        verbose_name="Presidente de la Comisión"
+    )
+    vice_president = models.ForeignKey(
+        HomeContent,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        limit_choices_to={'content_type': HomeContent.ContentTypes.COUNCILOR},
+        related_name='commissions_as_vicepresident',
+        verbose_name="Vicepresidente de la Comisión"
+    )
+    vocal = models.ForeignKey(
+        HomeContent,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        limit_choices_to={'content_type': HomeContent.ContentTypes.COUNCILOR},
+        related_name='commissions_as_vocal',
+        verbose_name="Vocal de la Comisión"
+    )
+
+    class Meta:
+        ordering = ['number']
+        verbose_name = "Comisión Permanente"
+        verbose_name_plural = "Comisiones Permanentes"
+
+    def __str__(self):
+        return f"Comisión N° {self.number}: {self.name}"
 
     @property
-    def content(self):
-        return self.description
+    def emoji(self):
+        """Mapeo dinámico de emojis para las 15 comisiones permanentes."""
+        emojis = {
+            1: '⚖️',   # Derechos Humanos, Justicia y Familia
+            2: '⚽',   # Deporte y Juventud
+            3: '🎓',   # Educación y Cultura
+            4: '🏛️',   # Historia, Patrimonio y Turismo
+            5: '📐',   # Ejidos
+            6: '💰',   # Presupuesto
+            7: '🔍',   # Contraloría
+            8: '🤝',   # Participación Ciudadana, Política y Frontera
+            9: '📜',   # Legislación
+            10: '🏗️',  # Obras Públicas y Ordenamiento del Territorio
+            11: '🚰',  # Servicios Públicos
+            12: '🚌',  # Transporte
+            13: '🏥',  # Salud, Ambiente y Actividades Agrícolas
+            14: '📡',  # Comunicación Social y Tecnología
+            15: '🎉',  # Eventos Públicos
+        }
+        return emojis.get(self.number, '📋')
+
+
+
+
+
+
+
+# Dentro de class Commission en apps/core/models.py
 

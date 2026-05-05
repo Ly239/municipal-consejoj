@@ -1,0 +1,60 @@
+{% extends 'core/base.html' %}
+
+
+{% block title %}Concejales y Directiva | Concejo Municipal{% endblock %}
+
+{% block content %}
+{% include 'core/includes/_navbar_private.html' %}
+<div class="container my-5">
+  <div class="text-center mb-5">
+    <h1 class="display-5 font-weight-bold text-primary">Cuerpo Edilicio y Directiva</h1>
+    <p class="lead text-muted">Representantes del Concejo Municipal comprometidos con nuestra comunidad.</p>
+    <hr class="w-25 mx-auto border-primary">
+  </div>
+
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for councilor in councilors %}
+      <div class="col">
+        <div class="card h-100 shadow-sm border-0 rounded-lg overflow-hidden">
+          {% if councilor.image %}
+            <img src="{{ councilor.image.url }}" class="card-img-top" alt="{{ councilor.title }}" style="height: 300px; object-fit: cover; object-position: top;">
+          {% else %}
+            <div class="bg-light d-flex align-items-center justify-content-center" style="height: 300px;">
+              <i class="bi bi-person-circle display-1 text-secondary"></i>
+            </div>
+          {% endif %}
+
+          <div class="card-body text-center d-flex flex-column">
+            <h5 class="card-title font-weight-bold text-dark mb-1">{{ councilor.title }}</h5>
+            <span class="badge bg-primary-soft text-primary mb-3 align-self-center px-3 py-2">
+              {{ councilor.author|default:"Concejal" }}
+            </span>
+            <p class="card-text text-muted small flex-grow-1">
+              {{ councilor.summary|default:"Sin biografía / resumen registrado." }}
+            </p>
+          </div>
+
+          <div class="card-footer bg-white border-0 text-center pb-4">
+            <a href="{% url 'core:councilor_detail' councilor.slug %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+              Ver Ficha Completa
+            </a>
+            {% if councilor.social_media_url %}
+              <a href="{{ councilor.social_media_url }}" target="_blank" class="btn btn-sm btn-light rounded-circle text-primary ms-1" title="Redes sociales">
+                <i class="bi bi-link-45deg"></i>
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 text-center py-5">
+        <div class="alert alert-info py-4">
+          <i class="bi bi-info-circle display-4 d-block mb-3"></i>
+          <h5 class="alert-heading">No hay concejales registrados</h5>
+          <p class="mb-0">Actualmente no hay información pública para mostrar en esta sección.</p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
