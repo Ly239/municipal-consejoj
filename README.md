@@ -1,2 +1,4 @@
 # municipal-consejoj
-Sistema de gestión documental para el Consejo Municipal – Módulo de Secretaría
+Sistema de gestión documental 
+
+**Proyecto en desarrollo**
