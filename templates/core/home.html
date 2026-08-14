@@ -1,0 +1,53 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Inicio - Concejo Municipal de Junín{% endblock %}
+
+{% block content %}
+<div class="jumbotron bg-light p-5 rounded-3">
+    <h1 class="display-4">Bienvenido al Concejo Municipal de Junín</h1>
+    <p class="lead">Sistema de gestión documental de la Secretaría</p>
+    <hr class="my-4">
+    <p>Este sistema permite gestionar Gacetas, Acuerdos, Ordenanzas, Decretos, Actas y demás documentos legales.</p>
+    {% if not user.is_authenticated %}
+    <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
+        <i class="fas fa-sign-in-alt me-2"></i>Iniciar sesión
+    </a>
+    {% else %}
+    <a href="{% url 'document-list' %}" class="btn btn-success btn-lg">
+        <i class="fas fa-file-alt me-2"></i>Ver documentos
+    </a>
+    {% endif %}
+</div>
+
+<!-- Información pública (para usuarios no autenticados) -->
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-book fa-3x text-primary mb-3"></i>
+                <h5>Gacetas</h5>
+                <p class="text-muted">Consulta las gacetas municipales publicadas</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-gavel fa-3x text-success mb-3"></i>
+                <h5>Documentos legales</h5>
+                <p class="text-muted">Accede a ordenanzas, acuerdos, decretos y más</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-3x text-info mb-3"></i>
+                <h5>Transparencia</h5>
+                <p class="text-muted">Información pública al servicio de la comunidad</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

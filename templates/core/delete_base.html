@@ -1,0 +1,40 @@
+{% extends 'core/base.html' %}
+{% block topbar_title %}Eliminar {% block delete_title %}Registro{% endblock %}{% endblock %}
+{% block content %}
+<div class="breadcrumb-nav">
+  <a href="{% url 'home' %}"><i class="fas fa-home"></i> Inicio</a>
+  <span class="sep"><i class="fas fa-chevron-right"></i></span>
+  <a href="{% block back_url %}{% url 'home' %}{% endblock %}">{% block breadcrumb_list %}Listado{% endblock %}</a>
+  <span class="sep"><i class="fas fa-chevron-right"></i></span>
+  <span>Eliminar</span>
+</div>
+
+<div class="delete-card-v2 fade-in">
+  <div class="delete-card-v2-body">
+    <div class="delete-icon-v2">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h1>Eliminar {% block delete_heading %}Registro{% endblock %}</h1>
+    <p class="delete-msg">¿Estás seguro de que deseas eliminar este registro? Se moverá temporalmente a la Papelera.</p>
+    <div class="delete-object-badge">
+      <i class="{% block delete_icon %}fas fa-file{% endblock %}" style="color:#b81b1b;margin-right:.5rem;"></i>
+      {{ object }}
+    </div>
+    <br>
+    <div class="delete-warning-badge">
+      <i class="fas fa-info-circle"></i> Esta acción es reversible.
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="delete-actions-v2">
+        <a href="{% block cancel_url %}{% url 'home' %}{% endblock %}" class="btn-cancel-v2">
+          <i class="fas fa-arrow-left"></i> Cancelar
+        </a>
+        <button type="submit" class="btn-confirm-delete">
+          <i class="fas fa-trash-alt"></i> Sí, Eliminar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

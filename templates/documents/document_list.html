@@ -1,0 +1,45 @@
+{% extends 'core/_list_base.html' %}
+{% block list_title %}Documentos{% endblock %}
+{% block breadcrumb_current %}Documentos{% endblock %}
+{% block header_icon %}fas fa-folder-open{% endblock %}
+{% block page_title %}Documentos{% endblock %}
+{% block page_subtitle %}Constancias, actas y documentos administrativos{% endblock %}
+{% block table_title %}Listado de Documentos{% endblock %}
+{% block create_button %}
+<a href="{% url 'document_create' %}" class="btn-new"><i class="fas fa-plus"></i> Nuevo Documento</a>
+{% endblock %}
+{% block table_content %}
+{% if documents %}
+<div style="overflow-x:auto;">
+<table class="data-table">
+  <thead><tr>
+    <th>#</th><th>Título</th><th>Tipo</th><th>Receptor</th><th>Fecha</th><th>Acciones</th>
+  </tr></thead>
+  <tbody>
+  {% for d in documents %}
+  <tr class="stagger-item">
+    <td style="color:#9ca3af;font-size:.8rem;">{{ forloop.counter }}</td>
+    <td><span style="font-weight:600;">{{ d.title }}</span></td>
+    <td style="font-size:.82rem;"><span class="badge-status badge-active">{{ d.document_type }}</span></td>
+    <td style="font-size:.82rem;color:#6b7280;">{{ d.recipient_resident }}</td>
+    <td style="font-size:.82rem;">{{ d.date|date:"d/m/Y" }}</td>
+    <td>
+      <div style="display:flex;gap:.4rem;">
+        <a href="{% url 'document_update' d.pk %}" class="btn-action btn-action-edit"><i class="fas fa-pencil-alt"></i> Editar</a>
+        <a href="{% url 'document_delete' d.pk %}" class="btn-action btn-action-delete"><i class="fas fa-trash-alt"></i></a>
+      </div>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="empty-state-icon"><i class="fas fa-folder-open"></i></div>
+  <h3>Sin documentos registrados</h3>
+  <p>Crea el primer documento administrativo.</p>
+  <a href="{% url 'document-create' %}" class="btn-new"><i class="fas fa-plus"></i> Nuevo Documento</a>
+</div>
+{% endif %}
+{% endblock %}
