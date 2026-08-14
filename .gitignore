@@ -139,6 +139,7 @@ celerybeat.pid
 .env
 .envrc
 .venv
+.venv37
 env/
 venv/
 ENV/
@@ -217,7 +218,7 @@ Thumbs.db
 
 #No subir base de datos
 db.
-db.project_vega
+db.sqlite3
 # Ignorar cualquier archivo con extensión .db
 *.db
 # "" que comienze con extensión "db"
