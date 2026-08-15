@@ -1,7 +1,8 @@
 {% extends "core/delete_base.html" %}
+
 {% block delete_title %}Documento{% endblock %}
-{% block back_url %}{% url "document_list" %}{% endblock %}
+{% block back_url %}{% url "documents:document_list" %}{% endblock %}
 {% block breadcrumb_list %}Documentos{% endblock %}
 {% block delete_heading %}Documento{% endblock %}
 {% block delete_icon %}fas fa-folder-open{% endblock %}
-{% block cancel_url %}{% url "document_list" %}{% endblock %}
+{% block cancel_url %}{% url "documents:document_list" %}{% endblock %}

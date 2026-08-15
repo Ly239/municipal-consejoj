@@ -1,0 +1,8 @@
+{% extends "core/delete_base.html" %}
+
+{% block delete_title %}Gaceta{% endblock %}
+{% block back_url %}{% url "documents:gazette_list" %}{% endblock %}
+{% block breadcrumb_list %}Gacetas{% endblock %}
+{% block delete_heading %}Gaceta{% endblock %}
+{% block delete_icon %}fas fa-book{% endblock %}
+{% block cancel_url %}{% url "documents:gazette_list" %}{% endblock %}

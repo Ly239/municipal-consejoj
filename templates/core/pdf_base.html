@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Concejo Municipal de Junín{% endblock %}</title>
+    <style>
+        /* =========================================================
+           ESTILOS BASE PARA TODOS LOS PDFs
+           ========================================================= */
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 1.5cm;
+            font-size: 12px;
+            line-height: 1.4;
+            background-color: #0a0a16;
+            background-image:
+                radial-gradient(circle at 15% 30%, rgba(99, 102, 241, 0.18) 0%, transparent 40%),
+                radial-gradient(circle at 85% 70%, rgba(139, 92, 246, 0.22) 0%, transparent 40%),
+                radial-gradient(circle at 10% 80%, rgba(6, 182, 212, 0.20) 0%, transparent 35%),
+                radial-gradient(circle at 80% 20%, rgba(244, 63, 94, 0.14) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(167, 139, 250, 0.16) 0%, transparent 30%);
+            background-attachment: fixed;
+            color: #e2e8f0;
+        }
+
+        /* =========================================================
+           ENCABEZADO
+           ========================================================= */
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+        }
+        .logo-placeholder {
+            font-size: 44px;
+            color: #6366f1;
+            margin-bottom: 5px;
+        }
+        h1 {
+            font-size: 18px;
+            color: #fff;
+            font-weight: 700;
+            margin: 5px 0;
+        }
+        h2 {
+            font-size: 13px;
+            color: #9ca3af;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 5px 0;
+        }
+        .fecha {
+            text-align: right;
+            font-size: 10px;
+            margin-top: 5px;
+            color: #6b7280;
+        }
+
+        /* =========================================================
+           TABLAS
+           ========================================================= */
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 8px 10px;
+            text-align: left;
+            vertical-align: top;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        th {
+            background-color: rgba(99, 102, 241, 0.15);
+            color: #e2e8f0;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        /* =========================================================
+           PIE DE PÁGINA
+           ========================================================= */
+        .footer {
+            margin-top: 25px;
+            font-size: 9px;
+            text-align: center;
+            color: #6b7280;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 8px;
+        }
+
+        /* =========================================================
+           BOTÓN DE IMPRESIÓN (solo visible en pantalla)
+           ========================================================= */
+        .btn-print {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.25rem;
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.2);
+            transition: all 0.2s;
+        }
+        .btn-print:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        /* =========================================================
+           IMPRESIÓN (ocultar botón, ajustar márgenes)
+           ========================================================= */
+        @media print {
+            body {
+                margin: 0.5cm;
+                background: #fff !important;
+                color: #000 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .header {
+                border-bottom-color: #ddd;
+            }
+            .footer {
+                border-top-color: #ddd;
+                color: #666;
+            }
+            th {
+                background-color: #f0f0f0 !important;
+                color: #000 !important;
+            }
+            table {
+                background: #fff !important;
+                border-color: #ccc !important;
+            }
+            td {
+                color: #000 !important;
+            }
+            .logo-placeholder {
+                color: #333 !important;
+            }
+            h1 {
+                color: #000 !important;
+            }
+            h2 {
+                color: #555 !important;
+            }
+            .fecha {
+                color: #555 !important;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <!-- =========================================================
+         ENCABEZADO
+         ========================================================= -->
+    <div class="header">
+        <div class="logo-placeholder">📋</div>
+        <h1>{% block institucion %}Concejo Municipal de Junín{% endblock %}</h1>
+        <h2>{% block report_title %}Reporte{% endblock %}</h2>
+        <div class="fecha">Generado el: {% now "d/m/Y H:i:s" %}</div>
+    </div>
+
+    <!-- =========================================================
+         BOTÓN DE IMPRESIÓN (solo visible en pantalla)
+         ========================================================= -->
+    <div class="no-print" style="margin-bottom:15px;text-align:center;">
+        <button onclick="window.print();" class="btn-print">
+            <i class="fas fa-print" style="font-style:normal;">🖨️</i> Imprimir / Guardar como PDF
+        </button>
+        <p style="font-size:12px;margin-top:8px;color:#9ca3af;">
+            💡 Presiona el botón o usa <strong>Ctrl+P</strong> para guardar como PDF.
+        </p>
+    </div>
+
+    <!-- =========================================================
+         CONTENIDO PRINCIPAL (lo define cada plantilla hija)
+         ========================================================= -->
+    {% block content %}{% endblock %}
+
+    <!-- =========================================================
+         PIE DE PÁGINA
+         ========================================================= -->
+    <div class="footer">
+        {% block footer_text %}
+        Sistema de Gestión Documental - Concejo Municipal de Junín
+        | Documento generado electrónicamente
+        {% endblock %}
+    </div>
+
+    <!-- =========================================================
+         SCRIPT PARA CERRAR LA VENTANA DESPUÉS DE IMPRIMIR (opcional)
+         ========================================================= -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

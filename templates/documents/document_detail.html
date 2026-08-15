@@ -1,180 +1,289 @@
 {% extends 'core/base.html' %}
-{% block topbar_title %}Vista Previa — Documento{% endblock %}
-{% block content %}
-<div class="breadcrumb-nav">
-  <a href="{% url 'home' %}"><i class="fas fa-home"></i> Inicio</a>
-  <span class="sep"><i class="fas fa-chevron-right"></i></span>
-  <a href="{% url 'document-list' %}">Documentos</a>
-  <span class="sep"><i class="fas fa-chevron-right"></i></span>
-  <span>Vista Previa</span>
-</div>
+{% load static %}
 
-<div class="page-header">
-  <div class="page-header-left">
-    <div class="page-header-icon"><i class="fas fa-file-search"></i></div>
-    <div>
-      <h1>{{ document.title }}</h1>
-      <p>{{ document.document_type }} · {{ document.date|date:"d/m/Y H:i" }}</p>
-    </div>
-  </div>
-  <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
-    <a href="{% url 'document_update' document.pk %}" class="btn-new" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">
-      <i class="fas fa-pencil-alt"></i> Editar
-    </a>
-    {% if document.file %}
-    <a href="{% url 'document_export' document.pk %}" class="btn-new" style="background:linear-gradient(135deg,#059669,#10b981);">
-      <i class="fas fa-download"></i> Exportar
-    </a>
-    {% endif %}
-    <a href="{% url 'document_list' %}" class="btn-new" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#e2e8f0;">
-      <i class="fas fa-arrow-left"></i> Volver
-    </a>
-  </div>
-</div>
+{% block title %}Detalle de Documento - Concejo Municipal{% endblock %}
 
-<div style="display:grid;grid-template-columns:340px 1fr;gap:1.5rem;align-items:start;">
-
-  <!-- Panel de información -->
-  <div class="data-card fade-in" style="padding:1.5rem;">
-    <div class="data-card-header" style="margin-bottom:1.2rem;">
-      <span class="data-card-title"><i class="fas fa-info-circle" style="color:#6366f1;margin-right:.5rem;"></i>Información</span>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:1rem;">
-      <div class="detail-field">
-        <label>Tipo de documento</label>
-        <span class="badge-status badge-active">{{ document.document_type }}</span>
-      </div>
-      <div class="detail-field">
-        <label>Receptor</label>
-        <span>{{ document.recipient_resident }}</span>
-      </div>
-      <div class="detail-field">
-        <label>Emisor</label>
-        <span>{{ document.issuer_user.get_full_name|default:document.issuer_user.username }}</span>
-      </div>
-      <div class="detail-field">
-        <label>Fecha de emisión</label>
-        <span>{{ document.date|date:"d/m/Y H:i" }}</span>
-      </div>
-      {% if document.description %}
-      <div class="detail-field">
-        <label>Descripción</label>
-        <span style="font-size:.85rem;line-height:1.5;color:#9ca3af;">{{ document.description }}</span>
-      </div>
-      {% endif %}
-      <div class="detail-field">
-        <label>Archivo adjunto</label>
-        {% if document.file %}
-          <span style="display:flex;align-items:center;gap:.4rem;">
-            <i class="fas fa-paperclip" style="color:#6366f1;"></i>
-            <span style="font-size:.82rem;color:#9ca3af;word-break:break-all;">{{ document.file.name|slice:"10:" }}</span>
-          </span>
-          <span style="font-size:.75rem;color:#6ee7b7;margin-top:.3rem;">
-            <i class="fas fa-check-circle"></i> Archivo cargado
-          </span>
-        {% else %}
-          <span style="color:#6b7280;font-size:.85rem;"><i class="fas fa-times-circle" style="color:#ef4444;"></i> Sin archivo</span>
-        {% endif %}
-      </div>
-    </div>
-
-    <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.08);">
-      <a href="{% url 'document_delete' document.pk %}" class="btn-action btn-action-delete" style="width:100%;justify-content:center;padding:.6rem;">
-        <i class="fas fa-trash-alt"></i> Eliminar documento
-      </a>
-    </div>
-  </div>
-
-  <!-- Panel de vista previa -->
-  <div class="data-card fade-in" style="min-height:520px;">
-    <div class="data-card-header">
-      <span class="data-card-title"><i class="fas fa-eye" style="color:#6366f1;margin-right:.5rem;"></i>Vista Previa</span>
-      {% if document.file %}
-      <span style="font-size:.78rem;color:#9ca3af;">
-        {% if file_type == 'pdf' %}PDF · Vista embebida{% elif file_type == 'image' %}Imagen{% elif file_type == 'txt' %}Texto plano{% elif file_type == 'office' %}Documento Office{% else %}Archivo adjunto{% endif %}
-      </span>
-      {% endif %}
-    </div>
-
-    <div style="padding:1.2rem;">
-      {% if not document.file %}
-        <!-- Sin archivo -->
-        <div class="preview-empty">
-          <div style="font-size:3.5rem;margin-bottom:1rem;opacity:.3;"><i class="fas fa-file-slash"></i></div>
-          <h3 style="color:#6b7280;font-size:1rem;">Sin archivo adjunto</h3>
-          <p style="color:#4b5563;font-size:.85rem;margin-top:.5rem;">Edita el documento para subir un archivo desde tu computador.</p>
-          <a href="{% url 'document_update' document.pk %}" class="btn-new" style="margin-top:1rem;font-size:.85rem;">
-            <i class="fas fa-upload"></i> Subir archivo
-          </a>
-        </div>
-
-      {% elif file_type == 'pdf' %}
-        <!-- Preview PDF -->
-        <div class="pdf-preview-wrapper">
-          <iframe
-            src="{{ document.file.url }}"
-            style="width:100%;height:620px;border:none;border-radius:10px;background:#111;"
-            title="Vista previa PDF"
-          ></iframe>
-          <p style="font-size:.75rem;color:#6b7280;margin-top:.5rem;text-align:center;">
-            Si el PDF no se muestra, <a href="{% url 'document_export' document.pk %}" style="color:#6366f1;">descárgalo aquí</a>.
-          </p>
-        </div>
-
-      {% elif file_type == 'image' %}
-        <!-- Preview imagen -->
-        <div style="text-align:center;">
-          <img src="{{ document.file.url }}" alt="{{ document.title }}"
-               style="max-width:100%;max-height:600px;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.4);">
-        </div>
-
-      {% elif file_type == 'txt' %}
-        <!-- Preview texto -->
-        <div class="text-preview-box">
-          <pre style="margin:0;white-space:pre-wrap;word-break:break-word;font-family:'Courier New',monospace;font-size:.85rem;line-height:1.7;color:#e2e8f0;">{{ text_content }}</pre>
-        </div>
-
-      {% elif file_type == 'office' %}
-        <!-- Documento Word/Office -->
-        <div class="preview-empty">
-          <div style="font-size:3.5rem;margin-bottom:1rem;color:#2196f3;opacity:.7;"><i class="fas fa-file-word"></i></div>
-          <h3 style="color:#9ca3af;font-size:1rem;">Documento de Office</h3>
-          <p style="color:#6b7280;font-size:.85rem;margin-top:.5rem;">Los archivos .doc/.docx no pueden previsualizarse directamente.<br>Descárgalo para verlo en tu computador.</p>
-          <a href="{% url 'document_export' document.pk %}" class="btn-new" style="margin-top:1rem;font-size:.85rem;background:linear-gradient(135deg,#2563eb,#3b82f6);">
-            <i class="fas fa-download"></i> Descargar para abrir
-          </a>
-        </div>
-
-      {% else %}
-        <!-- Otro tipo de archivo -->
-        <div class="preview-empty">
-          <div style="font-size:3.5rem;margin-bottom:1rem;opacity:.3;"><i class="fas fa-file-alt"></i></div>
-          <h3 style="color:#6b7280;font-size:1rem;">Vista previa no disponible</h3>
-          <p style="color:#4b5563;font-size:.85rem;margin-top:.5rem;">Este tipo de archivo no puede previsualizarse.</p>
-          <a href="{% url 'document_export' document.pk %}" class="btn-new" style="margin-top:1rem;font-size:.85rem;">
-            <i class="fas fa-download"></i> Descargar archivo
-          </a>
-        </div>
-      {% endif %}
-    </div>
-  </div>
-
-</div>
-
+{% block extra_css %}
 <style>
-.detail-field { display:flex;flex-direction:column;gap:.3rem; }
-.detail-field label { font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;font-weight:600; }
-.detail-field span { font-size:.9rem;color:#e2e8f0; }
-.preview-empty {
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  min-height:380px;text-align:center;padding:2rem;
-}
-.text-preview-box {
-  background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);
-  border-radius:10px;padding:1.2rem;max-height:620px;overflow-y:auto;
-}
-.text-preview-box::-webkit-scrollbar { width:6px; }
-.text-preview-box::-webkit-scrollbar-thumb { background:rgba(99,102,241,.4);border-radius:3px; }
+    /* Estilos específicos para el visor PDF */
+    #pdf-viewer {
+        background: #f8f9fa;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 400px;
+        width: 100%;
+    }
+    #pdf-viewer canvas {
+        max-width: 100%;
+        height: auto;
+    }
+    .pdf-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+        justify-content: center;
+        margin-top: 1rem;
+        padding: 0.5rem;
+        background: #f1f3f5;
+        border-radius: 8px;
+    }
+    .pdf-controls input[type="number"] {
+        width: 60px;
+        text-align: center;
+    }
+    .pdf-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        padding: 2rem;
+        color: #6c757d;
+    }
 </style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i> Inicio</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'documents:document_list' %}">Documentos</a></li>
+        <li class="breadcrumb-item active">{{ document.title|truncatechars:40 }}</li>
+    </ol>
+</nav>
+
+<!-- Encabezado -->
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1 class="h3 mb-1">{{ document.title }}</h1>
+        <p class="text-muted">
+            <span class="badge bg-primary">{{ document.document_type.name }}</span>
+            · N° {{ document.number }} - {{ document.gazette.year }}
+            · {{ document.emission_date|date:"d/m/Y" }}
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'documents:document_update' document.pk %}" class="btn btn-warning btn-sm">
+            <i class="fas fa-edit"></i> Editar
+        </a>
+        <a href="{% url 'documents:document_list' %}" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<!-- Grid: Info + Vista previa -->
+<div class="row g-4">
+    <!-- Panel de información -->
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Información</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Tipo</dt>
+                    <dd class="col-sm-7">{{ document.document_type.name }}</dd>
+
+                    <dt class="col-sm-5">N° Documento</dt>
+                    <dd class="col-sm-7"><strong>{{ document.number }}</strong></dd>
+
+                    <dt class="col-sm-5">Gaceta</dt>
+                    <dd class="col-sm-7">
+                        <a href="{% url 'documents:gazette_detail' document.gazette.pk %}">
+                            N° {{ document.gazette.number }} - {{ document.gazette.year }}
+                        </a>
+                    </dd>
+
+                    <dt class="col-sm-5">Ente Emisor</dt>
+                    <dd class="col-sm-7">{{ document.issuing_entity.name }}</dd>
+
+                    <dt class="col-sm-5">Subido por</dt>
+                    <dd class="col-sm-7">{{ document.submitted_by.get_full_name|default:document.submitted_by.username }}</dd>
+
+                    <dt class="col-sm-5">Fecha Emisión</dt>
+                    <dd class="col-sm-7">{{ document.emission_date|date:"d/m/Y" }}</dd>
+
+                    <dt class="col-sm-5">Fecha Publicación</dt>
+                    <dd class="col-sm-7">{{ document.publication_date|date:"d/m/Y " }}</dd>
+
+                    <dt class="col-sm-5">Estado</dt>
+                    <dd class="col-sm-7">
+                        {% if document.is_approved %}
+                            <span class="badge bg-success"><i class="fas fa-check-circle"></i> Aprobado</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark"><i class="fas fa-clock"></i> Pendiente</span>
+                        {% endif %}
+                    </dd>
+
+                    {% if document.other_entity_description %}
+                    <dt class="col-sm-5">Otro Ente</dt>
+                    <dd class="col-sm-7">{{ document.other_entity_description }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'documents:document_delete' document.pk %}" class="btn btn-danger btn-sm w-100">
+                    <i class="fas fa-trash-alt"></i> Mover a Papelera
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de vista previa -->
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-eye me-2"></i>Vista Previa</h5>
+                {% if document.pdf_file %}
+                    <a href="{{ document.pdf_file.url }}" target="_blank" class="btn btn-primary btn-sm">
+                        <i class="fas fa-external-link-alt"></i> Abrir PDF
+                    </a>
+                {% endif %}
+            </div>
+            <div class="card-body" style="min-height:400px;">
+                {% if document.pdf_file %}
+                    <!-- === VISOR PDF CON PDF.JS === -->
+                    <div id="pdf-viewer">
+                        <div id="pdf-loading" class="pdf-loading">
+                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                            <span>Cargando PDF...</span>
+                        </div>
+                        <canvas id="pdf-canvas" style="display:none;"></canvas>
+                    </div>
+                    <!-- Controles del visor -->
+                    <div class="pdf-controls" id="pdf-controls" style="display:none;">
+                        <button id="prev-page" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <span id="page-info">Página 1 / 1</span>
+                        <button id="next-page" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <span class="ms-2">Ir a:</span>
+                        <input type="number" id="page-input" value="1" min="1" class="form-control form-control-sm">
+                        <button id="go-page" class="btn btn-outline-secondary btn-sm">Ir</button>
+                    </div>
+                    <p class="text-muted small mt-2 text-center">
+                        Si el PDF no se carga, <a href="{{ document.pdf_file.url }}" target="_blank">descárgalo aquí</a>.
+                    </p>
+                {% elif document.image %}
+                    <div class="text-center">
+                        <img src="{{ document.image.url }}" alt="{{ document.title }}"
+                             class="img-fluid rounded" style="max-height:500px;">
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <div style="font-size:4rem;color:#d1d5db;">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <h5 class="text-muted mt-3">Sin archivo adjunto</h5>
+                        <p class="text-muted small">Este documento no tiene PDF ni imagen asociada.</p>
+                        <a href="{% url 'documents:document_update' document.pk %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-upload"></i> Subir archivo
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+            {% if document.pdf_file %}
+            <div class="card-footer text-muted small">
+                <i class="fas fa-paperclip me-1"></i> {{ document.pdf_file.name|slice:"10:" }}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Descripción -->
+        {% if document.description %}
+        <div class="card shadow-sm mt-3">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-align-left me-2"></i>Descripción</h5>
+            </div>
+            <div class="card-body">
+                {{ document.description|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- PDF.js (CDN) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const url = "{{ document.pdf_file.url|default:'' }}";
+    if (!url) return; // No hay PDF
+
+    const canvas = document.getElementById('pdf-canvas');
+    const context = canvas.getContext('2d');
+    const loading = document.getElementById('pdf-loading');
+    const controls = document.getElementById('pdf-controls');
+    const pageInfo = document.getElementById('page-info');
+    const pageInput = document.getElementById('page-input');
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+    const goBtn = document.getElementById('go-page');
+
+    let pdfDoc = null;
+    let currentPage = 1;
+
+    // Configurar worker de PDF.js
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    // Cargar el PDF
+    pdfjsLib.getDocument(url).promise.then(function(pdf) {
+        pdfDoc = pdf;
+        loading.style.display = 'none';
+        canvas.style.display = 'block';
+        controls.style.display = 'flex';
+        pageInfo.textContent = 'Página 1 / ' + pdf.numPages;
+        pageInput.max = pdf.numPages;
+        renderPage(1);
+    }).catch(function(error) {
+        console.error('Error al cargar PDF:', error);
+        loading.innerHTML = '<div class="alert alert-danger mb-0">No se pudo cargar el PDF. <a href="' + url + '" target="_blank">Descárgalo aquí</a>.</div>';
+    });
+
+    function renderPage(num) {
+        pdfDoc.getPage(num).then(function(page) {
+            const viewport = page.getViewport({ scale: 1.5 });
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            const renderContext = {
+                canvasContext: context,
+                viewport: viewport
+            };
+            page.render(renderContext);
+            currentPage = num;
+            pageInfo.textContent = 'Página ' + num + ' / ' + pdfDoc.numPages;
+            pageInput.value = num;
+        });
+    }
+
+    // Navegación
+    prevBtn.addEventListener('click', function() {
+        if (pdfDoc && currentPage > 1) renderPage(currentPage - 1);
+    });
+
+    nextBtn.addEventListener('click', function() {
+        if (pdfDoc && currentPage < pdfDoc.numPages) renderPage(currentPage + 1);
+    });
+
+    goBtn.addEventListener('click', function() {
+        let num = parseInt(pageInput.value);
+        if (pdfDoc && num >= 1 && num <= pdfDoc.numPages) renderPage(num);
+    });
+
+    pageInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') goBtn.click();
+    });
+});
+</script>
 {% endblock %}

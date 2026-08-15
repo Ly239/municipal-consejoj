@@ -1,0 +1,74 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{% block list_title %}Listado{% endblock %}{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i> Inicio</a></li>
+    <li class="breadcrumb-item active">{% block breadcrumb_current %}Listado{% endblock %}</li>
+  </ol>
+</nav>
+
+<!-- Encabezado -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-0">{% block page_title %}Listado{% endblock %}</h1>
+    <p class="text-muted">{% block page_subtitle %}Gestión de registros{% endblock %}</p>
+  </div>
+  {% block create_button %}{% endblock %}
+</div>
+
+<!-- Búsqueda -->
+<div class="row mb-3">
+  <div class="col-md-4 ms-auto">
+    <form method="get" action="">
+      <div class="input-group">
+        <input type="search" name="q" class="form-control" placeholder="Buscar..." value="{{ search_query|default:'' }}">
+        <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Tabla -->
+<div class="card shadow-sm">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>{% block table_title %}Registros{% endblock %}</span>
+    <span class="badge bg-secondary">{{ page_obj.paginator.count|default:0 }}</span>
+  </div>
+  <div class="card-body p-0">
+    {% block table_content %}{% endblock %}
+  </div>
+</div>
+
+<!-- Paginación -->
+{% if is_paginated %}
+<div class="d-flex justify-content-between align-items-center mt-3">
+  <span class="text-muted small">Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }}</span>
+  <nav>
+    <ul class="pagination mb-0">
+      {% if page_obj.has_previous %}
+      <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}"><i class="fas fa-chevron-left"></i></a></li>
+      {% else %}
+      <li class="page-item disabled"><span class="page-link"><i class="fas fa-chevron-left"></i></span></li>
+      {% endif %}
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+        {% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %}
+      <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}"><i class="fas fa-chevron-right"></i></a></li>
+      {% else %}
+      <li class="page-item disabled"><span class="page-link"><i class="fas fa-chevron-right"></i></span></li>
+      {% endif %}
+    </ul>
+  </nav>
+</div>
+{% endif %}
+{% endblock %}

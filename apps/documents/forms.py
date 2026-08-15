@@ -1,3 +1,4 @@
+import os
 import re
 from django import forms
 from django.core.exceptions import ValidationError
@@ -51,6 +52,24 @@ def validate_year(value, field_name="Año"):
             f"{field_name} debe estar entre 1900 y {current_year + 1}."
         )
     return value
+
+
+# Extensiones permitidas para cada campo
+ALLOWED_PDF_EXTENSIONS = ['.pdf']
+ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
+
+def validate_pdf_file(value):
+    """Valida que el archivo sea un PDF."""
+    ext = os.path.splitext(value.name)[1].lower()
+    if ext not in ALLOWED_PDF_EXTENSIONS:
+        raise ValidationError('Solo se permiten archivos PDF en este campo.')
+
+def validate_image_file(value):
+    """Valida que el archivo sea una imagen."""
+    ext = os.path.splitext(value.name)[1].lower()
+    if ext not in ALLOWED_IMAGE_EXTENSIONS:
+        raise ValidationError('Solo se permiten archivos de imagen (JPG, PNG, GIF, BMP, WEBP) en este campo.')
+
 
 
 # ==================================================
@@ -216,6 +235,22 @@ class DocumentForm(DateFieldMixin, forms.ModelForm):
             if emission_date > date.today():
                 raise ValidationError("La fecha de emisión no puede ser una fecha futura.")
         return emission_date
+
+
+    # Validación para PDF
+    def clean_pdf_file(self):
+        file = self.cleaned_data.get('pdf_file')
+        if file:
+            validate_pdf_file(file)
+        return file
+
+    # Validación para imagen
+    def clean_image(self):
+        file = self.cleaned_data.get('image')
+        if file:
+            validate_image_file(file)
+        return file
+
 
     def clean(self):
         """

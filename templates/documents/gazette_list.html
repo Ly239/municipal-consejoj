@@ -1,0 +1,72 @@
+{% extends 'core/list_base.html' %}
+
+{% load static %}
+
+{% block list_title %}Gacetas{% endblock %}
+{% block breadcrumb_current %}Gacetas{% endblock %}
+{% block header_icon %}fas fa-book{% endblock %}
+{% block page_title %}Gacetas{% endblock %}
+{% block page_subtitle %}Gacetas municipales publicadas{% endblock %}
+{% block table_title %}Listado de Gacetas{% endblock %}
+
+{% block create_button %}
+<a href="{% url 'documents:gazette_create' %}" class="btn btn-primary btn-sm">
+  <i class="fas fa-plus"></i> Nueva Gaceta
+</a>
+{% endblock %}
+
+{% block table_content %}
+{% if object_list %}
+<div class="table-responsive">
+  <table class="table table-striped table-hover mb-0">
+    <thead class="table-light">
+      <tr>
+        <th>#</th>
+        <th>N°</th>
+        <th>Año</th>
+        <th>Descripción</th>
+        <th>Documentos</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for gazette in object_list %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td><strong>{{ gazette.number }}</strong></td>
+      <td>{{ gazette.year }}</td>
+      <td>{{ gazette.description|truncatechars:50|default:"Sin descripción" }}</td>
+      <td>
+        <span class="badge bg-secondary">{{ gazette.documents.count }}</span>
+      </td>
+      <td>
+        <div class="btn-group btn-group-sm" role="group">
+          <a href="{% url 'documents:gazette_detail' gazette.pk %}" class="btn btn-outline-info" title="Ver">
+            <i class="fas fa-eye"></i>
+          </a>
+          <a href="{% url 'documents:gazette_update' gazette.pk %}" class="btn btn-outline-warning" title="Editar">
+            <i class="fas fa-edit"></i>
+          </a>
+          <a href="{% url 'documents:gazette_delete' gazette.pk %}" class="btn btn-outline-danger" title="Eliminar">
+            <i class="fas fa-trash"></i>
+          </a>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="text-center py-5">
+  <div style="font-size:4rem;color:#d1d5db;margin-bottom:1rem;">
+    <i class="fas fa-book"></i>
+  </div>
+  <h5 class="text-muted">No hay gacetas registradas</h5>
+  <p class="text-muted small">Comienza creando la primera gaceta.</p>
+  <a href="{% url 'documents:gazette_create' %}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> Nueva Gaceta
+  </a>
+</div>
+{% endif %}
+{% endblock %}
