@@ -247,3 +247,14 @@ media/
 # Excluir todos los archivos dentro de un directorio especifico
 /media/*
 
+apps/core/static/core/img/
+apps/documents/static/documents/img/
+media/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.webp
+*.bmp
+*.ico
