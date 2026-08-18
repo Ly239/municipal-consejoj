@@ -1,0 +1,64 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{% if object %}Editar{% else %}Crear{% endif %} {% block form_title %}Registro{% endblock %}{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i> Inicio</a></li>
+    <li class="breadcrumb-item"><a href="{% block back_url %}{% url 'home' %}{% endblock %}">{% block breadcrumb_list %}Listado{% endblock %}</a></li>
+    <li class="breadcrumb-item active">{% if object %}Editar{% else %}Crear{% endif %} {% block form_entity %}Registro{% endblock %}</li>
+  </ol>
+</nav>
+
+<!-- Encabezado -->
+<div class="d-flex align-items-center mb-4">
+  <div class="me-3" style="font-size:2rem;color:#0d6efd;">
+    <i class="{% block form_icon %}fas fa-edit{% endblock %}"></i>
+  </div>
+  <div>
+    <h1 class="h3 mb-0">{% if object %}Editar{% else %}Nuevo{% endif %} {% block form_heading %}Registro{% endblock %}</h1>
+    <p class="text-muted mb-0">{% if object %}Modifica los datos del registro{% else %}Completa los campos para crear un nuevo registro{% endif %}</p>
+  </div>
+</div>
+
+<!-- Formulario -->
+<div class="card shadow-sm">
+  <div class="card-header">
+    <i class="fas fa-pencil-alt me-2"></i> {% if object %}Editar{% else %}Crear{% endif %} {% block form_heading2 %}Registro{% endblock %}
+  </div>
+  <div class="card-body">
+    {% if form.errors %}
+    <div class="alert alert-danger">
+      <i class="fas fa-exclamation-circle me-2"></i>
+      <strong>Corrige los errores:</strong>
+      <ul class="mb-0 mt-1">
+        {% for field, errors in form.errors.items %}
+          {% for error in errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" novalidate id="form-principal">
+      {% csrf_token %}
+      {% block form_fields %}
+        {{ form.as_p }}
+      {% endblock %}
+      {% block extra_form %}{% endblock %}
+    </form>
+  </div>
+  <div class="card-footer text-end">
+    <a href="{% block cancel_url %}{% url 'home' %}{% endblock %}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left me-1"></i> Cancelar
+    </a>
+    <button type="submit" form="form-principal" class="btn btn-primary">
+      <i class="fas fa-save me-1"></i> {% if object %}Guardar cambios{% else %}Crear registro{% endif %}
+    </button>
+  </div>
+</div>
+{% endblock %}

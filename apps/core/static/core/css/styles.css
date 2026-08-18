@@ -1,0 +1,155 @@
+/* ============================================ */
+/* IDENTIDAD DE MARCA */
+/* ============================================ */
+:root {
+    --color-dark-blue: #003B4F;   /* Azul oscuro corporativo */
+    --color-light-blue: #0AB1D4;  /* Aguamarina/azul claro */
+    --color-bg: #F8F6F2;          /* Beige/gris de fondo del manual */
+    --color-text: #1A1A1A;
+    --font-title: 'Bebas Neue', 'Inter', cursive; /* Si no cargas Bebas, usa Inter */
+}
+
+body {
+    background-color: var(--color-bg);
+    font-family: 'Inter', sans-serif;
+    color: var(--color-text);
+}
+
+/* --- Estilos del Navbar (para mantenerlo limpio) --- */
+.navbar {
+    background-color: #FFFFFF;
+    box-shadow: 0 2px 10px rgba(0, 59, 79, 0.05);
+    padding: 12px 0;
+}
+.navbar-brand img {
+    height: 45px; /* Ajusta según tu logo */
+}
+.nav-link {
+    font-weight: 500;
+    color: var(--color-dark-blue) !important;
+    margin: 0 15px;
+    font-size: 1rem;
+}
+.nav-link.active {
+    border-bottom: 3px solid var(--color-light-blue);
+    color: var(--color-light-blue) !important;
+}
+.btn-nav-outline {
+    border: 2px solid var(--color-dark-blue);
+    color: var(--color-dark-blue);
+    border-radius: 50px;
+    padding: 6px 20px;
+    font-weight: 600;
+    background: transparent;
+}
+.btn-nav-outline:hover {
+    background-color: var(--color-dark-blue);
+    color: white;
+}
+.btn-nav-fill {
+    background-color: var(--color-light-blue);
+    color: white;
+    border-radius: 50px;
+    padding: 6px 20px;
+    font-weight: 600;
+    border: none;
+}
+.btn-nav-fill:hover {
+    background-color: #008da8;
+    color: white;
+}
+
+/* --- CARRUSEL HERO (Reemplazando a Miku) --- */
+.hero-carousel {
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 59, 79, 0.1);
+}
+.hero-slide {
+    height: 350px; /* Altura fija como en tu imagen */
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 40px 60px;
+}
+.hero-slide .slide-content {
+    position: relative;
+    z-index: 2;
+    max-width: 50%;
+}
+.hero-slide h1 {
+    font-size: 3.5rem;
+    font-family: var(--font-title);
+    color: #003B4F;
+}
+.hero-slide p {
+    font-size: 1.1rem;
+    color: #333;
+}
+.hero-slide .btn-hero {
+    background-color: var(--color-dark-blue);
+    color: white;
+    border-radius: 50px;
+    padding: 10px 30px;
+    text-decoration: none;
+    font-weight: 600;
+}
+.hero-slide .slide-img {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 50%;
+    object-fit: cover;
+    border-radius: 0 20px 20px 0;
+    mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 40%);
+    -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 40%);
+}
+
+/* --- TARJETAS Y SECCIONES --- */
+.section-title {
+    font-family: var(--font-title);
+    color: var(--color-dark-blue);
+    letter-spacing: 0.5px;
+    border-bottom: 3px solid var(--color-light-blue);
+    display: inline-block;
+    padding-bottom: 5px;
+}
+.card-concejo {
+    border: none;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0, 59, 79, 0.08);
+    transition: transform 0.3s ease;
+}
+.card-concejo:hover {
+    transform: translateY(-5px);
+}
+.search-pill {
+    background: #FFFFFF;
+    color: var(--color-dark-blue);
+    border-radius: 50px;
+    padding: 8px 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    display: inline-block;
+    margin: 4px;
+    font-size: 0.9rem;
+}
+.search-pill i {
+    color: var(--color-light-blue);
+    margin-right: 6px;
+}
+.info-badge {
+    width: 45px;
+    height: 45px;
+    background: var(--color-light-blue);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+.info-badge.dark {
+    background: var(--color-dark-blue);
+}

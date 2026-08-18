@@ -1,0 +1,13 @@
+{% extends 'core/form_base.html' %}
+
+{% load static %}
+
+{% block form_title %}Gaceta{% endblock %}
+{% block breadcrumb_list %}Gacetas{% endblock %}
+{% block form_entity %}Gaceta{% endblock %}
+{% block form_icon %}fas fa-book{% endblock %}
+{% block form_heading %}Gaceta{% endblock %}
+{% block form_heading2 %}Gaceta{% endblock %}
+
+{% block back_url %}{% url 'documents:gazette_list' %}{% endblock %}
+{% block cancel_url %}{% url 'documents:gazette_list' %}{% endblock %}

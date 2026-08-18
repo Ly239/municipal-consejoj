@@ -1,0 +1,160 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Inicio - Concejo Municipal de Junín{% endblock %}
+
+{% block content %}
+ <!-- INCLUIMOS EL NAVBAR AQUÍ (Solo en el Home) -->
+    {% include 'core/includes/_navbar.html' %}
+
+<!-- ============================================ -->
+<!-- 1. HERO CARRUSEL (3 imágenes)                -->
+<!-- ============================================ -->
+<div id="heroCarousel" class="carousel slide hero-carousel mb-5" data-bs-ride="carousel">
+    <div class="carousel-indicators">
+        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
+        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
+        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
+    </div>
+    
+    <div class="carousel-inner">
+        <!-- Slide 1: Institucional -->
+        <div class="carousel-item active">
+            <div class="hero-slide" style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2);">
+                <div class="slide-content">
+                    <h1>Rubio,<br>ciudad de trabajo</h1>
+                    <p>Sistema de gestión documental del Concejo Municipal. Transparencia y modernidad.</p>
+                    <a href="{% url 'documents:document_list' %}" class="btn-hero">Ver Gacetas <i class="fas fa-arrow-right ms-2"></i></a>
+                </div>
+                <!-- IMAGEN 1: Pon aquí una foto de la fachada de la Casa del Concejo -->
+                <img src="{% static 'core/img/slide_concejo.jpg' %}" class="slide-img" alt="Concejo Municipal">
+            </div>
+        </div>
+        
+        <!-- Slide 2: Gestión -->
+        <div class="carousel-item">
+            <div class="hero-slide" style="background: linear-gradient(135deg, #f8f9fa, #dee2e6);">
+                <div class="slide-content">
+                    <h1>Gestión<br>Documental</h1>
+                    <p>Ordenanzas, Acuerdos, Decretos y Actas a un solo clic.</p>
+                    <a href="#" class="btn-hero">Explorar <i class="fas fa-arrow-right ms-2"></i></a>
+                </div>
+                <!-- IMAGEN 2: Pon una foto de archivos o documentos legales -->
+                <img src="{% static 'core/img/slide_documentos.jpg' %}" class="slide-img" alt="Documentos">
+            </div>
+        </div>
+        
+        <!-- Slide 3: Comunidad -->
+        <div class="carousel-item">
+            <div class="hero-slide" style="background: linear-gradient(135deg, #fff3cd, #ffe69c);">
+                <div class="slide-content">
+                    <h1>Compromiso<br>Ciudadano</h1>
+                    <p>Información pública para el bienestar de la comunidad juninense.</p>
+                    <a href="#" class="btn-hero">Conoce más <i class="fas fa-arrow-right ms-2"></i></a>
+                </div>
+                <!-- IMAGEN 3: Pon una foto de la plaza o gente de Rubio -->
+                <img src="{% static 'core/img/slide_comunidad.jpg' %}" class="slide-img" alt="Comunidad">
+            </div>
+        </div>
+    </div>
+    
+    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    </button>
+</div>
+
+<!-- ============================================ -->
+<!-- 2. CONTENIDO PRINCIPAL (GRID 3 COLUMNAS)    -->
+<!-- ============================================ -->
+<div class="row g-4">
+
+    <!-- COLUMNA IZQUIERDA: Documentos Destacados (como Artwork) -->
+    <div class="col-lg-3 col-md-6">
+        <h4 class="section-title mb-3">Documentos <i class="fas fa-chevron-right ms-2" style="font-size: 0.8rem;"></i></h4>
+        
+        <div class="card card-concejo p-3 mb-3">
+            <div class="bg-light rounded-3 d-flex align-items-center justify-content-center mb-2" style="height: 150px;">
+                <i class="fas fa-file-pdf fa-4x" style="color: var(--color-dark-blue);"></i>
+            </div>
+            <div class="text-center">
+                <h6 class="fw-bold mb-0">Acuerdo N° 001</h6>
+                <small class="text-muted">Gaceta 2026</small>
+            </div>
+        </div>
+        
+        <div class="card card-concejo p-3 mb-3">
+            <div class="bg-light rounded-3 d-flex align-items-center justify-content-center mb-2" style="height: 150px;">
+                <i class="fas fa-file-signature fa-4x" style="color: var(--color-light-blue);"></i>
+            </div>
+            <div class="text-center">
+                <h6 class="fw-bold mb-0">Ordenanza 045</h6>
+                <small class="text-muted">Gaceta 2025</small>
+            </div>
+        </div>
+
+        <a href="{% url 'documents:document_list' %}" class="btn btn-light w-100 rounded-pill shadow-sm border">Ver Más</a>
+    </div>
+
+    <!-- COLUMNA CENTRAL: Búsquedas Recientes -->
+    <div class="col-lg-4 col-md-6">
+        <h4 class="section-title mb-3">Búsquedas Recientes</h4>
+        
+        <div class="mb-4">
+            <span class="search-pill"><i class="fas fa-search"></i> Gaceta extraordinaria</span>
+            <span class="search-pill"><i class="fas fa-search"></i> Acuerdos 2026</span>
+            <span class="search-pill"><i class="fas fa-search"></i> Presupuesto participativo</span>
+            <span class="search-pill"><i class="fas fa-search"></i> Concejal Pérez</span>
+            <span class="search-pill"><i class="fas fa-search"></i> Obras públicas</span>
+            <span class="search-pill"><i class="fas fa-search"></i> Decretos alcaldía</span>
+        </div>
+
+        <!-- Avatar de usuarios (o concejales destacados) -->
+        <div class="d-flex align-items-center gap-3 mt-3">
+            <div class="position-relative">
+                <div class="rounded-circle bg-white shadow-sm d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; border: 3px solid var(--color-light-blue);">
+                    <i class="fas fa-user-tie fa-2x" style="color: var(--color-dark-blue);"></i>
+                </div>
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill border border-white" style="background: var(--color-light-blue);">✓</span>
+            </div>
+            <div class="position-relative">
+                <div class="rounded-circle bg-white shadow-sm d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; border: 3px solid var(--color-dark-blue);">
+                    <i class="fas fa-user-tie fa-2x" style="color: var(--color-dark-blue);"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COLUMNA DERECHA: Gacetas Recientes (Lista como la de "The Number") -->
+    <div class="col-lg-5">
+        <h4 class="section-title mb-3">Últimas Gacetas</h4>
+        
+        <div class="card card-concejo mb-3 p-3 d-flex flex-row align-items-center gap-3">
+            <div class="info-badge">01</div>
+            <div>
+                <h6 class="fw-bold mb-0">Gaceta N° 2026-01</h6>
+                <small class="text-muted">Publicada: 10 Ago 2026 · 8 docs</small>
+            </div>
+        </div>
+        
+        <div class="card card-concejo mb-3 p-3 d-flex flex-row align-items-center gap-3">
+            <div class="info-badge dark">02</div>
+            <div>
+                <h6 class="fw-bold mb-0">Gaceta N° 2025-12</h6>
+                <small class="text-muted">Publicada: 15 Dic 2025 · 5 docs</small>
+            </div>
+        </div>
+        
+        <div class="card card-concejo mb-3 p-3 d-flex flex-row align-items-center gap-3">
+            <div class="info-badge" style="background: #e9ecef; color: var(--color-dark-blue);">03</div>
+            <div>
+                <h6 class="fw-bold mb-0">Gaceta N° 2025-11</h6>
+                <small class="text-muted">Publicada: 20 Nov 2025 · 3 docs</small>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
