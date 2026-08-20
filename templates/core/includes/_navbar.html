@@ -1,10 +1,12 @@
 {% load static %}
+{% load groups %}
+{% load trash_tags %}  <!-- ✅ Cargar el template tag para el contador -->
+
 <nav class="navbar navbar-expand-lg">
   <div class="container">
     <!-- LOGO -->
     <a class="navbar-brand" href="{% url 'home' %}">
-      <!-- Pon aquí tu imagen del logo: -->
-      <img src="{% static 'img/logo_concejo.png' %}" alt="Concejo" style="height: 45px;">
+      <img src="{% static 'core/img/logo_concejo.jpg' %}" alt="Concejo" style="height: 45px;">
     </a>
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -17,9 +19,26 @@
         <li class="nav-item"><a class="nav-link" href="{% url 'documents:document_list' %}">Documentos</a></li>
         <li class="nav-item">
           <a class="nav-link" href="{% url 'documents:gazette_list' %}">
-          <i class="fas fa-book me-1"></i>Gacetas
+            <i class="fas fa-book me-1"></i>Gacetas
           </a>
         </li>
+        <!-- ============================================ -->
+        <!-- 🗑️ PAPELERA (solo Superadmin, Administrator y Employee) -->
+        <!-- ============================================ -->
+        {% if user.is_authenticated %}
+          {% if user.is_superuser or user|has_group:"Administrator" or user|has_group:"Employee" %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'common:trash_list' %}" title="Papelera de reciclaje" style="color: #003B4F;">
+                <i class="fas fa-trash-alt me-1"></i>Papelera
+                {% with count=trash_count %}
+                  {% if count > 0 %}
+                    <span class="badge bg-danger rounded-pill ms-1">{{ count }}</span>
+                  {% endif %}
+                {% endwith %}
+              </a>
+            </li>
+          {% endif %}
+        {% endif %}
       </ul>
     </div>
 
@@ -34,7 +53,6 @@
         </a>
       {% else %}
         <a href="{% url 'login' %}" class="btn btn-nav-outline">Iniciar Sesión</a>
-        <!-- Puedes agregar un botón de Registro si lo tienes -->
         <a href="{% url 'register' %}" class="btn btn-nav-fill">Registrarse</a>
       {% endif %}
     </div>

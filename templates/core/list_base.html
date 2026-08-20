@@ -5,40 +5,67 @@
 
 {% block content %}
 <!-- Breadcrumb -->
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i> Inicio</a></li>
-    <li class="breadcrumb-item active">{% block breadcrumb_current %}Listado{% endblock %}</li>
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb bg-transparent p-0 mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none" style="color: var(--color-dark-blue);"><i class="fas fa-home me-1"></i>Inicio</a></li>
+    <li class="breadcrumb-item active text-muted">{% block breadcrumb_current %}Listado{% endblock %}</li>
   </ol>
 </nav>
 
-<!-- Encabezado -->
-<div class="d-flex justify-content-between align-items-center mb-3">
+<!-- Encabezado y Botón Crear -->
+<div class="d-flex justify-content-between align-items-center mb-4">
   <div>
-    <h1 class="h3 mb-0">{% block page_title %}Listado{% endblock %}</h1>
-    <p class="text-muted">{% block page_subtitle %}Gestión de registros{% endblock %}</p>
+    <h1 class="h3 fw-bold mb-0" style="color: var(--color-dark-blue);">
+      <i class="{% block page_icon %}fas fa-list{% endblock %} me-2" style="color: var(--color-light-blue);"></i>
+      {% block page_title %}Listado{% endblock %}
+    </h1>
+    <p class="text-muted small mb-0">{% block page_subtitle %}Gestión de registros{% endblock %}</p>
   </div>
-  {% block create_button %}{% endblock %}
+  <div>
+    {% block header_actions %}{% endblock %} <!-- Bloque para acciones extras (ej: Vaciar papelera) -->
+    {% block create_button %}{% endblock %}
+  </div>
 </div>
 
-<!-- Búsqueda -->
-<div class="row mb-3">
-  <div class="col-md-4 ms-auto">
-    <form method="get" action="">
-      <div class="input-group">
-        <input type="search" name="q" class="form-control" placeholder="Buscar..." value="{{ search_query|default:'' }}">
-        <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
+<!-- Barra de Herramientas (Búsqueda + Filtros + Selección Múltiple) -->
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-body p-3 bg-light">
+    <div class="row g-2 align-items-center">
+      <!-- Buscador -->
+      <div class="col-md-5">
+        <form method="get" action="">
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0" style="color: var(--color-dark-blue);">
+              <i class="fas fa-search"></i>
+            </span>
+            <input type="search" name="q" class="form-control border-start-0" placeholder="Buscar por nombre o fecha..." value="{{ search_query|default:'' }}">
+            <button class="btn" type="submit" style="background-color: var(--color-light-blue); color: white;">
+              Buscar
+            </button>
+          </div>
+        </form>
       </div>
-    </form>
+      
+      <!-- Selector Múltiple (Solo para papelera) -->
+      <div class="col-md-4 text-center">
+        {% block bulk_actions_toggle %}{% endblock %}
+      </div>
+
+      <!-- Contador -->
+      <div class="col-md-3 text-end">
+        <span class="badge rounded-pill px-3 py-2" style="background-color: var(--color-dark-blue); color: white;">
+          Total: {{ page_obj.paginator.count|default:0 }}
+        </span>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- Tabla -->
-<div class="card shadow-sm">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <span>{% block table_title %}Registros{% endblock %}</span>
-    <span class="badge bg-secondary">{{ page_obj.paginator.count|default:0 }}</span>
-  </div>
+<!-- Barra de Acciones Masivas (Inyectada desde el hijo) -->
+{% block bulk_actions_bar %}{% endblock %}
+
+<!-- Tabla o Lista -->
+<div class="card shadow-sm border-0">
   <div class="card-body p-0">
     {% block table_content %}{% endblock %}
   </div>
@@ -46,24 +73,26 @@
 
 <!-- Paginación -->
 {% if is_paginated %}
-<div class="d-flex justify-content-between align-items-center mt-3">
-  <span class="text-muted small">Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }}</span>
+<div class="d-flex justify-content-between align-items-center mt-4">
+  <span class="text-muted small">
+    Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }}
+  </span>
   <nav>
     <ul class="pagination mb-0">
       {% if page_obj.has_previous %}
-      <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}"><i class="fas fa-chevron-left"></i></a></li>
+      <li class="page-item"><a class="page-link" style="color: var(--color-dark-blue);" href="?page={{ page_obj.previous_page_number }}"><i class="fas fa-chevron-left"></i></a></li>
       {% else %}
       <li class="page-item disabled"><span class="page-link"><i class="fas fa-chevron-left"></i></span></li>
       {% endif %}
       {% for num in page_obj.paginator.page_range %}
         {% if page_obj.number == num %}
-        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+        <li class="page-item active"><span class="page-link" style="background-color: var(--color-light-blue); border-color: var(--color-light-blue);">{{ num }}</span></li>
         {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+        <li class="page-item"><a class="page-link" style="color: var(--color-dark-blue);" href="?page={{ num }}">{{ num }}</a></li>
         {% endif %}
       {% endfor %}
       {% if page_obj.has_next %}
-      <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}"><i class="fas fa-chevron-right"></i></a></li>
+      <li class="page-item"><a class="page-link" style="color: var(--color-dark-blue);" href="?page={{ page_obj.next_page_number }}"><i class="fas fa-chevron-right"></i></a></li>
       {% else %}
       <li class="page-item disabled"><span class="page-link"><i class="fas fa-chevron-right"></i></span></li>
       {% endif %}

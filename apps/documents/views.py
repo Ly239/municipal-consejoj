@@ -3,10 +3,11 @@ import operator
 from functools import reduce
 from urllib.parse import urlencode
 from django.db.models import Q
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.urls import reverse_lazy
 from django.contrib import messages
+from django.shortcuts import redirect
 from common.mixins import LoggingMixin
 from .models import Gazette, Document
 from .forms import GazetteForm, DocumentForm  
@@ -95,7 +96,6 @@ class SearchListMixin:
         return tags
 
     def get_filter_label(self, field_name, value):
-        # Intenta obtener el label desde el campo (choices, etc.)
         try:
             field = self.model._meta.get_field(field_name)
             if getattr(field, 'choices', None):
@@ -115,7 +115,6 @@ class SearchListMixin:
 # VISTAS PARA GACETAS
 # ==================================================
 class GazetteListView(LoginRequiredMixin, SearchListMixin, ListView):
-    """Listado de gacetas con búsqueda y filtros."""
     model = Gazette
     template_name = 'documents/gazette_list.html'
     context_object_name = 'gazettes'
@@ -124,12 +123,16 @@ class GazetteListView(LoginRequiredMixin, SearchListMixin, ListView):
     filter_fields = ['year']
 
 
-class GazetteCreateView(LoginRequiredMixin, LoggingMixin, CreateView):
-    """Crear una nueva gaceta."""
+class GazetteCreateView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixin, CreateView):
     model = Gazette
     form_class = GazetteForm
     template_name = 'documents/gazette_form.html'
     success_url = reverse_lazy('documents:gazette_list')
+    permission_required = 'documents.add_gazette'
+
+    def handle_no_permission(self):
+        messages.error(self.request, "No tienes permiso para crear gacetas.")
+        return redirect('documents:gazette_list')
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -143,12 +146,16 @@ class GazetteCreateView(LoginRequiredMixin, LoggingMixin, CreateView):
         return super().form_invalid(form)
 
 
-class GazetteUpdateView(LoginRequiredMixin, LoggingMixin, UpdateView):
-    """Actualizar una gaceta existente."""
+class GazetteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixin, UpdateView):
     model = Gazette
     form_class = GazetteForm
     template_name = 'documents/gazette_form.html'
     success_url = reverse_lazy('documents:gazette_list')
+    permission_required = 'documents.change_gazette'
+
+    def handle_no_permission(self):
+        messages.error(self.request, "No tienes permiso para editar gacetas.")
+        return redirect('documents:gazette_list')
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -162,11 +169,15 @@ class GazetteUpdateView(LoginRequiredMixin, LoggingMixin, UpdateView):
         return super().form_invalid(form)
 
 
-class GazetteDeleteView(LoginRequiredMixin, LoggingMixin, DeleteView):
-    """Mover gaceta a la papelera (soft delete)."""
+class GazetteDeleteView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixin, DeleteView):
     model = Gazette
     template_name = 'documents/gazette_confirm_delete.html'
     success_url = reverse_lazy('documents:gazette_list')
+    permission_required = 'documents.soft_delete_gazette'
+
+    def handle_no_permission(self):
+        messages.error(self.request, "No tienes permiso para eliminar gacetas.")
+        return redirect('documents:gazette_list')
 
     def form_valid(self, form):
         messages.success(self.request, "Gaceta movida a la papelera. Puedes restaurarla si lo deseas.")
@@ -174,14 +185,12 @@ class GazetteDeleteView(LoginRequiredMixin, LoggingMixin, DeleteView):
 
 
 class GazetteDetailView(LoginRequiredMixin, LoggingMixin, DetailView):
-    """Detalle de una gaceta con sus documentos asociados."""
     model = Gazette
     template_name = 'documents/gazette_detail.html'
     context_object_name = 'gazette'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Lista de documentos de esta gaceta (paginados)
         documents = self.object.documents.all().order_by('-emission_date')
         context['documents'] = documents
         context['total_documents'] = documents.count()
@@ -192,7 +201,6 @@ class GazetteDetailView(LoginRequiredMixin, LoggingMixin, DetailView):
 # VISTAS PARA DOCUMENTOS
 # ==================================================
 class DocumentListView(LoginRequiredMixin, SearchListMixin, ListView):
-    """Listado de documentos con búsqueda y filtros."""
     model = Document
     template_name = 'documents/document_list.html'
     context_object_name = 'documents'
@@ -200,30 +208,29 @@ class DocumentListView(LoginRequiredMixin, SearchListMixin, ListView):
     search_fields = ['title', 'number', 'description', 'gazette__number', 'gazette__year']
     filter_fields = ['document_type__name', 'issuing_entity__name', 'is_approved']
 
-
     def get_queryset(self):
         queryset = super().get_queryset()
         year = self.request.GET.get('year')
         month = self.request.GET.get('month')
-
         if year:
             queryset = queryset.filter(emission_date__year=year)
         if month:
             queryset = queryset.filter(emission_date__month=month)
-
         return queryset
 
 
-
-class DocumentCreateView(LoginRequiredMixin, LoggingMixin, CreateView):
-    """Crear un nuevo documento."""
+class DocumentCreateView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixin, CreateView):
     model = Document
     form_class = DocumentForm
     template_name = 'documents/document_form.html'
     success_url = reverse_lazy('documents:document_list')
+    permission_required = 'documents.add_document'
+
+    def handle_no_permission(self):
+        messages.error(self.request, "No tienes permiso para crear documentos.")
+        return redirect('documents:document_list')
 
     def form_valid(self, form):
-        # Asignar el usuario que sube el documento
         form.instance.submitted_by = self.request.user
         response = super().form_valid(form)
         messages.success(self.request, "Documento creado exitosamente.")
@@ -236,12 +243,16 @@ class DocumentCreateView(LoginRequiredMixin, LoggingMixin, CreateView):
         return super().form_invalid(form)
 
 
-class DocumentUpdateView(LoginRequiredMixin, LoggingMixin, UpdateView):
-    """Actualizar un documento existente."""
+class DocumentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixin, UpdateView):
     model = Document
     form_class = DocumentForm
     template_name = 'documents/document_form.html'
     success_url = reverse_lazy('documents:document_list')
+    permission_required = 'documents.change_document'
+
+    def handle_no_permission(self):
+        messages.error(self.request, "No tienes permiso para editar documentos.")
+        return redirect('documents:document_list')
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -255,19 +266,22 @@ class DocumentUpdateView(LoginRequiredMixin, LoggingMixin, UpdateView):
         return super().form_invalid(form)
 
 
-class DocumentDeleteView(LoginRequiredMixin, LoggingMixin, DeleteView):
-    """Mover documento a la papelera (soft delete)."""
+class DocumentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixin, DeleteView):
     model = Document
     template_name = 'documents/document_confirm_delete.html'
     success_url = reverse_lazy('documents:document_list')
+    permission_required = 'documents.soft_delete_document'
+
+    def handle_no_permission(self):
+        messages.error(self.request, "No tienes permiso para eliminar documentos.")
+        return redirect('documents:document_list')
 
     def form_valid(self, form):
-        messages.success(self.request, "Documento movido a la papelera. Puedes restaurarlo si lo deseas.")
+        messages.success(self.request, "Documento movido a la papelera. Puedes restaurarla si lo deseas.")
         return super().form_valid(form)
 
 
 class DocumentDetailView(LoginRequiredMixin, LoggingMixin, DetailView):
-    """Detalle de un documento."""
     model = Document
     template_name = 'documents/document_detail.html'
     context_object_name = 'document'

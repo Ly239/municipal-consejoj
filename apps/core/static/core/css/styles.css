@@ -153,3 +153,11 @@ body {
 .info-badge.dark {
     background: var(--color-dark-blue);
 }
+
+
+/*message*/
+.alert-error {
+    background-color: #f8d7da;
+    border-color: #f5c2c7;
+    color: #842029;
+}
