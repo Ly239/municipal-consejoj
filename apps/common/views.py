@@ -6,7 +6,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.views import View
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, ListView
 from django.apps import apps
 from django.core.exceptions import PermissionDenied
 
@@ -29,12 +29,19 @@ register_trash_model(Document)
 # register_trash_model(User)
 
 
-class TrashListView(LoginRequiredMixin, TemplateView):
-    """Vista que muestra todos los elementos eliminados (papelera)."""
+class TrashListView(LoginRequiredMixin, ListView):
+    """
+    Vista que muestra todos los elementos eliminados (papelera).
+    Usa ListView con paginación real.
+    """
     template_name = 'common/trash_list.html'
+    context_object_name = 'trash_items'
+    paginate_by = 20  # Paginación de 20 elementos por página
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+    def get_queryset(self):
+        """
+        Construye la lista de elementos eliminados de todos los modelos registrados.
+        """
         trash_items = []
         for model in TRASH_MODELS:
             try:
@@ -47,10 +54,20 @@ class TrashListView(LoginRequiredMixin, TemplateView):
                         'deleted_at': obj.deleted_at,
                         'model_index': TRASH_MODELS.index(model),
                         'app_label': model._meta.app_label,
+                        'token': f"{model._meta.app_label}|{model._meta.model_name}|{obj.pk}",  # ✅ Para bulk actions
+                        'icon': 'fas fa-file',
+                        'details': [],
                     })
             except Exception as e:
                 logger.error(f"Error al obtener elementos de {model.__name__}: {e}")
-        context['trash_items'] = trash_items
+        return trash_items
+
+    def get_context_data(self, **kwargs):
+        """
+        Añade el total de elementos al contexto.
+        """
+        context = super().get_context_data(**kwargs)
+        context['total'] = len(self.get_queryset())  # Total real de elementos
         return context
 
 
