@@ -8,7 +8,7 @@ from django.views.generic import ListView, CreateView, UpdateView, DeleteView, D
 from django.urls import reverse_lazy
 from django.contrib import messages
 from common.mixins import LoggingMixin
-from .models import Gazette, Document
+from .models import Gazette, Document, DocumentType
 from .forms import GazetteForm, DocumentForm  
 
 logger = logging.getLogger(__name__)
@@ -199,20 +199,31 @@ class DocumentListView(LoginRequiredMixin, SearchListMixin, ListView):
     paginate_by = 20
     search_fields = ['title', 'number', 'description', 'gazette__number', 'gazette__year']
     filter_fields = ['document_type__name', 'issuing_entity__name', 'is_approved']
-
-
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Extraemos los años únicos de los documentos existentes para el filtro
+        context['years'] = Document.objects.dates('emission_date', 'year', order='DESC').distinct()
+        # Corregido: Usamos el modelo DocumentType y la clave 'document_types' que espera el HTML
+        context['document_types'] = DocumentType.objects.all()
+        return context
+   
     def get_queryset(self):
         queryset = super().get_queryset()
         year = self.request.GET.get('year')
         month = self.request.GET.get('month')
+        doc_type = self.request.GET.get('doc_type')
+        status = self.request.GET.get('status')
 
         if year:
             queryset = queryset.filter(emission_date__year=year)
         if month:
             queryset = queryset.filter(emission_date__month=month)
-
+        if doc_type:
+            queryset = queryset.filter(document_type__id=doc_type)
+        if status:
+            queryset = queryset.filter(is_approved=status == 'approved')
         return queryset
-
 
 
 class DocumentCreateView(LoginRequiredMixin, LoggingMixin, CreateView):

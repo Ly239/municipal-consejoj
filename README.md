@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-# municipal-consejoj
-Sistema de gestión documental 
-
-**Proyecto en desarrollo**
-=======
 ```markdown
 # 🏛️ Sistema de Gestión Documental
 
@@ -60,4 +54,3 @@ Para consultas o sugerencias, abre un issue en este repositorio.
 
 **© 2026 – Proyecto en desarrollo**
 ```
->>>>>>> 0007b97f7db6c2807cf12ea0aa6db699be119bf0

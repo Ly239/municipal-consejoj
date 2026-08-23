@@ -21,12 +21,24 @@ from django.contrib.auth import authenticate,login, get_user_model,logout
 from django.views import View
 from django.core.paginator import Paginator
 from django.contrib import messages                      # <- necesario para mostrar mensajes
-
+from documents.models import Document, Gazette
 # Create your views here.
+from django.shortcuts import render
+from django.contrib import messages
+from documents.models import Document, Gazette
 
 def HomeView(request):
     try:
-        return render(request, 'core/home.html')
+        # Consultas dinámicas para la base de datos
+        documentos_destacados = Document.objects.select_related('gazette', 'document_type').order_by('-publication_date')[:2]
+        ultimas_gacetas = Gazette.objects.all()[:3]
+
+        context = {
+            'documentos_destacados': documentos_destacados,
+            'ultimas_gacetas': ultimas_gacetas,
+        }
+        return render(request, 'core/home.html', context)
+        
     except Exception as e:
         messages.error(request, f'Error al cargar la página principal: {e}')
         # Aún devolvemos la misma plantilla para no romper la navegación
