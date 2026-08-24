@@ -110,7 +110,7 @@
                     <dd class="col-sm-7">{{ document.emission_date|date:"d/m/Y" }}</dd>
 
                     <dt class="col-sm-5">Fecha Publicación</dt>
-                    <dd class="col-sm-7">{{ document.publication_date|date:"d/m/Y " }}</dd>
+                    <dd class="col-sm-7">{{ document.publication_date|date:"d/m/Y" }}</dd>
 
                     <dt class="col-sm-5">Estado</dt>
                     <dd class="col-sm-7">
@@ -140,14 +140,14 @@
         <div class="card shadow-sm">
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-eye me-2"></i>Vista Previa</h5>
-                {% if document.pdf_file %}
+                {% if document.pdf_file and document.pdf_file.name %}
                     <a href="{{ document.pdf_file.url }}" target="_blank" class="btn btn-primary btn-sm">
                         <i class="fas fa-external-link-alt"></i> Abrir PDF
                     </a>
                 {% endif %}
             </div>
             <div class="card-body" style="min-height:400px;">
-                {% if document.pdf_file %}
+                {% if document.pdf_file and document.pdf_file.name %}
                     <!-- === VISOR PDF CON PDF.JS === -->
                     <div id="pdf-viewer">
                         <div id="pdf-loading" class="pdf-loading">
@@ -172,7 +172,7 @@
                     <p class="text-muted small mt-2 text-center">
                         Si el PDF no se carga, <a href="{{ document.pdf_file.url }}" target="_blank">descárgalo aquí</a>.
                     </p>
-                {% elif document.image %}
+                {% elif document.image and document.image.name %}
                     <div class="text-center">
                         <img src="{{ document.image.url }}" alt="{{ document.title }}"
                              class="img-fluid rounded" style="max-height:500px;">
@@ -190,7 +190,7 @@
                     </div>
                 {% endif %}
             </div>
-            {% if document.pdf_file %}
+            {% if document.pdf_file and document.pdf_file.name %}
             <div class="card-footer text-muted small">
                 <i class="fas fa-paperclip me-1"></i> {{ document.pdf_file.name|slice:"10:" }}
             </div>
@@ -218,72 +218,74 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const url = "{{ document.pdf_file.url|default:'' }}";
-    if (!url) return; // No hay PDF
+    {% if document.pdf_file and document.pdf_file.name %}
+        const url = "{{ document.pdf_file.url }}";
+        if (!url) return;
 
-    const canvas = document.getElementById('pdf-canvas');
-    const context = canvas.getContext('2d');
-    const loading = document.getElementById('pdf-loading');
-    const controls = document.getElementById('pdf-controls');
-    const pageInfo = document.getElementById('page-info');
-    const pageInput = document.getElementById('page-input');
-    const prevBtn = document.getElementById('prev-page');
-    const nextBtn = document.getElementById('next-page');
-    const goBtn = document.getElementById('go-page');
+        const canvas = document.getElementById('pdf-canvas');
+        const context = canvas.getContext('2d');
+        const loading = document.getElementById('pdf-loading');
+        const controls = document.getElementById('pdf-controls');
+        const pageInfo = document.getElementById('page-info');
+        const pageInput = document.getElementById('page-input');
+        const prevBtn = document.getElementById('prev-page');
+        const nextBtn = document.getElementById('next-page');
+        const goBtn = document.getElementById('go-page');
 
-    let pdfDoc = null;
-    let currentPage = 1;
+        let pdfDoc = null;
+        let currentPage = 1;
 
-    // Configurar worker de PDF.js
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        // Configurar worker de PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-    // Cargar el PDF
-    pdfjsLib.getDocument(url).promise.then(function(pdf) {
-        pdfDoc = pdf;
-        loading.style.display = 'none';
-        canvas.style.display = 'block';
-        controls.style.display = 'flex';
-        pageInfo.textContent = 'Página 1 / ' + pdf.numPages;
-        pageInput.max = pdf.numPages;
-        renderPage(1);
-    }).catch(function(error) {
-        console.error('Error al cargar PDF:', error);
-        loading.innerHTML = '<div class="alert alert-danger mb-0">No se pudo cargar el PDF. <a href="' + url + '" target="_blank">Descárgalo aquí</a>.</div>';
-    });
-
-    function renderPage(num) {
-        pdfDoc.getPage(num).then(function(page) {
-            const viewport = page.getViewport({ scale: 1.5 });
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            const renderContext = {
-                canvasContext: context,
-                viewport: viewport
-            };
-            page.render(renderContext);
-            currentPage = num;
-            pageInfo.textContent = 'Página ' + num + ' / ' + pdfDoc.numPages;
-            pageInput.value = num;
+        // Cargar el PDF
+        pdfjsLib.getDocument(url).promise.then(function(pdf) {
+            pdfDoc = pdf;
+            loading.style.display = 'none';
+            canvas.style.display = 'block';
+            controls.style.display = 'flex';
+            pageInfo.textContent = 'Página 1 / ' + pdf.numPages;
+            pageInput.max = pdf.numPages;
+            renderPage(1);
+        }).catch(function(error) {
+            console.error('Error al cargar PDF:', error);
+            loading.innerHTML = '<div class="alert alert-danger mb-0">No se pudo cargar el PDF. <a href="' + url + '" target="_blank">Descárgalo aquí</a>.</div>';
         });
-    }
 
-    // Navegación
-    prevBtn.addEventListener('click', function() {
-        if (pdfDoc && currentPage > 1) renderPage(currentPage - 1);
-    });
+        function renderPage(num) {
+            pdfDoc.getPage(num).then(function(page) {
+                const viewport = page.getViewport({ scale: 1.5 });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                page.render(renderContext);
+                currentPage = num;
+                pageInfo.textContent = 'Página ' + num + ' / ' + pdfDoc.numPages;
+                pageInput.value = num;
+            });
+        }
 
-    nextBtn.addEventListener('click', function() {
-        if (pdfDoc && currentPage < pdfDoc.numPages) renderPage(currentPage + 1);
-    });
+        // Navegación
+        prevBtn.addEventListener('click', function() {
+            if (pdfDoc && currentPage > 1) renderPage(currentPage - 1);
+        });
 
-    goBtn.addEventListener('click', function() {
-        let num = parseInt(pageInput.value);
-        if (pdfDoc && num >= 1 && num <= pdfDoc.numPages) renderPage(num);
-    });
+        nextBtn.addEventListener('click', function() {
+            if (pdfDoc && currentPage < pdfDoc.numPages) renderPage(currentPage + 1);
+        });
 
-    pageInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') goBtn.click();
-    });
+        goBtn.addEventListener('click', function() {
+            let num = parseInt(pageInput.value);
+            if (pdfDoc && num >= 1 && num <= pdfDoc.numPages) renderPage(num);
+        });
+
+        pageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') goBtn.click();
+        });
+    {% endif %}
 });
 </script>
 {% endblock %}

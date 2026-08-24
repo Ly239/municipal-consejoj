@@ -1,0 +1,421 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load groups %}
+
+{% block title %}Dashboard - Concejo Municipal{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Estilos del Dashboard ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+    perspective: 900px;
+  }
+  .kpi-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transform-style: preserve-3d;
+    transition: transform 0.12s ease, box-shadow 0.2s ease;
+    will-change: transform;
+    cursor: default;
+    position: relative;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.18) 0%, transparent 65%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 2;
+  }
+  .kpi-card:hover::before { opacity: 1; }
+  .kpi-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+  .kpi-icon.blue { background: rgba(10, 177, 212, 0.15); color: #0AB1D4; }
+  .kpi-icon.dark { background: rgba(0, 59, 79, 0.15); color: #003B4F; }
+  .kpi-icon.green { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+  .kpi-icon.red { background: rgba(248, 113, 113, 0.15); color: #f87171; }
+  .kpi-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #003B4F;
+    line-height: 1.2;
+  }
+  .kpi-label {
+    font-size: 0.85rem;
+    color: #6b7280;
+    font-weight: 500;
+  }
+
+  /* ── Quick Access ── */
+  .quick-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+    perspective: 1000px;
+  }
+  .data-card-3d {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transform-style: preserve-3d;
+    transition: transform 0.12s ease, box-shadow 0.25s ease;
+    will-change: transform;
+    position: relative;
+    overflow: hidden;
+  }
+  .data-card-3d .card-shine {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,0.10) 0%, transparent 65%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 10;
+  }
+  .data-card-3d:hover .card-shine { opacity: 1; }
+  .data-card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    font-weight: 600;
+    color: #003B4F;
+  }
+  .quick-link-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    text-decoration: none;
+    color: #1a1a1a;
+    transition: background 0.15s ease;
+    border-radius: 8px;
+  }
+  .quick-link-item:hover {
+    background: rgba(0, 59, 79, 0.05);
+    color: #003B4F;
+  }
+  .quick-link-item .qlink-label {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .quick-link-item .qlink-sub {
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+  .quick-link-arrow {
+    margin-left: auto;
+    color: #9ca3af;
+    font-size: 0.75rem;
+  }
+  .tilt-active {
+    box-shadow: 0 24px 48px rgba(0,0,0,0.15) !important;
+  }
+
+  /* ── Tabla de documentos recientes ── */
+  .table-dashboard {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  .table-dashboard th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    background: #f8fafc;
+    color: #4b5563;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .table-dashboard td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .badge-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .badge-approved { background: #d1fae5; color: #065f46; }
+  .badge-pending { background: #fef3c7; color: #92400e; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- INCLUIMOS EL NAVBAR PRIVADO -->
+{% include 'core/includes/_navbar_private.html' %}
+
+<!-- Breadcrumb -->
+<div class="breadcrumb-nav mb-4">
+  <a href="{% url 'home' %}" style="color: #003B4F; text-decoration: none;">
+    <i class="fas fa-home"></i> Inicio
+  </a>
+  <span class="sep"><i class="fas fa-chevron-right"></i></span>
+  <span>Dashboard</span>
+</div>
+
+<!-- ============================================ -->
+<!-- 1. KPI CARDS -->
+<!-- ============================================ -->
+<div class="kpi-grid" id="kpiGrid">
+  <div class="kpi-card tilt-card" data-tilt-max="12">
+    <div class="kpi-icon blue"><i class="fas fa-file-pdf"></i></div>
+    <div>
+      <div class="kpi-value">{{ total_documents|default:"0" }}</div>
+      <div class="kpi-label">Documentos</div>
+    </div>
+  </div>
+  <div class="kpi-card tilt-card" data-tilt-max="12">
+    <div class="kpi-icon dark"><i class="fas fa-book"></i></div>
+    <div>
+      <div class="kpi-value">{{ total_gazettes|default:"0" }}</div>
+      <div class="kpi-label">Gacetas</div>
+    </div>
+  </div>
+  <div class="kpi-card tilt-card" data-tilt-max="12">
+    <div class="kpi-icon green"><i class="fas fa-users"></i></div>
+    <div>
+      <div class="kpi-value">{{ total_users|default:"0" }}</div>
+      <div class="kpi-label">Usuarios</div>
+    </div>
+  </div>
+  {% if user.is_superuser or user|has_group:"Administrator" or user|has_group:"Employee" %}
+  <div class="kpi-card tilt-card" data-tilt-max="12">
+    <div class="kpi-icon red"><i class="fas fa-trash-alt"></i></div>
+    <div>
+      <div class="kpi-value">{{ total_trash|default:"0" }}</div>
+      <div class="kpi-label">Papelera</div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ============================================ -->
+<!-- 2. GRÁFICO DE DOCUMENTOS (Aprobados vs Pendientes) -->
+<!-- ============================================ -->
+<div class="data-card-3d tilt-card" data-tilt-max="4" style="margin-bottom: 2rem;">
+  <div class="card-shine"></div>
+  <div class="data-card-header" style="display:flex; justify-content:space-between; align-items:center;">
+    <span><i class="fas fa-chart-pie" style="color: #0AB1D4; margin-right: 0.5rem;"></i> Estado de Documentos</span>
+  </div>
+  <div style="padding: 1.5rem; display: flex; justify-content: center;">
+    <div style="width: 100%; max-width: 400px;">
+      <canvas id="financeChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- 3. QUICK ACCESS GRID (Solo módulos principales) -->
+<!-- ============================================ -->
+<div class="quick-grid">
+  <!-- Documentos -->
+  <div class="data-card-3d tilt-card" data-tilt-max="8">
+    <div class="card-shine"></div>
+    <div class="data-card-header">
+      <i class="fas fa-file-pdf" style="color: #0AB1D4; margin-right: 0.5rem;"></i> Documentos
+    </div>
+    <div style="padding: 0.5rem 0;">
+      <a href="{% url 'documents:document_list' %}" class="quick-link-item">
+        <div><div class="qlink-label">Listado de Documentos</div><div class="qlink-sub">Ver y gestionar documentos</div></div>
+        <i class="fas fa-chevron-right quick-link-arrow"></i>
+      </a>
+      <a href="{% url 'documents:document_create' %}" class="quick-link-item">
+        <div><div class="qlink-label">Crear Documento</div><div class="qlink-sub">Subir un nuevo documento</div></div>
+        <i class="fas fa-chevron-right quick-link-arrow"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- Gacetas -->
+  <div class="data-card-3d tilt-card" data-tilt-max="8">
+    <div class="card-shine"></div>
+    <div class="data-card-header">
+      <i class="fas fa-book" style="color: #003B4F; margin-right: 0.5rem;"></i> Gacetas
+    </div>
+    <div style="padding: 0.5rem 0;">
+      <a href="{% url 'documents:gazette_list' %}" class="quick-link-item">
+        <div><div class="qlink-label">Listado de Gacetas</div><div class="qlink-sub">Ver y gestionar gacetas</div></div>
+        <i class="fas fa-chevron-right quick-link-arrow"></i>
+      </a>
+      <a href="{% url 'documents:gazette_create' %}" class="quick-link-item">
+        <div><div class="qlink-label">Crear Gaceta</div><div class="qlink-sub">Registrar una nueva gaceta</div></div>
+        <i class="fas fa-chevron-right quick-link-arrow"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- Papelera (solo Administradores y Employees) -->
+  {% if user.is_superuser or user|has_group:"Administrator" or user|has_group:"Employee" %}
+  <div class="data-card-3d tilt-card" data-tilt-max="8">
+    <div class="card-shine"></div>
+    <div class="data-card-header">
+      <i class="fas fa-trash-alt" style="color: #f87171; margin-right: 0.5rem;"></i> Papelera
+    </div>
+    <div style="padding: 0.5rem 0;">
+      <a href="{% url 'common:trash_list' %}" class="quick-link-item">
+        <div><div class="qlink-label">Ver Papelera</div><div class="qlink-sub">Restaurar o eliminar elementos</div></div>
+        <i class="fas fa-chevron-right quick-link-arrow"></i>
+      </a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ============================================ -->
+<!-- 4. DOCUMENTOS RECIENTES -->
+<!-- ============================================ -->
+<div class="data-card-3d tilt-card" data-tilt-max="4" style="margin-top: 1.5rem;">
+  <div class="card-shine"></div>
+  <div class="data-card-header" style="display:flex; justify-content:space-between; align-items:center;">
+    <span><i class="fas fa-clock" style="color: #0AB1D4; margin-right: 0.5rem;"></i> Documentos Recientes</span>
+    <a href="{% url 'documents:document_list' %}" style="color: #0AB1D4; text-decoration: none; font-size: 0.85rem;">
+      Ver todos <i class="fas fa-arrow-right" style="font-size: 0.7rem;"></i>
+    </a>
+  </div>
+  <div style="padding: 0 1.25rem 1.25rem;">
+    {% if recent_documents %}
+    <table class="table-dashboard">
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Tipo</th>
+          <th>Gaceta</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for doc in recent_documents %}
+        <tr>
+          <td><a href="{% url 'documents:document_detail' doc.pk %}" style="color: #003B4F; text-decoration: none; font-weight: 500;">{{ doc.title|truncatechars:30 }}</a></td>
+          <td>{{ doc.document_type.name }}</td>
+          <td>N° {{ doc.gazette.number }} - {{ doc.gazette.year }}</td>
+          <td>{{ doc.emission_date|date:"d/m/Y" }}</td>
+          <td>
+            {% if doc.is_approved %}
+              <span class="badge-status badge-approved">Aprobado</span>
+            {% else %}
+              <span class="badge-status badge-pending">Pendiente</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="text-align: center; padding: 2rem; color: #9ca3af;">
+      <i class="fas fa-file-alt" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+      No hay documentos recientes.
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- Chart.js (CDN) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // ============================================
+    // TILT 3D EFFECT
+    // ============================================
+    document.querySelectorAll('.tilt-card').forEach(function(card) {
+      card.addEventListener('mousemove', function(e) {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = ((y - centerY) / centerY) * -12;
+        const rotateY = ((x - centerX) / centerX) * 12;
+        card.style.setProperty('--mx', (x / rect.width * 100) + '%');
+        card.style.setProperty('--my', (y / rect.height * 100) + '%');
+        card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.01)`;
+        card.classList.add('tilt-active');
+      });
+      card.addEventListener('mouseleave', function() {
+        card.style.transform = 'rotateX(0deg) rotateY(0deg) scale(1)';
+        card.classList.remove('tilt-active');
+      });
+    });
+
+    // ============================================
+    // GRÁFICO CON CHART.JS (Doughnut)
+    // ============================================
+    const ctx = document.getElementById('financeChart');
+    if (ctx) {
+      const approved = {{ approved_count|default:0 }};
+      const pending = {{ pending_count|default:0 }};
+
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Aprobados', 'Pendientes'],
+          datasets: [{
+            data: [approved, pending],
+            backgroundColor: ['#34d399', '#f87171'],
+            borderColor: ['#34d399', '#f87171'],
+            borderWidth: 2,
+            hoverOffset: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          cutout: '65%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: '#003B4F',
+                padding: 15,
+                font: { size: 12, family: "'Inter', sans-serif" }
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 59, 79, 0.95)',
+              titleColor: '#ffffff',
+              bodyColor: '#e2e8f0',
+              borderColor: 'rgba(255,255,255,0.1)',
+              borderWidth: 1,
+              padding: 10,
+              callbacks: {
+                label: function(context) {
+                  let val = context.raw || 0;
+                  return ' ' + val + ' documentos';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

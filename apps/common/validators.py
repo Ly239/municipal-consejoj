@@ -54,3 +54,35 @@ def validate_venezuelan_phone(phone):
     if resto == resto[0] * 7:
         raise ValidationError("El número de teléfono no puede tener todos los dígitos iguales después del código.")
     return phone_clean
+
+
+
+def validate_unique_with_trash(model, field_name, value, instance=None, exclude_pk=False):
+    """
+    Valida que el valor de un campo sea único, considerando también registros en papelera.
+    - model: el modelo (ej: Gazette, Document, User)
+    - field_name: el nombre del campo (ej: 'number', 'id_number')
+    - value: el valor a validar
+    - instance: la instancia actual (para excluirla en edición)
+    - exclude_pk: si es True, excluye la instancia actual por su pk
+    """
+    if not value:
+        return
+
+    # Construir el filtro
+    filters = {field_name: value}
+    qs = model.all_objects.filter(**filters)
+
+    # Excluir la instancia actual si estamos editando
+    if instance and exclude_pk:
+        qs = qs.exclude(pk=instance.pk)
+
+    existing = qs.first()
+    if existing:
+        if existing.is_deleted:
+            raise ValidationError(
+                f"Ya existe un registro con este {field_name} en la papelera. "
+                "Restáuralo o elimínalo definitivamente."
+            )
+        else:
+            raise ValidationError(f"Ya existe un registro con este {field_name}.")

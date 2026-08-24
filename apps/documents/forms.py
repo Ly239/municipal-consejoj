@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from datetime import date
 from .models import Gazette, Document, DocumentType, IssuingEntity
-
+from common.validators import validate_unique_with_trash
 
 # ==================================================
 # 1. MIXIN PARA CAMPOS DE FECHA
@@ -77,7 +77,7 @@ def validate_image_file(value):
 # ==================================================
 class GazetteForm(DateFieldMixin, forms.ModelForm):
     """Formulario para crear y editar Gacetas."""
-    
+
     class Meta:
         model = Gazette
         fields = ['number', 'year', 'description']
@@ -120,25 +120,30 @@ class GazetteForm(DateFieldMixin, forms.ModelForm):
         year = validate_year(year, "El año")
         return year
 
+
     def clean(self):
-        """
-        Valida que no exista otra gaceta con el mismo número y año.
-        """
         cleaned_data = super().clean()
         number = cleaned_data.get('number')
         year = cleaned_data.get('year')
 
         if number and year:
-            # Verificar unicidad (excluyendo el propio objeto si es edición)
-            qs = Gazette.objects.filter(number=number, year=year)
+            # Validar unicidad de (number, year) considerando papelera
+            existing = Gazette.all_objects.filter(number=number, year=year).first()
             if self.instance.pk:
-                qs = qs.exclude(pk=self.instance.pk)
-            if qs.exists():
-                raise ValidationError(
-                    f"Ya existe una gaceta con el número {number} y año {year}."
-                )
+                existing = Gazette.all_objects.filter(number=number, year=year).exclude(pk=self.instance.pk).first()
 
+            if existing:
+                if existing.is_deleted:
+                    raise ValidationError(
+                        f"Ya existe una gaceta con el número {number} y año {year} en la papelera. "
+                        "Restáurala o elimínala definitivamente."
+                    )
+                else:
+                    raise ValidationError(
+                        f"Ya existe una gaceta con el número {number} y año {year}."
+                    )
         return cleaned_data
+
 
 
 # ==================================================
@@ -146,7 +151,7 @@ class GazetteForm(DateFieldMixin, forms.ModelForm):
 # ==================================================
 class DocumentForm(DateFieldMixin, forms.ModelForm):
     """Formulario para crear y editar Documentos."""
-    
+
     class Meta:
         model = Document
         fields = [
@@ -256,9 +261,8 @@ class DocumentForm(DateFieldMixin, forms.ModelForm):
         """
         Validaciones cruzadas:
         1. Si 'issuing_entity' es "Otros", 'other_entity_description' es obligatorio.
-        2. Unicidad de número de documento dentro de la gaceta.
-        3. La fecha de emisión debe ser anterior a la fecha de publicación (si existe).
-        4. El año del documento debe coincidir con el año de la gaceta.
+        2. Unicidad de número de documento dentro de la gaceta (considerando papelera).
+        3. El año del documento debe coincidir con el año de la gaceta.
         """
         cleaned_data = super().clean()
         gazette = cleaned_data.get('gazette')
@@ -266,7 +270,6 @@ class DocumentForm(DateFieldMixin, forms.ModelForm):
         issuing_entity = cleaned_data.get('issuing_entity')
         other_desc = cleaned_data.get('other_entity_description')
         emission_date = cleaned_data.get('emission_date')
-        publication_date = cleaned_data.get('publication_date')  # No está en el form, se asigna automáticamente
 
         # 1. Validación de "Otros" ente emisor
         if issuing_entity and issuing_entity.name == "Otros":
@@ -276,16 +279,22 @@ class DocumentForm(DateFieldMixin, forms.ModelForm):
                     'Debe especificar el nombre del ente emisor cuando selecciona "Otros".'
                 )
 
-        # 2. Unicidad de número dentro de la gaceta
+        # 2. Unicidad de número dentro de la gaceta (considerando papelera)
         if gazette and number:
-            qs = Document.objects.filter(gazette=gazette, number=number)
+            existing = Document.all_objects.filter(number=number, gazette=gazette).first()
             if self.instance.pk:
-                qs = qs.exclude(pk=self.instance.pk)
-            if qs.exists():
-                self.add_error(
-                    'number',
-                    f"Ya existe un documento con el número {number} en la gaceta {gazette}."
-                )
+                existing = Document.all_objects.filter(number=number, gazette=gazette).exclude(pk=self.instance.pk).first()
+
+            if existing:
+                if existing.is_deleted:
+                    raise ValidationError(
+                        f"Ya existe un documento con el número {number} en la gaceta {gazette} en la papelera. "
+                        "Restáuralo o elimínalo definitivamente."
+                    )
+                else:
+                    raise ValidationError(
+                        f"Ya existe un documento con el número {number} en la gaceta {gazette}."
+                    )
 
         # 3. El año del documento debe coincidir con el año de la gaceta
         if gazette and emission_date:
@@ -296,4 +305,3 @@ class DocumentForm(DateFieldMixin, forms.ModelForm):
                 )
 
         return cleaned_data
-

@@ -1,0 +1,71 @@
+{% load static %}
+{% load groups %}
+
+<!-- TOP BAR (Eslogan + Redes sociales) -->
+<div class="top-bar" style="background-color: #FFDCA6; padding: 6px 0; font-size: 0.85rem; color: #471C13; border-bottom: 1px solid rgba(0,0,0,0.05);">
+    <div class="container d-flex justify-content-between align-items-center">
+        <span>
+            <i class="fas fa-mug-hot me-2" style="color: #471C13;"></i> 
+            <strong>RUBIO ES ENCANTO Y CAFÉ</strong>
+        </span>
+        <div>
+            <a href="#" style="color: #471C13; margin-left: 12px; text-decoration: none;" aria-label="Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="#" style="color: #471C13; margin-left: 12px; text-decoration: none;" aria-label="X (Twitter)">
+                <i class="fab fa-x-twitter"></i>
+            </a>
+            <a href="#" style="color: #471C13; margin-left: 12px; text-decoration: none;" aria-label="Facebook">
+                <i class="fab fa-facebook"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- NAVBAR PRINCIPAL -->
+<nav class="navbar navbar-expand-lg" style="background-color: #003B4F; padding: 10px 0;">
+    <div class="container">
+        <!-- LOGO -->
+        <a class="navbar-brand" href="{% url 'home' %}">
+            <img src="{% static 'core/img/logo_concejo.jpg' %}" alt="Concejo Municipal de Junín" style="height: 45px;">
+        </a>
+
+        <!-- Botón hamburguesa -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarPublic" 
+                aria-controls="navbarPublic" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
+        </button>
+
+        <!-- Enlaces centrados -->
+        <div class="collapse navbar-collapse justify-content-center" id="navbarPublic">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link active" href="{% url 'home' %}" style="color: #ffffff; font-weight: 500;">Inicio</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" style="color: #ffffff; font-weight: 500;">Noticias</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" style="color: #ffffff; font-weight: 500;">Concejales</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" style="color: #ffffff; font-weight: 500;">Ordenanzas</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" style="color: #ffffff; font-weight: 500;">Sobre Nosotros</a></li>
+            </ul>
+        </div>
+
+        <!-- BOTONES DERECHA (dinámicos según autenticación) -->
+        <div class="d-flex gap-2 align-items-center">
+            {% if user.is_authenticated %}
+                <!-- Usuario autenticado: nombre, gestión y salir -->
+                <a href="{% url 'profile' %}" class="btn" style="color: #ffffff; font-weight: 500; border-radius: 50px; padding: 6px 16px; border: 1px solid rgba(255,255,255,0.3); transition: all 0.2s;">
+                    <i class="fas fa-user me-1"></i> {{ user.username }}
+                </a>
+                <a href="{% url 'dashboard' %}" class="btn" style="background-color: #F8AE1B; color: #471C13; font-weight: 600; border-radius: 50px; padding: 6px 20px; border: none; transition: all 0.2s;">
+                    <i class="fas fa-tachometer-alt me-1"></i> Gestión
+                </a>
+                <a href="{% url 'logout' %}" class="btn" style="background-color: transparent; color: #ffffff; font-weight: 500; border-radius: 50px; padding: 6px 16px; border: 1px solid rgba(255,255,255,0.3); transition: all 0.2s;">
+                    <i class="fas fa-sign-out-alt me-1"></i> Salir
+                </a>
+            {% else %}
+                <!-- Visitante: solo Iniciar sesión -->
+                <a href="{% url 'login' %}" class="btn" style="background-color: #F8AE1B; color: #471C13; font-weight: 600; border-radius: 50px; padding: 6px 24px; border: none; transition: all 0.2s;">
+                    <i class="fas fa-sign-in-alt me-1"></i> Iniciar sesión
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</nav>

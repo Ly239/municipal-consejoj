@@ -1,11 +1,10 @@
 """
 Comando para crear los grupos del sistema y asignar permisos según cada rol.
-Roles: Superadmin, Administrator, Employee, ContentManager, Viewer.
+Roles: Administrator, Employee, ContentManager, Viewer.
 """
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group, Permission
 from common.constants import (
-    GROUP_SUPERADMIN,
     GROUP_ADMINISTRATOR,
     GROUP_EMPLOYEE,
     GROUP_CONTENT_MANAGER,
@@ -23,9 +22,8 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('✅ Grupos creados y permisos asignados'))
 
     def create_groups(self):
-        """Crea los 5 grupos principales del sistema."""
+        """Crea los grupos principales del sistema."""
         groups = [
-            {'name': GROUP_SUPERADMIN, 'desc': 'Superadministrador - Desarrollo'},
             {'name': GROUP_ADMINISTRATOR, 'desc': 'Administrador - Jefe de Secretaría'},
             {'name': GROUP_EMPLOYEE, 'desc': 'Empleado - Personal de Secretaría'},
             {'name': GROUP_CONTENT_MANAGER, 'desc': 'Gestor de Contenido - Home'},
@@ -47,13 +45,11 @@ class Command(BaseCommand):
         employee_group = Group.objects.get(name=GROUP_EMPLOYEE)
         employee_perms = Permission.objects.filter(
             codename__in=[
-                'add_document',          # Puede subir documentos
-                'change_document',       # Puede editar los suyos
-                'view_document',         # Puede ver documentos
-                'view_gazette',          # Puede ver gacetas
-                'soft_delete_document',  # ✅ Puede mover a papelera (soft delete)
-                # ❌ No tiene 'delete_document' (hard delete)
-                # ❌ No tiene 'restore_document'
+                'add_document',
+                'change_document',
+                'view_document',
+                'view_gazette',
+                'soft_delete_document',
             ]
         )
         employee_group.permissions.add(*employee_perms)
@@ -68,15 +64,18 @@ class Command(BaseCommand):
         admin_perms = Permission.objects.filter(
             codename__in=[
                 'add_document', 'change_document', 'view_document',
-                'delete_document',          # Hard delete
-                'soft_delete_document',     # Soft delete (papelera)
-                'restore_document',         # Restaurar desde papelera
+                'delete_document',
+                'soft_delete_document',
+                'restore_document',      # ✅ Restaurar desde papelera
                 'add_gazette', 'change_gazette', 'view_gazette',
-                'delete_gazette',           # Hard delete
-                'soft_delete_gazette',      # Soft delete (papelera)
-                'restore_gazette',          # Restaurar desde papelera
+                'delete_gazette',
+                'soft_delete_gazette',
+                'restore_gazette',
                 'view_documenttype',
                 'view_issuingentity',
+                'can_approve_document',
+                'can_reject_document',
+                'can_manage_users',
             ]
         )
         admin_group.permissions.add(*admin_perms)
@@ -103,14 +102,7 @@ class Command(BaseCommand):
         # 4. GRUPO CONTENT_MANAGER (Gestor de contenido del Home)
         # ------------------------------------------------------------
         content_group = Group.objects.get(name=GROUP_CONTENT_MANAGER)
-        # Por ahora sin permisos (se añadirán cuando existan los modelos de core)
+        # Pendiente de permisos (modelos de core no creados aún)
         self.stdout.write(self.style.SUCCESS(
             f'✅ {GROUP_CONTENT_MANAGER} pendiente de permisos (modelos de core no creados aún).'
-        ))
-
-        # ------------------------------------------------------------
-        # 5. GRUPO SUPERADMIN (No necesita permisos específicos)
-        # ------------------------------------------------------------
-        self.stdout.write(self.style.SUCCESS(
-            f'✅ {GROUP_SUPERADMIN} no requiere permisos explícitos (superusuario).'
         ))

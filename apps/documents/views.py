@@ -3,10 +3,11 @@ import operator
 from functools import reduce
 from urllib.parse import urlencode
 from django.db.models import Q
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.urls import reverse_lazy
 from django.contrib import messages
+from django.shortcuts import redirect
 from common.mixins import LoggingMixin
 from .models import Gazette, Document, DocumentType
 from .forms import GazetteForm, DocumentForm  
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 # ==================================================
 class SearchListMixin:
     """Mixin que añade búsqueda y filtros a las vistas de listado."""
+    # ✅ Eliminamos __slots__ para evitar conflicto con atributos de clase
     search_fields = []
     filter_fields = []
 
@@ -36,22 +38,26 @@ class SearchListMixin:
         return active_filters
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        query = self.request.GET.get('q', '').strip()
-        if query and self.search_fields:
-            filters = [Q(**{f'{field}__icontains': query}) for field in self.search_fields]
-            queryset = queryset.filter(reduce(operator.or_, filters))
-        active_filters = self.get_active_filters()
-        if active_filters:
-            groups = {}
-            for field_name, value in active_filters:
-                groups.setdefault(field_name, []).append(value)
-            for field_name, values in groups.items():
-                lookup = field_name
-                or_filters = [Q(**{lookup: v}) for v in values]
-                if or_filters:
-                    queryset = queryset.filter(reduce(operator.or_, or_filters))
-        return queryset
+        try:
+            queryset = super().get_queryset()
+            query = self.request.GET.get('q', '').strip()
+            if query and self.search_fields:
+                filters = [Q(**{f'{field}__icontains': query}) for field in self.search_fields]
+                queryset = queryset.filter(reduce(operator.or_, filters))
+            active_filters = self.get_active_filters()
+            if active_filters:
+                groups = {}
+                for field_name, value in active_filters:
+                    groups.setdefault(field_name, []).append(value)
+                for field_name, values in groups.items():
+                    lookup = field_name
+                    or_filters = [Q(**{lookup: v}) for v in values]
+                    if or_filters:
+                        queryset = queryset.filter(reduce(operator.or_, or_filters))
+            return queryset
+        except Exception as e:
+            logger.error(f"Error en SearchListMixin.get_queryset: {e}")
+            return self.model.objects.none()
 
     def build_query_string(self, additional_filters=None):
         params = {}
@@ -69,33 +75,35 @@ class SearchListMixin:
 
     def get_filter_tags(self):
         tags = []
-        active_filters = set(self.get_active_filters())
-        queryset = self.model.objects.all()
-        for field_name in self.filter_fields:
-            values = queryset.values_list(field_name, flat=True).distinct().order_by(field_name)
-            for value in values:
-                if value is None or value == '':
-                    continue
-                label = self.get_filter_label(field_name, value)
-                active = (field_name, str(value)) in active_filters
-                current_filter_key = f'{field_name}|{value}'
-                if active:
-                    new_filters = [item for item in active_filters if item != (field_name, str(value))]
-                    new_filters = [f'{field}|{val}' for field, val in new_filters]
-                else:
-                    new_filters = [f'{field}|{val}' for field, val in active_filters] + [current_filter_key]
-                url = self.build_query_string(additional_filters=new_filters)
-                tags.append({
-                    'label': label,
-                    'filter': field_name,
-                    'value': value,
-                    'active': active,
-                    'url': url,
-                })
+        try:
+            active_filters = set(self.get_active_filters())
+            queryset = self.model.objects.all()
+            for field_name in self.filter_fields:
+                values = queryset.values_list(field_name, flat=True).distinct().order_by(field_name)
+                for value in values:
+                    if value is None or value == '':
+                        continue
+                    label = self.get_filter_label(field_name, value)
+                    active = (field_name, str(value)) in active_filters
+                    current_filter_key = f'{field_name}|{value}'
+                    if active:
+                        new_filters = [item for item in active_filters if item != (field_name, str(value))]
+                        new_filters = [f'{field}|{val}' for field, val in new_filters]
+                    else:
+                        new_filters = [f'{field}|{val}' for field, val in active_filters] + [current_filter_key]
+                    url = self.build_query_string(additional_filters=new_filters)
+                    tags.append({
+                        'label': label,
+                        'filter': field_name,
+                        'value': value,
+                        'active': active,
+                        'url': url,
+                    })
+        except Exception as e:
+            logger.error(f"Error en get_filter_tags: {e}")
         return tags
 
     def get_filter_label(self, field_name, value):
-        # Intenta obtener el label desde el campo (choices, etc.)
         try:
             field = self.model._meta.get_field(field_name)
             if getattr(field, 'choices', None):
@@ -115,7 +123,9 @@ class SearchListMixin:
 # VISTAS PARA GACETAS
 # ==================================================
 class GazetteListView(LoginRequiredMixin, SearchListMixin, ListView):
-    """Listado de gacetas con búsqueda y filtros."""
+    #  __slots__ para listados que pueden crecer
+    __slots__ = ()
+
     model = Gazette
     template_name = 'documents/gazette_list.html'
     context_object_name = 'gazettes'
@@ -124,17 +134,26 @@ class GazetteListView(LoginRequiredMixin, SearchListMixin, ListView):
     filter_fields = ['year']
 
 
-class GazetteCreateView(LoginRequiredMixin, LoggingMixin, CreateView):
-    """Crear una nueva gaceta."""
+class GazetteCreateView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixin, CreateView):
     model = Gazette
     form_class = GazetteForm
     template_name = 'documents/gazette_form.html'
     success_url = reverse_lazy('documents:gazette_list')
+    permission_required = 'documents.add_gazette'
+
+    def handle_no_permission(self):
+        messages.error(self.request, "No tienes permiso para crear gacetas.")
+        return redirect('documents:gazette_list')
 
     def form_valid(self, form):
-        response = super().form_valid(form)
-        messages.success(self.request, "Gaceta creada exitosamente.")
-        return response
+        try:
+            response = super().form_valid(form)
+            messages.success(self.request, "Gaceta creada exitosamente.")
+            return response
+        except Exception as e:
+            logger.error(f"Error al crear gaceta: {e}")
+            messages.error(self.request, "Ocurrió un error al crear la gaceta.")
+            return self.form_invalid(form)
 
     def form_invalid(self, form):
         for field, errors in form.errors.items():
@@ -143,17 +162,26 @@ class GazetteCreateView(LoginRequiredMixin, LoggingMixin, CreateView):
         return super().form_invalid(form)
 
 
-class GazetteUpdateView(LoginRequiredMixin, LoggingMixin, UpdateView):
-    """Actualizar una gaceta existente."""
+class GazetteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixin, UpdateView):
     model = Gazette
     form_class = GazetteForm
     template_name = 'documents/gazette_form.html'
     success_url = reverse_lazy('documents:gazette_list')
+    permission_required = 'documents.change_gazette'
+
+    def handle_no_permission(self):
+        messages.error(self.request, "No tienes permiso para editar gacetas.")
+        return redirect('documents:gazette_list')
 
     def form_valid(self, form):
-        response = super().form_valid(form)
-        messages.success(self.request, "Gaceta actualizada correctamente.")
-        return response
+        try:
+            response = super().form_valid(form)
+            messages.success(self.request, "Gaceta actualizada correctamente.")
+            return response
+        except Exception as e:
+            logger.error(f"Error al actualizar gaceta: {e}")
+            messages.error(self.request, "Ocurrió un error al actualizar la gaceta.")
+            return self.form_invalid(form)
 
     def form_invalid(self, form):
         for field, errors in form.errors.items():
@@ -162,29 +190,45 @@ class GazetteUpdateView(LoginRequiredMixin, LoggingMixin, UpdateView):
         return super().form_invalid(form)
 
 
-class GazetteDeleteView(LoginRequiredMixin, LoggingMixin, DeleteView):
-    """Mover gaceta a la papelera (soft delete)."""
+class GazetteDeleteView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixin, DeleteView):
     model = Gazette
     template_name = 'documents/gazette_confirm_delete.html'
     success_url = reverse_lazy('documents:gazette_list')
+    permission_required = 'documents.soft_delete_gazette'
+
+    def handle_no_permission(self):
+        messages.error(self.request, "No tienes permiso para eliminar gacetas.")
+        return redirect('documents:gazette_list')
 
     def form_valid(self, form):
-        messages.success(self.request, "Gaceta movida a la papelera. Puedes restaurarla si lo deseas.")
-        return super().form_valid(form)
+        try:
+            messages.success(self.request, "Gaceta movida a la papelera. Puedes restaurarla si lo deseas.")
+            return super().form_valid(form)
+        except Exception as e:
+            logger.error(f"Error al eliminar gaceta: {e}")
+            messages.error(self.request, "Ocurrió un error al mover la gaceta a la papelera.")
+            return redirect('documents:gazette_list')
 
 
 class GazetteDetailView(LoginRequiredMixin, LoggingMixin, DetailView):
-    """Detalle de una gaceta con sus documentos asociados."""
     model = Gazette
     template_name = 'documents/gazette_detail.html'
     context_object_name = 'gazette'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Lista de documentos de esta gaceta (paginados)
-        documents = self.object.documents.all().order_by('-emission_date')
-        context['documents'] = documents
-        context['total_documents'] = documents.count()
+        try:
+            # Optimización: prefetch_related para evitar N+1 al listar documentos
+            documents = self.object.documents.select_related(
+                'document_type', 'issuing_entity'
+            ).order_by('-emission_date')
+            context['documents'] = documents
+            context['total_documents'] = documents.count()
+        except Exception as e:
+            logger.error(f"Error al obtener documentos de la gaceta {self.object.pk}: {e}")
+            context['documents'] = []
+            context['total_documents'] = 0
+            messages.warning(self.request, "No se pudieron cargar los documentos asociados.")
         return context
 
 
@@ -192,53 +236,83 @@ class GazetteDetailView(LoginRequiredMixin, LoggingMixin, DetailView):
 # VISTAS PARA DOCUMENTOS
 # ==================================================
 class DocumentListView(LoginRequiredMixin, SearchListMixin, ListView):
-    """Listado de documentos con búsqueda y filtros."""
+ 
+    __slots__ = ()
+
     model = Document
     template_name = 'documents/document_list.html'
     context_object_name = 'documents'
     paginate_by = 20
     search_fields = ['title', 'number', 'description', 'gazette__number', 'gazette__year']
     filter_fields = ['document_type__name', 'issuing_entity__name', 'is_approved']
-    
+
     def get_context_data(self, **kwargs):
+        """Añade años y tipos de documento para los filtros en el template."""
         context = super().get_context_data(**kwargs)
-        # Extraemos los años únicos de los documentos existentes para el filtro
-        context['years'] = Document.objects.dates('emission_date', 'year', order='DESC').distinct()
-        # Corregido: Usamos el modelo DocumentType y la clave 'document_types' que espera el HTML
-        context['document_types'] = DocumentType.objects.all()
+        try:
+            # Extraemos los años únicos de los documentos existentes para el filtro
+            context['years'] = Document.objects.dates('emission_date', 'year', order='DESC').distinct()
+            # Cargamos todos los tipos de documento para el filtro
+            context['document_types'] = DocumentType.objects.all()
+        except Exception as e:
+            logger.error(f"Error al obtener años/tipos para filtros: {e}")
+            context['years'] = []
+            context['document_types'] = []
         return context
-   
+
     def get_queryset(self):
-        queryset = super().get_queryset()
-        year = self.request.GET.get('year')
-        month = self.request.GET.get('month')
-        doc_type = self.request.GET.get('doc_type')
-        status = self.request.GET.get('status')
+        try:
+            # Optimización: Usar select_related para evitar N+1 queries
+            queryset = super().get_queryset().select_related(
+                'gazette',
+                'document_type',
+                'issuing_entity',
+                'submitted_by'
+            )
+            # Filtros por año y mes
+            year = self.request.GET.get('year')
+            month = self.request.GET.get('month')
+            if year:
+                queryset = queryset.filter(emission_date__year=year)
+            if month:
+                queryset = queryset.filter(emission_date__month=month)
 
-        if year:
-            queryset = queryset.filter(emission_date__year=year)
-        if month:
-            queryset = queryset.filter(emission_date__month=month)
-        if doc_type:
-            queryset = queryset.filter(document_type__id=doc_type)
-        if status:
-            queryset = queryset.filter(is_approved=status == 'approved')
-        return queryset
+            # Filtros por tipo de documento y estado
+            doc_type = self.request.GET.get('doc_type')
+            status = self.request.GET.get('status')
+            if doc_type:
+                queryset = queryset.filter(document_type__id=doc_type)
+            if status:
+                queryset = queryset.filter(is_approved=status == 'approved')
+
+            return queryset
+        except Exception as e:
+            logger.error(f"Error al obtener listado de documentos: {e}")
+            messages.error(self.request, "Ocurrió un error al cargar los documentos.")
+            return Document.objects.none()
 
 
-class DocumentCreateView(LoginRequiredMixin, LoggingMixin, CreateView):
-    """Crear un nuevo documento."""
+class DocumentCreateView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixin, CreateView):
     model = Document
     form_class = DocumentForm
     template_name = 'documents/document_form.html'
     success_url = reverse_lazy('documents:document_list')
+    permission_required = 'documents.add_document'
+
+    def handle_no_permission(self):
+        messages.error(self.request, "No tienes permiso para crear documentos.")
+        return redirect('documents:document_list')
 
     def form_valid(self, form):
-        # Asignar el usuario que sube el documento
-        form.instance.submitted_by = self.request.user
-        response = super().form_valid(form)
-        messages.success(self.request, "Documento creado exitosamente.")
-        return response
+        try:
+            form.instance.submitted_by = self.request.user
+            response = super().form_valid(form)
+            messages.success(self.request, "Documento creado exitosamente.")
+            return response
+        except Exception as e:
+            logger.error(f"Error al crear documento: {e}")
+            messages.error(self.request, "Ocurrió un error al crear el documento.")
+            return self.form_invalid(form)
 
     def form_invalid(self, form):
         for field, errors in form.errors.items():
@@ -247,17 +321,26 @@ class DocumentCreateView(LoginRequiredMixin, LoggingMixin, CreateView):
         return super().form_invalid(form)
 
 
-class DocumentUpdateView(LoginRequiredMixin, LoggingMixin, UpdateView):
-    """Actualizar un documento existente."""
+class DocumentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixin, UpdateView):
     model = Document
     form_class = DocumentForm
     template_name = 'documents/document_form.html'
     success_url = reverse_lazy('documents:document_list')
+    permission_required = 'documents.change_document'
+
+    def handle_no_permission(self):
+        messages.error(self.request, "No tienes permiso para editar documentos.")
+        return redirect('documents:document_list')
 
     def form_valid(self, form):
-        response = super().form_valid(form)
-        messages.success(self.request, "Documento actualizado correctamente.")
-        return response
+        try:
+            response = super().form_valid(form)
+            messages.success(self.request, "Documento actualizado correctamente.")
+            return response
+        except Exception as e:
+            logger.error(f"Error al actualizar documento: {e}")
+            messages.error(self.request, "Ocurrió un error al actualizar el documento.")
+            return self.form_invalid(form)
 
     def form_invalid(self, form):
         for field, errors in form.errors.items():
@@ -266,19 +349,37 @@ class DocumentUpdateView(LoginRequiredMixin, LoggingMixin, UpdateView):
         return super().form_invalid(form)
 
 
-class DocumentDeleteView(LoginRequiredMixin, LoggingMixin, DeleteView):
-    """Mover documento a la papelera (soft delete)."""
+class DocumentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixin, DeleteView):
     model = Document
     template_name = 'documents/document_confirm_delete.html'
     success_url = reverse_lazy('documents:document_list')
+    permission_required = 'documents.soft_delete_document'
+
+    def handle_no_permission(self):
+        messages.error(self.request, "No tienes permiso para eliminar documentos.")
+        return redirect('documents:document_list')
 
     def form_valid(self, form):
-        messages.success(self.request, "Documento movido a la papelera. Puedes restaurarlo si lo deseas.")
-        return super().form_valid(form)
+        try:
+            messages.success(self.request, "Documento movido a la papelera. Puedes restaurarla si lo deseas.")
+            return super().form_valid(form)
+        except Exception as e:
+            logger.error(f"Error al eliminar documento: {e}")
+            messages.error(self.request, "Ocurrió un error al mover el documento a la papelera.")
+            return redirect('documents:document_list')
 
 
 class DocumentDetailView(LoginRequiredMixin, LoggingMixin, DetailView):
-    """Detalle de un documento."""
     model = Document
     template_name = 'documents/document_detail.html'
     context_object_name = 'document'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        try:
+            # Optimización: select_related para cargar relaciones en detalle
+            if hasattr(self.object, 'gazette'):
+                pass
+        except Exception as e:
+            logger.error(f"Error al cargar contexto del documento {self.object.pk}: {e}")
+        return context

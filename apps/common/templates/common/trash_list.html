@@ -1,0 +1,207 @@
+{% extends 'core/list_base.html' %}
+{% load static %}
+
+{% block list_title %}Papelera de Reciclaje{% endblock %}
+{% block breadcrumb_current %}Papelera{% endblock %}
+{% block page_icon %}fas fa-trash-alt{% endblock %}
+{% block page_title %}Papelera de Reciclaje{% endblock %}
+{% block page_subtitle %}Registros eliminados. Puedes restaurarlos o eliminarlos permanentemente.{% endblock %}
+
+<!-- Acciones masivas (siempre visibles) -->
+{% block header_actions %}
+<div class="d-flex gap-2">
+  <form method="post" action="{% url 'common:bulk_trash_action' %}" onsubmit="return confirm('¿Restaurar TODOS los elementos de la papelera?');">
+    {% csrf_token %}
+    <input type="hidden" name="bulk_action" value="restore_all">
+    <button type="submit" class="btn btn-success btn-sm">
+      <i class="fas fa-undo-alt me-1"></i> Restaurar todo
+    </button>
+  </form>
+  <form method="post" action="{% url 'common:bulk_trash_action' %}" onsubmit="return confirm('¿Eliminar TODOS los elementos de la papelera permanentemente? Esta acción no se puede deshacer.');">
+    {% csrf_token %}
+    <input type="hidden" name="bulk_action" value="delete_all">
+    <button type="submit" class="btn btn-danger btn-sm">
+      <i class="fas fa-trash-alt me-1"></i> Eliminar todo
+    </button>
+  </form>
+</div>
+{% endblock %}
+
+<!-- Toggle de selección múltiple -->
+{% block bulk_actions_toggle %}
+<div class="form-check form-switch d-inline-block">
+  <input class="form-check-input" type="checkbox" id="bulkModeToggle" style="width: 40px; height: 20px; cursor: pointer;">
+  <label class="form-check-label ms-2 small fw-bold" for="bulkModeToggle" style="color: var(--color-dark-blue);">
+    <i class="fas fa-check-square me-1"></i> Selección múltiple
+  </label>
+</div>
+{% endblock %}
+
+<!-- Barra de acciones masivas (para selección múltiple) -->
+{% block bulk_actions_bar %}
+<div id="bulkActionsBar" class="d-none bg-white p-2 rounded shadow-sm mb-3 border-start border-4" style="border-color: var(--color-light-blue) !important;">
+  <form method="post" action="{% url 'common:bulk_trash_action' %}" id="trashForm" class="d-flex align-items-center gap-3">
+    {% csrf_token %}
+    <span class="small fw-bold text-muted me-2">
+      <i class="fas fa-check-circle me-1" style="color: var(--color-light-blue);"></i> 
+      <span id="trashSelectedCount">0</span> seleccionados
+    </span>
+    
+    <button type="submit" class="btn btn-sm btn-success px-3" name="bulk_action" value="restore" disabled>
+      <i class="fas fa-undo-alt me-1"></i> Restaurar
+    </button>
+    
+    <button type="submit" class="btn btn-sm btn-danger px-3" name="bulk_action" value="delete" disabled onclick="return confirm('¿Eliminar permanentemente los seleccionados?');">
+      <i class="fas fa-skull-crossbones me-1"></i> Eliminar
+    </button>
+  </form>
+</div>
+{% endblock %}
+
+<!-- Contenido de la tabla -->
+{% block table_content %}
+{% if trash_items %}
+<div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="bg-light">
+      <tr>
+        <th style="width: 40px; text-align: center;">
+          <input type="checkbox" id="trashSelectAll" class="form-check-input bulk-checkbox d-none">
+        </th>
+        <th>Tipo</th>
+        <th>Registro</th>
+        <th>Eliminado</th>
+        <th style="text-align: center;">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in trash_items %}
+      <tr>
+        <td style="text-align: center;">
+          <input type="checkbox" name="selected_items" value="{{ item.token }}" class="form-check-input trash-item-check bulk-checkbox d-none">
+        </td>
+        <td>
+          <span class="badge bg-primary">{{ item.model_name }}</span>
+        </td>
+        <td>
+          <strong>{{ item.title }}</strong>
+          <div class="small text-muted">{{ item.app_label }}</div>
+        </td>
+        <td>{{ item.deleted_at|date:"d/m/Y H:i" }}</td>
+        <td style="text-align: center;">
+          <!-- BOTÓN RESTAURAR (individual) -->
+          <form method="post" action="{% url 'common:trash_restore' item.model_index item.id %}" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-success" title="Restaurar">
+              <i class="fas fa-undo-alt"></i>
+            </button>
+          </form>
+
+          <!-- BOTÓN ELIMINAR PERMANENTEMENTE (individual) -->
+          <form method="post" action="{% url 'common:trash_hard_delete' item.model_index item.id %}" style="display: inline;" onsubmit="return confirm('¿Eliminar permanentemente este registro?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-danger" title="Eliminar permanentemente">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="text-center py-5">
+  <div style="font-size: 4rem; color: #d1d5db;">
+    <i class="fas fa-trash-alt"></i>
+  </div>
+  <h5 class="text-muted mt-3">La papelera está vacía</h5>
+  <p class="text-muted small">Los registros eliminados aparecerán aquí.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+<!-- Scripts -->
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const toggleSwitch = document.getElementById('bulkModeToggle');
+  const bulkCheckboxes = document.querySelectorAll('.bulk-checkbox');
+  const bulkActionsBar = document.getElementById('bulkActionsBar');
+  const trashSelectedCount = document.getElementById('trashSelectedCount');
+  const rowChecks = document.querySelectorAll('.trash-item-check');
+  const selectAll = document.getElementById('trashSelectAll');
+  const restoreBtn = document.querySelector('button[name="bulk_action"][value="restore"]');
+  const deleteBtn = document.querySelector('button[name="bulk_action"][value="delete"]');
+
+  function toggleBulkMode(active) {
+    bulkCheckboxes.forEach(cb => {
+      if (active) {
+        cb.classList.remove('d-none');
+      } else {
+        cb.classList.add('d-none');
+        cb.checked = false;
+      }
+    });
+    if (!active) {
+      bulkActionsBar.classList.add('d-none');
+      updateBulkState();
+    }
+  }
+
+  function updateBulkState() {
+    const checked = document.querySelectorAll('.trash-item-check:checked');
+    const count = checked.length;
+    trashSelectedCount.textContent = count;
+    
+    if (count > 0 && !bulkActionsBar.classList.contains('d-none')) {
+      bulkActionsBar.classList.remove('d-none');
+      restoreBtn.disabled = false;
+      deleteBtn.disabled = false;
+    } else if (count === 0 && !bulkActionsBar.classList.contains('d-none')) {
+      bulkActionsBar.classList.add('d-none');
+      restoreBtn.disabled = true;
+      deleteBtn.disabled = true;
+    }
+
+    if (selectAll) {
+      selectAll.checked = count > 0 && count === rowChecks.length;
+      selectAll.indeterminate = count > 0 && count < rowChecks.length;
+    }
+  }
+
+  toggleSwitch.addEventListener('change', function() {
+    toggleBulkMode(this.checked);
+    if (this.checked) {
+      bulkActionsBar.classList.remove('d-none');
+    }
+    updateBulkState();
+  });
+
+  rowChecks.forEach(cb => cb.addEventListener('change', updateBulkState));
+
+  if (selectAll) {
+    selectAll.addEventListener('change', function() {
+      rowChecks.forEach(cb => cb.checked = selectAll.checked);
+      updateBulkState();
+    });
+  }
+
+  restoreBtn.addEventListener('click', function(e) {
+    const count = document.querySelectorAll('.trash-item-check:checked').length;
+    if (count === 0 || !confirm('¿Restaurar ' + count + ' elemento' + (count !== 1 ? 's' : '') + '?')) {
+      e.preventDefault();
+    }
+  });
+
+  deleteBtn.addEventListener('click', function(e) {
+    const count = document.querySelectorAll('.trash-item-check:checked').length;
+    if (count === 0 || !confirm('¿Eliminar permanentemente ' + count + ' elemento' + (count !== 1 ? 's' : '') + '?')) {
+      e.preventDefault();
+    }
+  });
+
+  toggleBulkMode(false);
+});
+</script>
+{% endblock %}

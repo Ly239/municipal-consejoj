@@ -1,5 +1,7 @@
 import re
+import logging
 from django import forms
+from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.forms import UserChangeForm
 
@@ -8,9 +10,11 @@ from common.validators import (
     validate_only_letters,
     validate_alphanumeric_name,
     validate_venezuelan_id,
-    validate_venezuelan_phone
+    validate_venezuelan_phone,
+    validate_unique_with_trash,
 )
 
+logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
@@ -87,15 +91,23 @@ class RegisterForm(forms.Form):
 
     def clean_username(self):
         username = self.cleaned_data.get('username')
-        if User.objects.filter(username=username).exists():
-            raise forms.ValidationError("Este nombre de usuario ya está en uso.")
-        return username
+        try:
+            if User.objects.filter(username=username).exists():
+                raise forms.ValidationError("Este nombre de usuario ya está en uso.")
+            return username
+        except Exception as e:
+            logger.error(f"Error en clean_username: {e}")
+            raise forms.ValidationError("Error al validar el nombre de usuario.")
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        if User.objects.filter(email=email).exists():
-            raise forms.ValidationError("Este correo electrónico ya está registrado.")
-        return email
+        try:
+            if User.objects.filter(email=email).exists():
+                raise forms.ValidationError("Este correo electrónico ya está registrado.")
+            return email
+        except Exception as e:
+            logger.error(f"Error en clean_email: {e}")
+            raise forms.ValidationError("Error al validar el correo electrónico.")
 
     def clean(self):
         cleaned_data = super().clean()
@@ -160,36 +172,153 @@ class UserProfileForm(forms.ModelForm):
         }
 
     # ========== VALIDACIONES ==========
+
     def clean_first_name(self):
-        return validate_only_letters(self.cleaned_data.get('first_name'), "El nombre")
+        try:
+            return validate_only_letters(self.cleaned_data.get('first_name'), "El nombre")
+        except Exception as e:
+            logger.error(f"Error en clean_first_name: {e}")
+            raise forms.ValidationError("Error al validar el nombre.")
 
     def clean_last_name(self):
-        return validate_only_letters(self.cleaned_data.get('last_name'), "El apellido")
+        try:
+            return validate_only_letters(self.cleaned_data.get('last_name'), "El apellido")
+        except Exception as e:
+            logger.error(f"Error en clean_last_name: {e}")
+            raise forms.ValidationError("Error al validar el apellido.")
 
     def clean_username(self):
         username = self.cleaned_data.get('username')
-        if username:
-            if len(username) < 4 or len(username) > 20:
-                raise forms.ValidationError("El nombre de usuario debe tener entre 4 y 20 caracteres.")
-            if not re.match(r'^[A-Za-z0-9_]+$', username):
-                raise forms.ValidationError(
-                    "El nombre de usuario solo puede contener letras, números y guión bajo (_)."
-                )
-            if not any(c.isalpha() for c in username):
-                raise forms.ValidationError("El nombre de usuario debe contener al menos una letra.")
-            if all(c == username[0] for c in username) and username[0].isalpha():
-                raise forms.ValidationError("El nombre de usuario no puede consistir en una sola letra repetida.")
-        return username
+        if not username:
+            return username
+
+        # Validar longitud y caracteres
+        if len(username) < 4 or len(username) > 20:
+            raise forms.ValidationError("El nombre de usuario debe tener entre 4 y 20 caracteres.")
+        if not re.match(r'^[A-Za-z0-9_]+$', username):
+            raise forms.ValidationError(
+                "El nombre de usuario solo puede contener letras, números y guión bajo (_)."
+            )
+        if not any(c.isalpha() for c in username):
+            raise forms.ValidationError("El nombre de usuario debe contener al menos una letra.")
+        if all(c == username[0] for c in username) and username[0].isalpha():
+            raise forms.ValidationError("El nombre de usuario no puede consistir en una sola letra repetida.")
+
+        # Validar unicidad considerando papelera
+        try:
+            existing = User.all_objects.filter(username=username)
+            if self.instance.pk:
+                existing = existing.exclude(pk=self.instance.pk)
+            existing = existing.first()
+            if existing:
+                if existing.is_deleted:
+                    raise forms.ValidationError(
+                        "Este nombre de usuario ya existe en la papelera. "
+                        "Restáuralo o elimínalo definitivamente."
+                    )
+                else:
+                    raise forms.ValidationError("Este nombre de usuario ya está registrado.")
+            return username
+        except Exception as e:
+            logger.error(f"Error en clean_username: {e}")
+            raise forms.ValidationError("Error al validar el nombre de usuario.")
 
     def clean_id_number(self):
-        return validate_venezuelan_id(self.cleaned_data.get('id_number'))
+        id_number = self.cleaned_data.get('id_number')
+        if not id_number:
+            return id_number
+
+        # Validar formato de cédula
+        try:
+            validate_venezuelan_id(id_number)
+        except ValidationError as e:
+            raise e
+        except Exception as e:
+            logger.error(f"Error en clean_id_number (validate): {e}")
+            raise forms.ValidationError("Error al validar la cédula.")
+
+        # Validar unicidad considerando papelera
+        try:
+            existing = User.all_objects.filter(id_number=id_number)
+            if self.instance.pk:
+                existing = existing.exclude(pk=self.instance.pk)
+            existing = existing.first()
+            if existing:
+                if existing.is_deleted:
+                    raise forms.ValidationError(
+                        "Esta cédula ya existe en la papelera. "
+                        "Restáurala o elimínala definitivamente."
+                    )
+                else:
+                    raise forms.ValidationError("Esta cédula ya está registrada.")
+            return id_number
+        except Exception as e:
+            logger.error(f"Error en clean_id_number: {e}")
+            raise forms.ValidationError("Error al validar la cédula.")
 
     def clean_phone(self):
-        return validate_venezuelan_phone(self.cleaned_data.get('phone'))
+        phone = self.cleaned_data.get('phone')
+        if not phone:
+            return phone
+
+        # Validar formato de teléfono
+        try:
+            validate_venezuelan_phone(phone)
+        except ValidationError as e:
+            raise e
+        except Exception as e:
+            logger.error(f"Error en clean_phone (validate): {e}")
+            raise forms.ValidationError("Error al validar el teléfono.")
+
+        # Validar unicidad considerando papelera
+        try:
+            existing = User.all_objects.filter(phone=phone)
+            if self.instance.pk:
+                existing = existing.exclude(pk=self.instance.pk)
+            existing = existing.first()
+            if existing:
+                if existing.is_deleted:
+                    raise forms.ValidationError(
+                        "Este teléfono ya existe en la papelera. "
+                        "Restáuralo o elimínalo definitivamente."
+                    )
+                else:
+                    raise forms.ValidationError("Este teléfono ya está registrado.")
+            return phone
+        except Exception as e:
+            logger.error(f"Error en clean_phone: {e}")
+            raise forms.ValidationError("Error al validar el teléfono.")
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if not email:
+            return email
+
+        # Validar unicidad considerando papelera
+        try:
+            existing = User.all_objects.filter(email=email)
+            if self.instance.pk:
+                existing = existing.exclude(pk=self.instance.pk)
+            existing = existing.first()
+            if existing:
+                if existing.is_deleted:
+                    raise forms.ValidationError(
+                        "Este correo ya existe en la papelera. "
+                        "Restáuralo o elimínalo definitivamente."
+                    )
+                else:
+                    raise forms.ValidationError("Este correo ya está registrado.")
+            return email
+        except Exception as e:
+            logger.error(f"Error en clean_email: {e}")
+            raise forms.ValidationError("Error al validar el correo electrónico.")
 
     def clean_password1(self):
         password1 = self.cleaned_data.get('password1')
-        if password1:
+        if not password1:
+            return password1
+
+        try:
             if len(password1) < 8 or len(password1) > 15:
                 raise forms.ValidationError("La contraseña debe tener entre 8 y 15 caracteres.")
             if not re.search(r'[A-Z]', password1):
@@ -200,7 +329,10 @@ class UserProfileForm(forms.ModelForm):
                 raise forms.ValidationError(
                     "La contraseña debe contener al menos un carácter especial (ej: !@#$%^&*)."
                 )
-        return password1
+            return password1
+        except Exception as e:
+            logger.error(f"Error en clean_password1: {e}")
+            raise forms.ValidationError("Error al validar la contraseña.")
 
     def clean(self):
         cleaned_data = super().clean()
