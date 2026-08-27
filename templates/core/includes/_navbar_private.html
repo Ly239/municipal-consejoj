@@ -14,7 +14,8 @@
     </button>
 
     <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
-      <ul class="navbar-nav">
+      <!-- CAMBIO 1: Añadido gap-lg-3 para que los enlaces respiren y no se amontonen en pantallas medianas -->
+      <ul class="navbar-nav gap-lg-3">
         <li class="nav-item"><a class="nav-link active" href="{% url 'home' %}">Inicio</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'documents:document_list' %}">Documentos</a></li>
         <li class="nav-item">
@@ -42,10 +43,11 @@
       </ul>
     </div>
 
-    <!-- BOTONES DERECHA -->
-    <div class="d-flex gap-2">
+    <!-- CAMBIO 2: Añadido ms-lg-3 y align-items-center para separar los botones del menú y centrarlos verticalmente -->
+    <div class="d-flex gap-2 align-items-center ms-lg-3">
       {% if user.is_authenticated %}
-        <a href="{% url 'profile' %}" class="btn btn-nav-outline">
+        <!-- CAMBIO 3: Añadido max-width y truncado para que el nombre de usuario largo no rompa el botón -->
+        <a href="{% url 'profile' %}" class="btn btn-nav-outline" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
           <i class="fas fa-user me-1"></i>{{ user.username }}
         </a>
         <a href="{% url 'logout' %}" class="btn btn-nav-fill">
@@ -53,7 +55,7 @@
         </a>
       {% else %}
         <a href="{% url 'login' %}" class="btn btn-nav-outline">Iniciar Sesión</a>
-        <a href="{% url 'register' %}" class="btn btn-nav-fill">Registrarse</a>
+        
       {% endif %}
     </div>
   </div>
