@@ -23,26 +23,47 @@ from django.views.generic import TemplateView
 from django.core.paginator import Paginator
 from django.contrib import messages                      # <- necesario para mostrar mensajes
 from documents.models import Document, Gazette
+# Importamos los modelos proxy para el contenido dinámico del home
+from .models import Councilor, News, Carousel, AboutUs
 
 User = get_user_model()
 
 
 def HomeView(request):
-    try:
-        # Consultas dinámicas para la base de datos
-        documentos_destacados = Document.objects.select_related('gazette', 'document_type').order_by('-publication_date')[:2]
-        ultimas_gacetas = Gazette.objects.all()[:3]
+    """Vista principal combinando documentos previos y el nuevo contenido dinámico (Proxy Models)."""
+    context = {}
 
-        context = {
-            'documentos_destacados': documentos_destacados,
-            'ultimas_gacetas': ultimas_gacetas,
-        }
-        return render(request, 'core/home.html', context)
-        
+    # 1. Carga segura de documentos y gacetas anteriores
+    try:
+        context['documentos_destacados'] = Document.objects.select_related('gazette', 'document_type').order_by('-publication_date')[:2]
+        context['ultimas_gacetas'] = Gazette.objects.all()[:3]
     except Exception as e:
-        messages.error(request, f'Error al cargar la página principal: {e}')
-        # Aún devolvemos la misma plantilla para no romper la navegación
-        return render(request, 'core/home.html')
+        messages.error(request, f'Error al cargar los documentos recientes: {e}')
+        context['documentos_destacados'] = []
+        context['ultimas_gacetas'] = []
+
+    # 2. Carga segura del contenido dinámico del Home usando Proxy Models
+    try:
+        context['councilors'] = Councilor.objects.all()
+    except Exception:
+        context['councilors'] = []
+
+    try:
+        context['news_list'] = News.objects.all()[:5]  # Últimas 5 noticias
+    except Exception:
+        context['news_list'] = []
+
+    try:
+        context['carousel_items'] = Carousel.objects.all()
+    except Exception:
+        context['carousel_items'] = []
+
+    try:
+        context['about_us'] = AboutUs.objects.first()
+    except Exception:
+        context['about_us'] = None
+
+    return render(request, 'core/home.html', context)
 
 
 
@@ -74,3 +95,5 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context['pending_count'] = Document.objects.filter(is_approved=False).count()
 
         return context
+
+
