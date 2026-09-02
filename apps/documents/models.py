@@ -14,6 +14,8 @@ User = get_user_model()
 # ------------------------------------------------------------------------
 class DocumentType(BaseModel):
     """Catálogo de tipos de documentos legales (Acuerdo, Ordenanza, etc.)."""
+    include_in_trash = False  # no aparece en la papelera universal
+
     name = models.CharField(max_length=50, unique=True, verbose_name="Nombre")
     description = models.TextField(blank=True, verbose_name="Descripción")
 
@@ -28,6 +30,9 @@ class DocumentType(BaseModel):
 
 class IssuingEntity(BaseModel):
     """Catálogo de entes emisores de documentos."""
+
+    include_in_trash = False
+
     name = models.CharField(max_length=100, unique=True, verbose_name="Nombre")
     description = models.TextField(blank=True, verbose_name="Descripción")
 
