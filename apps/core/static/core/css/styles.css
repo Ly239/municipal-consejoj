@@ -65,6 +65,8 @@ body {
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(0, 59, 79, 0.1);
 }
+
+
 .hero-slide {
     height: 350px; /* Altura fija como en tu imagen */
     position: relative;

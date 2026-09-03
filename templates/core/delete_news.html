@@ -1,0 +1,24 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Noticia - Concejo Municipal de Junín{% endblock %}
+
+{% block content %}
+{% include 'core/includes/_navbar_public.html' %}
+
+<div class="container my-5" style="max-width: 500px;">
+    <div class="card card-concejo p-4 shadow-sm border-0 text-center">
+        <div class="mb-3 text-danger fs-1"><i class="fas fa-exclamation-triangle"></i></div>
+        <h3 class="fw-bold mb-3" style="color: var(--color-dark-blue);">¿Estás seguro?</h3>
+        <p class="text-muted mb-4">Estás a punto de eliminar la noticia: <br><strong>"{{ news_item.title }}"</strong>. Esta acción no se puede deshacer.</p>
+        
+        <form method="POST">
+            {% csrf_token %}
+            <button type="submit" class="btn w-100 rounded-pill text-white fw-bold shadow-sm mb-2 btn-danger">
+                <i class="fas fa-trash-alt me-2"></i> Sí, eliminar
+            </button>
+            <a href="{% url 'core:manage_news_frontend' %}" class="btn w-100 rounded-pill btn-light text-muted fw-bold">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

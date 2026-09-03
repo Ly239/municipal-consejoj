@@ -5,13 +5,8 @@
 <nav class="navbar navbar-expand-lg">
   <div class="container">
     <!-- LOGO -->
-    <a class="navbar-brand" href="{% url 'home' %}">
-<<<<<<< HEAD
-      <!-- Pon aquí tu imagen del logo: -->
-      <img src="{% static 'img/logo_concejo.png' %}" alt="Concejo Muncipal" style="height: 45px;">
-=======
+    <a class="navbar-brand" href="{% url 'core:home' %}">
       <img src="{% static 'core/img/logo_concejo.jpg' %}" alt="Concejo" style="height: 45px;">
->>>>>>> permissions-backend-ly
     </a>
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -20,7 +15,7 @@
 
     <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
       <ul class="navbar-nav">
-        <li class="nav-item"><a class="nav-link active" href="{% url 'home' %}">Inicio</a></li>
+        <li class="nav-item"><a class="nav-link active" href="{% url 'core:home' %}">Inicio</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'documents:document_list' %}">Documentos</a></li>
         <li class="nav-item">
           <a class="nav-link" href="{% url 'documents:gazette_list' %}">

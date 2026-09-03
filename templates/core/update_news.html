@@ -1,0 +1,43 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Editar Noticia - Concejo Municipal de Junín{% endblock %}
+
+{% block content %}
+{% include 'core/includes/_navbar_public.html' %}
+
+<div class="container my-5" style="max-width: 600px;">
+    <div class="card card-concejo p-4 shadow-sm border-0">
+        <h2 class="fw-bold mb-3" style="color: var(--color-dark-blue);">Editar Noticia</h2>
+        
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label fw-bold small">Título</label>
+                {{ form.title }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold small">Resumen / Extracto</label>
+                {{ form.summary }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold small">Imagen Actual / Cambiar</label>
+                {{ form.image }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold small">Orden</label>
+                {{ form.order }}
+            </div>
+            <div class="mb-3 form-check">
+                {{ form.is_active }}
+                <label class="form-check-label small fw-bold">Activo en portada</label>
+            </div>
+            
+            <button type="submit" class="btn w-100 rounded-pill text-white fw-bold shadow-sm mb-2" style="background-color: var(--color-dark-blue);">
+                <i class="fas fa-save me-2"></i> Actualizar Noticia
+            </button>
+            <a href="{% url 'core:manage_news_frontend' %}" class="btn w-100 rounded-pill btn-light text-muted fw-bold">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

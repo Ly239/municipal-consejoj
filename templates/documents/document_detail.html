@@ -51,7 +51,7 @@
 <!-- Breadcrumb -->
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i> Inicio</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'core:home' %}"><i class="fas fa-home"></i> Inicio</a></li>
         <li class="breadcrumb-item"><a href="{% url 'documents:document_list' %}">Documentos</a></li>
         <li class="breadcrumb-item active">{{ document.title|truncatechars:40 }}</li>
     </ol>

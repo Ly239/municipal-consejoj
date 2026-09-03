@@ -1,0 +1,135 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Noticias - Concejo Municipal de Junín{% endblock %}
+
+{% block content %}
+<!-- INCLUIMOS EL NAVBAR -->
+{% include 'core/includes/_navbar_public.html' %}
+
+<div class="container my-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold" style="color: var(--color-dark-blue); font-family: var(--font-title);">
+                <i class="fas fa-newspaper me-2"></i> Gestión de Noticias del Carrusel
+            </h2>
+            <p class="text-muted">Administra las noticias que se muestran en la portada principal del sitio.</p>
+        </div>
+    </div>
+
+    <!-- Mensajes de alerta -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row g-4">
+        <!-- Columna del Formulario -->
+        <div class="col-lg-4">
+            <div class="card card-concejo p-4 shadow-sm border-0">
+                <h4 class="fw-bold mb-3" style="color: var(--color-dark-blue); font-size: 1.2rem;">Nueva Noticia</h4>
+                
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Título</label>
+                        {{ form.title }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Resumen / Extracto</label>
+                        {{ form.summary }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Contenido Completo</label>
+                        {{ form.content }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Categoría</label>
+                        {{ form.category }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Imagen del Carrusel</label>
+                        {{ form.image }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Orden de visualización</label>
+                        {{ form.order }}
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        {{ form.is_active }}
+                        <label class="form-check-label small fw-bold">Activo en portada</label>
+                    </div>
+
+                    <button type="submit" class="btn w-100 rounded-pill text-white fw-bold shadow-sm" style="background-color: var(--color-dark-blue);">
+                        <i class="fas fa-save me-2"></i> Guardar Noticia
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Columna del Listado / Tabla de Noticias -->
+        <div class="col-lg-8">
+            <div class="card card-concejo p-4 shadow-sm border-0">
+                <h4 class="fw-bold mb-3" style="color: var(--color-dark-blue); font-size: 1.2rem;">Noticias Registradas</h4>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="py-3">Título</th>
+                                <th class="py-3 text-center">Orden</th>
+                                <th class="py-3 text-center">Estado</th>
+                                <th class="py-3 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in news_list %}
+                            <tr>
+                                <td class="fw-bold text-dark">{{ item.title }}</td>
+                                <td class="text-center">{{ item.order }}</td>
+                                <td class="text-center">
+                                    {% if item.is_active %}
+                                        <span class="badge bg-success px-3 py-2">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary px-3 py-2">Inactivo</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <!-- Contenedor flex para alinear los botones horizontalmente (Ver, Editar, Eliminar) -->
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <a href="{% url 'core:news_detail_frontend' item.pk %}" class="btn btn-sm btn-outline-success rounded-circle p-2" title="Ver Noticia Completa" target="_blank">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'core:update_news_frontend' item.pk %}" class="btn btn-sm btn-outline-primary rounded-circle p-2" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'core:delete_news_frontend' item.pk %}" class="btn btn-sm btn-outline-danger rounded-circle p-2" title="Eliminar">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">No hay noticias registradas en el carrusel.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

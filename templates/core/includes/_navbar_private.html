@@ -5,7 +5,7 @@
 <nav class="navbar navbar-expand-lg">
   <div class="container">
     <!-- LOGO -->
-    <a class="navbar-brand" href="{% url 'home' %}">
+    <a class="navbar-brand" href="{% url 'core:home' %}">
       <img src="{% static 'core/img/logo_concejo.jpg' %}" alt="Concejo" style="height: 45px;">
     </a>
 
@@ -16,7 +16,7 @@
     <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
       <!-- CAMBIO 1: Añadido gap-lg-3 para que los enlaces respiren y no se amontonen en pantallas medianas -->
       <ul class="navbar-nav gap-lg-3">
-        <li class="nav-item"><a class="nav-link active" href="{% url 'home' %}">Inicio</a></li>
+        <li class="nav-item"><a class="nav-link active" href="{% url 'core:home' %}">Inicio</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'documents:document_list' %}">Documentos</a></li>
         <li class="nav-item">
           <a class="nav-link" href="{% url 'documents:gazette_list' %}">

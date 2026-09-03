@@ -1,0 +1,87 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Categorías - Concejo Municipal de Junín{% endblock %}
+
+{% block content %}
+{% include 'core/includes/_navbar_public.html' %}
+
+<div class="container my-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold" style="color: var(--color-dark-blue); font-family: var(--font-title);">
+                <i class="fas fa-tags me-2"></i> Gestión de Categorías de Noticias
+            </h2>
+            <p class="text-muted">Crea y administra los segmentos para clasificar las noticias del portal.</p>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row g-4">
+        <!-- Formulario de Creación -->
+        <div class="col-lg-4">
+            <div class="card card-concejo p-4 shadow-sm border-0">
+                <h4 class="fw-bold mb-3" style="color: var(--color-dark-blue); font-size: 1.2rem;">Nueva Categoría</h4>
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Nombre de la Categoría</label>
+                        {{ form.name }}
+                    </div>
+                    <button type="submit" class="btn w-100 rounded-pill text-white fw-bold shadow-sm" style="background-color: var(--color-dark-blue);">
+                        <i class="fas fa-save me-2"></i> Guardar Categoría
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Listado de Categorías -->
+        <div class="col-lg-8">
+            <div class="card card-concejo p-4 shadow-sm border-0">
+                <h4 class="fw-bold mb-3" style="color: var(--color-dark-blue); font-size: 1.2rem;">Categorías Registradas</h4>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="py-3">Nombre</th>
+                                <th class="py-3">Slug</th>
+                                <th class="py-3 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cat in categories %}
+                            <tr>
+                                <td class="fw-bold text-dark">{{ cat.name }}</td>
+                                <td class="text-muted small"><code>{{ cat.slug }}</code></td>
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <a href="{% url 'core:update_category_frontend' cat.pk %}" class="btn btn-sm btn-outline-primary rounded-circle p-2" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'core:delete_category_frontend' cat.pk %}" class="btn btn-sm btn-outline-danger rounded-circle p-2" title="Eliminar">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">No hay categorías registradas.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

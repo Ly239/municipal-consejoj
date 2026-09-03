@@ -7,8 +7,8 @@
 <!-- Breadcrumb -->
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i> Inicio</a></li>
-    <li class="breadcrumb-item"><a href="{% block back_url %}{% url 'home' %}{% endblock %}">{% block breadcrumb_list %}Listado{% endblock %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'core:home' %}"><i class="fas fa-home"></i> Inicio</a></li>
+    <li class="breadcrumb-item"><a href="{% block back_url %}{% url 'core:home' %}{% endblock %}">{% block breadcrumb_list %}Listado{% endblock %}</a></li>
     <li class="breadcrumb-item active">Eliminar</li>
   </ol>
 </nav>
@@ -39,7 +39,7 @@
   <div class="card-footer text-end">
     <form method="post">
       {% csrf_token %}
-      <a href="{% block cancel_url %}{% url 'home' %}{% endblock %}" class="btn btn-secondary">
+      <a href="{% block cancel_url %}{% url 'core:home' %}{% endblock %}" class="btn btn-secondary">
         <i class="fas fa-arrow-left me-1"></i> Cancelar
       </a>
       <button type="submit" class="btn btn-danger">

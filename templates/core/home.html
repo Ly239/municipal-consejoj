@@ -8,17 +8,37 @@
 {% include 'core/includes/_navbar_public.html' %}
 
 <!-- ============================================ -->
-<!-- 1. HERO CARRUSEL (3 imágenes)                 -->
+<!-- 1. HERO CARRUSEL (Noticias Dinámicas)         -->
 <!-- ============================================ -->
 <div id="heroCarousel" class="carousel slide hero-carousel mb-5" data-bs-ride="carousel">
     <div class="carousel-indicators">
+        {% for item in carousel_news %}
+        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active"{% endif %}></button>
+        {% empty %}
         <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
         <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
         <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
+        {% endfor %}
     </div>
     
     <div class="carousel-inner">
-        <!-- Slide 1: Institucional -->
+        {% for item in carousel_news %}
+        <!-- Slide Dinámico de Noticia -->
+        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+            <div class="hero-slide" style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2);">
+                <div class="slide-content">
+                    <span class="badge mb-2" style="background-color: var(--color-light-blue); color: white;">Noticia Destacada</span>
+                    <h1 class="fw-bold" style="color: var(--color-dark-blue); font-family: var(--font-title);">{{ item.title }}</h1>
+                    <p class="text-muted">{{ item.summary }}</p>
+                    <a href="#" class="btn-hero">Leer más <i class="fas fa-arrow-right ms-2"></i></a>
+                </div>
+                {% if item.image %}
+                <img src="{{ item.image.url }}" class="slide-img" alt="{{ item.title }}">
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <!-- Slide 1: Institucional por defecto -->
         <div class="carousel-item active">
             <div class="hero-slide" style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2);">
                 <div class="slide-content">
@@ -26,7 +46,6 @@
                     <p>Sistema de gestión documental del Concejo Municipal. Transparencia y modernidad.</p>
                     <a href="{% url 'documents:document_list' %}" class="btn-hero">Ver Gacetas <i class="fas fa-arrow-right ms-2"></i></a>
                 </div>
-                <!-- IMAGEN 1: Pon aquí una foto de la fachada de la Casa del Concejo -->
                 <img src="{% static 'core/img/slide_concejo.jpg' %}" class="slide-img" alt="Concejo Municipal">
             </div>
         </div>
@@ -39,7 +58,6 @@
                     <p>Ordenanzas, Acuerdos, Decretos y Actas a un solo clic.</p>
                     <a href="{% url 'documents:document_list' %}" class="btn-hero">Explorar <i class="fas fa-arrow-right ms-2"></i></a>
                 </div>
-                <!-- IMAGEN 2: Pon una foto de archivos o documentos legales -->
                 <img src="{% static 'core/img/slide_documentos.jpg' %}" class="slide-img" alt="Documentos">
             </div>
         </div>
@@ -52,10 +70,10 @@
                     <p>Información pública para el bienestar de la comunidad juninense.</p>
                     <a href="{% url 'documents:document_list' %}" class="btn-hero">Conoce más <i class="fas fa-arrow-right ms-2"></i></a>
                 </div>
-                <!-- IMAGEN 3: Pon una foto de la plaza o gente de Rubio -->
                 <img src="{% static 'core/img/slide_comunidad.jpg' %}" class="slide-img" alt="Comunidad">
             </div>
         </div>
+        {% endfor %}
     </div>
     
     <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
@@ -65,9 +83,45 @@
         <span class="carousel-control-next-icon" aria-hidden="true"></span>
     </button>
 </div>
-
+        
 <!-- ============================================ -->
-<!-- 2. CONTENIDO PRINCIPAL (GRID 3 COLUMNAS)    -->
+<!-- 2. SECCIÓN DE CRÓNICAS MUNICIPALES          -->
+<!-- ============================================ -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="section-title mb-0">Crónicas Municipales</h4>
+            <!-- PUNTO DE INTEGRACIÓN DE ROLES: Aquí el usuario con rol de Crónicas puede acceder a gestionar -->
+            <!-- TODO: if request.user.is_authenticated and request.user.has_perm('core.can_manage_chronicles') -->
+        </div>
+        
+        <div class="row g-4">
+            {% for chronicle in chronicles %}
+            <div class="col-md-4">
+                <div class="card card-concejo h-100 p-3">
+                    {% if chronicle.image %}
+                    <img src="{{ chronicle.image.url }}" class="card-img-top rounded mb-3" style="height: 160px; object-fit: cover;" alt="{{ chronicle.title }}">
+                    {% endif %}
+                    <div class="card-body p-0 d-flex flex-column">
+                        <small class="text-muted d-block mb-1"><i class="fas fa-calendar-alt me-1" style="color: var(--color-light-blue);"></i> {{ chronicle.publication_date|date:"d M, Y" }}</small>
+                        <h5 class="fw-bold mb-2" style="color: var(--color-dark-blue);">{{ chronicle.title }}</h5>
+                        <p class="text-muted small mb-3 flex-grow-1">{{ chronicle.content|truncatechars:90 }}</p>
+                        <a href="#" class="btn btn-sm btn-outline-primary rounded-pill align-self-start" style="border-color: var(--color-dark-blue); color: var(--color-dark-blue);">Leer crónica</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="card card-concejo p-4 text-center">
+                    <p class="text-muted mb-0">No hay crónicas publicadas recientemente.</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<!-- ============================================ -->
+<!-- 3. CONTENIDO PRINCIPAL (GRID 3 COLUMNAS)    -->
 <!-- ============================================ -->
 <div class="row g-4">
 
@@ -146,4 +200,6 @@
     </div>
 
 </div>
+
+
 {% endblock %}

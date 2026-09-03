@@ -26,7 +26,7 @@
 <nav class="navbar navbar-expand-lg" style="background-color: #ffffff; padding: 10px 0; box-shadow: 0 2px 10px rgba(0,59,79,0.05);">
     <div class="container">
         <!-- LOGO -->
-        <a class="navbar-brand" href="{% url 'home' %}">
+        <a class="navbar-brand" href="{% url 'core:home' %}">
             <img src="{% static 'core/img/logo_concejo.jpg' %}" alt="Concejo Municipal de Junín" style="height: 45px;">
         </a>
 
@@ -40,8 +40,8 @@
         <div class="collapse navbar-collapse justify-content-center" id="navbarPublic">
             <!-- CAMBIO: flex-wrap para que los enlaces bajen de línea si son muchos -->
             <ul class="navbar-nav gap-lg-2 flex-wrap">
-                <li class="nav-item"><a class="nav-link active" href="{% url 'home' %}" style="color: #003B4F; font-weight: 500;">Inicio</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" style="color: #003B4F; font-weight: 500;">Noticias</a></li>
+                <li class="nav-item"><a class="nav-link active" href="{% url 'core:home' %}" style="color: #003B4F; font-weight: 500;">Inicio</a></li>
+                <li class="nav-item"><a class="nav-link" href=""{% url 'core:manage_news_frontend' %}"" style="color: #003B4F; font-weight: 500;">Noticias</a></li>
                 <li class="nav-item"><a class="nav-link" href="#" style="color: #003B4F; font-weight: 500;">Concejales</a></li>
                 <li class="nav-item"><a class="nav-link" href="#" style="color: #003B4F; font-weight: 500;">Ordenanzas</a></li>
                 <li class="nav-item"><a class="nav-link" href="#" style="color: #003B4F; font-weight: 500;">Sobre Nosotros</a></li>
@@ -54,7 +54,7 @@
                 <a href="{% url 'profile' %}" class="btn btn-outline-dark btn-sm" style="border-radius: 50px; padding: 6px 16px; border: 1px solid #003B4F; color: #003B4F; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                     <i class="fas fa-user me-1"></i> {{ user.username }}
                 </a>
-                <a href="{% url 'dashboard' %}" class="btn btn-sm" style="background-color: #0AB1D4; color: #003B4F; font-weight: 600; border-radius: 50px; padding: 6px 20px; border: none;">
+                <a href="{% url 'core:dashboard' %}" class="btn btn-sm" style="background-color: #0AB1D4; color: #003B4F; font-weight: 600; border-radius: 50px; padding: 6px 20px; border: none;">
                     <i class="fas fa-tachometer-alt me-1"></i> Gestión
                 </a>
                 <a href="{% url 'logout' %}" class="btn btn-outline-dark btn-sm" style="border-radius: 50px; padding: 6px 16px; border: 1px solid #003B4F; color: #003B4F;">
