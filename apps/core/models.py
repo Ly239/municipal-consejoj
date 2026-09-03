@@ -51,7 +51,7 @@ class HomeContent(BaseModel):
 # 2. PROXY MODELS (Modelos Fantasma)
 # ============================================================
 
-# 🔹 Councilor (Concejal)
+# Councilor (Concejal)
 class CouncilorManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(content_type=HomeContent.ContentTypes.COUNCILOR, is_active=True)
@@ -73,7 +73,7 @@ class Councilor(HomeContent):
         return self.description
 
 
-# 🔹 News (Noticia)
+# News (Noticia)
 class NewsManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(content_type=HomeContent.ContentTypes.NEWS, is_active=True)
@@ -91,7 +91,10 @@ class News(HomeContent):
         return self.publication_date
 
 
-# 🔹 Carousel (Carrusel)
+# Carousel (Carrusel)
+# NOTA: Este modelo NO se usa actualmente para el carrusel.
+# El carrusel toma las 3 noticias más recientes del proxy News.
+# Se mantiene por si en el futuro se necesita un carrusel personalizado.
 class CarouselManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(content_type=HomeContent.ContentTypes.CAROUSEL, is_active=True)
@@ -109,7 +112,7 @@ class Carousel(HomeContent):
         return self.image.url if self.image else None
 
 
-# 🔹 About Us (Sobre Nosotros)
+# About Us (Sobre Nosotros)
 class AboutUsManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(content_type=HomeContent.ContentTypes.ABOUT_US, is_active=True)

@@ -10,57 +10,36 @@
 <!-- ============================================ -->
 <!-- 1. HERO CARRUSEL (3 imágenes)                 -->
 <!-- ============================================ -->
+
 <div id="heroCarousel" class="carousel slide hero-carousel mb-5" data-bs-ride="carousel">
     <div class="carousel-indicators">
-        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
-        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
-        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
+        {% for news in news_list|slice:":3" %}
+        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ forloop.counter0 }}" 
+                class="{% if forloop.first %}active{% endif %}"></button>
+        {% endfor %}
     </div>
-    
+
     <div class="carousel-inner">
-        <!-- Slide 1: Institucional -->
-        <div class="carousel-item active">
-            <div class="hero-slide" style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2);">
-                <div class="slide-content">
-                    <h1>Rubio,<br>ciudad de trabajo</h1>
-                    <p>Sistema de gestión documental del Concejo Municipal. Transparencia y modernidad.</p>
-                    <a href="{% url 'documents:document_list' %}" class="btn-hero">Ver Gacetas <i class="fas fa-arrow-right ms-2"></i></a>
+        {% for news in news_list|slice:":3" %}
+        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+            <a href="{% url 'news_detail' news.id %}" class="text-decoration-none">
+                <div class="hero-slide" style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2);">
+                    <div class="slide-content">
+                        <h1>{{ news.title }}</h1>
+                        <p>{{ news.description|truncatechars:120 }}</p>
+                        <span class="btn-hero">Leer más <i class="fas fa-arrow-right ms-2"></i></span>
+                    </div>
+                    <img src="{% static news.image %}" class="slide-img" alt="{{ news.title }}">
                 </div>
-                <!-- IMAGEN 1: Pon aquí una foto de la fachada de la Casa del Concejo -->
-                <img src="{% static 'core/img/slide_concejo.jpg' %}" class="slide-img" alt="Concejo Municipal">
-            </div>
+            </a>
         </div>
-        
-        <!-- Slide 2: Gestión -->
-        <div class="carousel-item">
-            <div class="hero-slide" style="background: linear-gradient(135deg, #f8f9fa, #dee2e6);">
-                <div class="slide-content">
-                    <h1>Gestión<br>Documental</h1>
-                    <p>Ordenanzas, Acuerdos, Decretos y Actas a un solo clic.</p>
-                    <a href="{% url 'documents:document_list' %}" class="btn-hero">Explorar <i class="fas fa-arrow-right ms-2"></i></a>
-                </div>
-                <!-- IMAGEN 2: Pon una foto de archivos o documentos legales -->
-                <img src="{% static 'core/img/slide_documentos.jpg' %}" class="slide-img" alt="Documentos">
-            </div>
-        </div>
-        
-        <!-- Slide 3: Comunidad -->
-        <div class="carousel-item">
-            <div class="hero-slide" style="background: linear-gradient(135deg, #fff3cd, #ffe69c);">
-                <div class="slide-content">
-                    <h1>Compromiso<br>Ciudadano</h1>
-                    <p>Información pública para el bienestar de la comunidad juninense.</p>
-                    <a href="{% url 'documents:document_list' %}" class="btn-hero">Conoce más <i class="fas fa-arrow-right ms-2"></i></a>
-                </div>
-                <!-- IMAGEN 3: Pon una foto de la plaza o gente de Rubio -->
-                <img src="{% static 'core/img/slide_comunidad.jpg' %}" class="slide-img" alt="Comunidad">
-            </div>
-        </div>
+        {% endfor %}
     </div>
-    
+
     <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
     </button>
+
     <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
         <span class="carousel-control-next-icon" aria-hidden="true"></span>
     </button>
