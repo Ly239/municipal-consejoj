@@ -28,7 +28,6 @@
                         <p>{{ news.description|truncatechars:120 }}</p>
                         <span class="btn-hero">Leer más <i class="fas fa-arrow-right ms-2"></i></span>
                     </div>
-                    <!-- Usar src directo (sin static) para URLs externas -->
                     <img src="{{ news.image }}" class="slide-img" alt="{{ news.title }}">
                 </div>
             </a>
@@ -45,86 +44,147 @@
 </div>
 
 <!-- ============================================ -->
-<!-- 2. CONTENIDO PRINCIPAL (GRID 3 COLUMNAS)    -->
+<!-- 2. LO ÚLTIMO (Noticias destacadas)           -->
 <!-- ============================================ -->
-<div class="row g-4">
+<div class="row mt-5">
+    <div class="col-12">
+        <h4 class="section-title mb-3">Lo Último en el Concejo</h4>
 
-    <!-- COLUMNA IZQUIERDA: Documentos Destacados (Dinámico) -->
-    <div class="col-lg-3 col-md-6">
-        <h4 class="section-title mb-3">Documentos <i class="fas fa-chevron-right ms-2" style="font-size: 0.8rem;"></i></h4>
-        
-        {% for doc in documentos_destacados %}
-        <div class="card card-concejo p-3 mb-3">
-            <div class="bg-light rounded-3 d-flex align-items-center justify-content-center mb-2" style="height: 150px;">
-                <i class="fas fa-file-pdf fa-4x" style="color: var(--color-dark-blue);"></i>
-            </div>
-            <div class="text-center">
-                <h6 class="fw-bold mb-0">{{ doc.document_type.name }} N° {{ doc.number }}</h6>
-                <small class="text-muted">Gaceta {{ doc.gazette.year }}</small>
-            </div>
-        </div>
-        {% empty %}
-        <div class="card card-concejo p-3 mb-3 text-center p-4">
-            <div class="text-muted">
-                <small>No hay documentos registrados.</small>
-            </div>
-        </div>
-        {% endfor %}
-
-        <a href="{% url 'documents:document_list' %}" class="btn btn-light w-100 rounded-pill shadow-sm border">Ver Más</a>
-    </div>
-
-    <!-- COLUMNA CENTRAL: Búsquedas Recientes -->
-    <div class="col-lg-4 col-md-6">
-        <h4 class="section-title mb-3">Búsquedas Recientes</h4>
-        
-        <div class="mb-4">
-            <a href="{% url 'documents:document_list' %}?q=extraordinaria" class="text-decoration-none"><span class="search-pill"><i class="fas fa-search"></i> Gaceta extraordinaria</span></a>
-            <a href="{% url 'documents:document_list' %}?q=Acuerdos" class="text-decoration-none"><span class="search-pill"><i class="fas fa-search"></i> Acuerdos 2026</span></a>
-            <a href="{% url 'documents:document_list' %}?q=Presupuesto" class="text-decoration-none"><span class="search-pill"><i class="fas fa-search"></i> Presupuesto participativo</span></a>
-            <a href="{% url 'documents:document_list' %}?q=Ordenanza" class="text-decoration-none"><span class="search-pill"><i class="fas fa-search"></i> Ordenanzas municipales</span></a>
-            <a href="{% url 'documents:document_list' %}?q=Decretos" class="text-decoration-none"><span class="search-pill"><i class="fas fa-search"></i> Decretos alcaldía</span></a>
-        </div>
-
-        <!-- Avatar de usuarios (o concejales destacados) -->
-        <div class="d-flex align-items-center gap-3 mt-3">
-            <div class="position-relative">
-                <div class="rounded-circle bg-white shadow-sm d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; border: 3px solid var(--color-light-blue);">
-                    <i class="fas fa-user-tie fa-2x" style="color: var(--color-dark-blue);"></i>
+        <div class="row g-4">
+            <!-- Noticia 1 -->
+            <div class="col-md-4">
+                <div class="card card-concejo h-100">
+                    <img src="{% static 'core/img/noticia1.jpg' %}" class="card-img-top" alt="Noticia 1" style="height: 200px; object-fit: cover;">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold">Concejo Municipal impulsa jornada de bienestar animal</h5>
+                        <p class="text-muted small"><i class="fas fa-calendar-alt me-1"></i> 27 de abril de 2026</p>
+                        <p class="card-text small">El Concejo Municipal realizó una jornada de atención para mascotas en la plaza Bolívar...</p>
+                        <a href="{% url 'news_detail' 1 %}" class="btn btn-primary btn-sm">Leer más</a>
+                    </div>
                 </div>
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill border border-white" style="background: var(--color-light-blue);">✓</span>
             </div>
-            <div class="position-relative">
-                <div class="rounded-circle bg-white shadow-sm d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; border: 3px solid var(--color-dark-blue);">
-                    <i class="fas fa-user-tie fa-2x" style="color: var(--color-dark-blue);"></i>
+
+            <!-- Noticia 2 -->
+            <div class="col-md-4">
+                <div class="card card-concejo h-100">
+                    <img src="{% static 'core/img/noticia2.jpg' %}" class="card-img-top" alt="Noticia 2" style="height: 200px; object-fit: cover;">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold">Llamado a concurso abierto N° 007-2026</h5>
+                        <p class="text-muted small"><i class="fas fa-calendar-alt me-1"></i> 20 de abril de 2026</p>
+                        <p class="card-text small">El Concejo Municipal invita a empresas a participar en el concurso para servicios de mantenimiento...</p>
+                        <a href="{% url 'news_detail' 2 %}" class="btn btn-primary btn-sm">Leer más</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Noticia 3 -->
+            <div class="col-md-4">
+                <div class="card card-concejo h-100">
+                    <img src="{% static 'core/img/noticia3.jpg' %}" class="card-img-top" alt="Noticia 3" style="height: 200px; object-fit: cover;">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold">Consulta pública sobre reforma de ordenanza</h5>
+                        <p class="text-muted small"><i class="fas fa-calendar-alt me-1"></i> 15 de abril de 2026</p>
+                        <p class="card-text small">Se abre consulta pública para la reforma de la Ordenanza del Consejo Local de Planificación...</p>
+                        <a href="{% url 'news_detail' 3 %}" class="btn btn-primary btn-sm">Leer más</a>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- COLUMNA DERECHA: Gacetas Recientes (Dinámico) -->
-    <div class="col-lg-5">
-        <h4 class="section-title mb-3">Últimas Gacetas</h4>
-        
-        {% for gazette in ultimas_gacetas %}
-        <div class="card card-concejo mb-3 p-3 d-flex flex-row align-items-center gap-3">
-            <div class="info-badge {% if forloop.counter == 2 %}dark{% endif %}">
-                {% if forloop.counter < 10 %}0{{ forloop.counter }}{% else %}{{ forloop.counter }}{% endif %}
-            </div>
-            <div>
-                <h6 class="fw-bold mb-0">Gaceta N° {{ gazette.number }}</h6>
-                <small class="text-muted">Año: {{ gazette.year }} · {{ gazette.documents.count }} docs</small>
-            </div>
+        <div class="text-end mt-3">
+            <a href="{% url 'home' %}#heroCarousel" class="btn btn-outline-primary">
+                Más Noticias <i class="fas fa-arrow-right ms-1"></i>
+            </a>
         </div>
-        {% empty %}
-        <div class="card card-concejo mb-3 p-3 text-center">
-            <small class="text-muted">No hay gacetas registradas aún.</small>
-        </div>
-        {% endfor %}
     </div>
-
 </div>
 
-<!-- INCLUIMOS EL FOOTER-->
+<!-- ============================================ -->
+<!-- 3. ACTIVIDADES Y DIFUSIÓN                   -->
+<!-- ============================================ -->
+<div id="documents" class="row mt-5">
+    <div class="col-12">
+        <h4 class="section-title mb-3">Actividades y Difusión</h4>
+
+        <div class="row g-4">
+            <!-- Instagram -->
+            <div class="col-md-6">
+                <div class="card card-concejo p-4 text-center">
+                    <i class="fab fa-instagram fa-3x" style="color: #E4405F;"></i>
+                    <h5 class="mt-2">Síguenos en Instagram</h5>
+                    <p class="text-muted small">Mantente al día con nuestras actividades y noticias.</p>
+                    <a href="#" class="btn btn-outline-primary">@concejomunicipaljunin</a>
+                </div>
+            </div>
+
+            <!-- Descargables -->
+            <div class="col-md-6">
+                <div class="card card-concejo p-4">
+                    <h5><i class="fas fa-download me-2"></i>Descargables</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-decoration-none"><i class="fas fa-file-pdf me-2"></i>Ordenanza de tránsito</a></li>
+                        <li><a href="#" class="text-decoration-none"><i class="fas fa-file-pdf me-2"></i>Informe de gestión 2025</a></li>
+                        <li><a href="#" class="text-decoration-none"><i class="fas fa-file-pdf me-2"></i>Proyecto de reforma CLPP</a></li>
+                        <li><a href="#" class="text-decoration-none"><i class="fas fa-file-pdf me-2"></i>Reglamento interno</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- 4. CONSULTAS PÚBLICAS                       -->
+<!-- ============================================ -->
+<div class="row mt-5">
+    <div class="col-12">
+        <h4 class="section-title mb-3">Consultas Públicas</h4>
+
+        <div class="row g-4">
+            <!-- Consulta 1 -->
+            <div class="col-md-4">
+                <div class="card card-concejo h-100">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold">Proyecto de Ordenanza CLPP</h5>
+                        <p class="card-text small">Reforma parcial de la Ordenanza del Consejo Local de Planificación Pública.</p>
+                        <p class="text-muted small"><i class="fas fa-calendar-alt me-1"></i> Inicio: 31/10/2025</p>
+                        <p class="text-muted small"><i class="fas fa-calendar-check me-1"></i> Culminación: 13/11/2025</p>
+                        <a href="#" class="btn btn-primary btn-sm">Ver documento</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consulta 2 -->
+            <div class="col-md-4">
+                <div class="card card-concejo h-100">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold">Proyecto de Ordenanza de Tránsito</h5>
+                        <p class="card-text small">Actualización de la normativa de circulación de vehículos y personas.</p>
+                        <p class="text-muted small"><i class="fas fa-calendar-alt me-1"></i> Inicio: 15/09/2025</p>
+                        <p class="text-muted small"><i class="fas fa-calendar-check me-1"></i> Culminación: 30/09/2025</p>
+                        <a href="#" class="btn btn-primary btn-sm">Ver documento</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consulta 3 -->
+            <div class="col-md-4">
+                <div class="card card-concejo h-100">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold">Proyecto de Ordenanza Ambiental</h5>
+                        <p class="card-text small">Regulación de residuos sólidos y protección de espacios naturales.</p>
+                        <p class="text-muted small"><i class="fas fa-calendar-alt me-1"></i> Inicio: 20/08/2025</p>
+                        <p class="text-muted small"><i class="fas fa-calendar-check me-1"></i> Culminación: 05/09/2025</p>
+                        <a href="#" class="btn btn-primary btn-sm">Ver documento</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- FOOTER                                      -->
+<!-- ============================================ -->
 {% include 'core/includes/_footer.html' %}
 {% endblock %}
