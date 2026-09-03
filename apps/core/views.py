@@ -30,13 +30,17 @@ User = get_user_model()
 
 
 
-# Datos estaticos de ejemplo para noticia (for demo without DB)
+# ============================================================
+# DATOS DE EJEMPLO PARA DEMO ESTÁTICA (SIN BD)
+# ============================================================
+
+# Noticias de ejemplo (con imágenes de Unsplash)
 NEWS_DATA = [
     {
         'id': 1,
         'title': 'Concejo Municipal fortalece labores de rescate de los «Ángeles de la Autopista»',
         'description': 'En el marco del desarrollo de la Sesión Ordinaria N° 55, el Concejo Municipal concretó la entrega formal de una antena de internet satelital Starlink al cuerpo paramédico y de rescate de los «Ángeles de la Autopista».',
-        'image': 'core/img/noticia1.jpg',
+        'image': 'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=800',
         'date': '20 de agosto de 2026',
         'category': 'Social',
     },
@@ -44,7 +48,7 @@ NEWS_DATA = [
         'id': 2,
         'title': 'Nueva ordenanza para la protección del medio ambiente',
         'description': 'El Concejo Municipal aprobó una nueva ordenanza que regula el uso de plásticos de un solo uso en el municipio, con el objetivo de reducir la contaminación y proteger los espacios naturales.',
-        'image': 'core/img/noticia2.jpg',
+        'image': 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800',
         'date': '18 de agosto de 2026',
         'category': 'Cultura',
     },
@@ -52,12 +56,72 @@ NEWS_DATA = [
         'id': 3,
         'title': 'Jornada de atención al ciudadano en Rubio',
         'description': 'La alcaldía y el concejo municipal realizaron una jornada de atención al ciudadano en la plaza Bolívar de Rubio, donde se atendieron más de 200 personas en temas de salud, registro civil y servicios públicos.',
-        'image': 'core/img/noticia3.jpg',
+        'image': 'https://images.unsplash.com/photo-1573164713988-8665fc963095?w=800',
         'date': '15 de agosto de 2026',
         'category': 'Salud',
     },
 ]
 
+# Datos reales de Concejales del Municipio Junín (con fotos de Unsplash)
+COUNCILORS_DATA = [
+    # Bloque de Presidencia
+    {
+        'name': 'Danny Carrillo',
+        'position': 'Presidente del Concejo Municipal',
+        'image': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+        'bio': 'Abogado comprometido con el desarrollo civil de Rubio. Lidera el parlamento municipal con un enfoque en la modernización institucional y el fortalecimiento de la legislación vecinal.'
+    },
+    {
+        'name': 'F. Kempes',
+        'position': 'Vicepresidente del Concejo Municipal',
+        'image': 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400',
+        'bio': 'Líder social enfocado en la articulación de las comisiones del concejo y el seguimiento parlamentario. Promueve el desarrollo integral de las comunidades rurales del municipio.'
+    },
+    {
+        'name': 'Johan Lizcano',
+        'position': 'Concejal Principal',
+        'image': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400',
+        'bio': 'Vocero comunitario con trayectoria en la fiscalización de la gestión local. Centra sus esfuerzos en la mejora del transporte, la infraestructura y los servicios públicos andinos.'
+    },
+    # Bloque de Comisiones
+    {
+        'name': 'Rubén Manrique',
+        'position': 'Concejal Principal',
+        'image': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400',
+        'bio': 'Planificador enfocado en el desarrollo económico y comercial del municipio Junín. Su meta principal es el rescate del potencial cafetalero e histórico de la región.'
+    },
+    {
+        'name': 'Sonia Mendoza',
+        'position': 'Concejal Principal',
+        'image': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400',
+        'bio': 'Docente y defensora comunitaria. Dedica su actividad legislativa al impulso de programas educativos, culturales y de protección a sectores vulnerables de Rubio.'
+    },
+    {
+        'name': 'Marco Rincón',
+        'position': 'Concejal Principal',
+        'image': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+        'bio': 'Promotor vecinal enfocado en la transparencia presupuestaria. Trabaja activamente en las comisiones técnicas orientadas a la contraloría social municipal.'
+    },
+    {
+        'name': 'Concejal por incorporar',
+        'position': 'Concejal Suplente / Incorporado',
+        'image': 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=400',
+        'bio': 'Apoya las funciones legislativas del bloque de comisiones y participa activamente en el despliegue del parlamentarismo de calle en las parroquias del municipio.'
+    },
+]
+
+SYNDICATE_DATA = [
+    {
+        'name': 'Abogado por designar',
+        'position': 'Síndico Procurador Municipal',
+        'image': 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400',
+    },
+    {
+        'name': 'Daymar C.',
+        'position': 'Secretaria Municipal del Concejo',
+        'image': 'https://images.unsplash.com/photo-1580894732444-8ecded7900cd?w=400',
+    },
+]
 
 
 class NewsDetailView(TemplateView):
@@ -66,8 +130,8 @@ class NewsDetailView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         news_id = self.kwargs.get('pk')
-        
-        # 1. Obtener la noticia actual (DB o estática)
+
+        # Obtener la noticia actual
         try:
             news = News.objects.get(pk=news_id)
             context['news'] = {
@@ -84,7 +148,7 @@ class NewsDetailView(TemplateView):
                     context['news'] = item
                     break
 
-        # 2. Obtener últimas noticias (Siempre desde NEWS_DATA para la demo)
+        # Últimas noticias (excluyendo la actual)
         try:
             latest = News.objects.exclude(pk=news_id).order_by('-publication_date')[:5]
             context['latest_news'] = [
@@ -96,13 +160,12 @@ class NewsDetailView(TemplateView):
                 for new in latest
             ]
         except Exception:
-            # Fallback a datos estáticos SIEMPRE
             context['latest_news'] = [
                 {'id': item['id'], 'title': item['title'], 'date': item['date']}
                 for item in NEWS_DATA if item['id'] != news_id
             ][:5]
 
-        # Si no hay noticias en latest_news, usar todas las estáticas
+        # Fallback si no hay noticias
         if not context.get('latest_news'):
             context['latest_news'] = [
                 {'id': item['id'], 'title': item['title'], 'date': item['date']}
@@ -112,11 +175,85 @@ class NewsDetailView(TemplateView):
         return context
 
 
+class CouncilorsView(TemplateView):  
+    """Vista para la página de concejales (estática con datos de ejemplo)."""
+    template_name = 'core/councilors.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['councilors'] = COUNCILORS_DATA
+        context['syndicate'] = SYNDICATE_DATA
+        return context
+
+
+class NewsDetailView(TemplateView):
+    """Vista para el detalle de una noticia."""
+    template_name = 'core/news_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        news_id = self.kwargs.get('pk')
+
+        # Obtener la noticia actual (DB o estática)
+        try:
+            news = News.objects.get(pk=news_id)
+            context['news'] = {
+                'id': news.id,
+                'title': news.title,
+                'description': news.description,
+                'image': news.image.url if news.image else 'core/img/default_news.jpg',
+                'date': news.date.strftime('%d de %B de %Y'),
+                'category': news.content_type,
+            }
+        except Exception:
+            for item in NEWS_DATA:
+                if item['id'] == news_id:
+                    context['news'] = item
+                    break
+
+        # Últimas noticias (excluyendo la actual)
+        try:
+            latest = News.objects.exclude(pk=news_id).order_by('-publication_date')[:5]
+            context['latest_news'] = [
+                {
+                    'id': new.id,
+                    'title': new.title,
+                    'date': new.date.strftime('%d/%m/%Y'),
+                }
+                for new in latest
+            ]
+        except Exception:
+            context['latest_news'] = [
+                {'id': item['id'], 'title': item['title'], 'date': item['date']}
+                for item in NEWS_DATA if item['id'] != news_id
+            ][:5]
+
+        # Fallback si no hay noticias
+        if not context.get('latest_news'):
+            context['latest_news'] = [
+                {'id': item['id'], 'title': item['title'], 'date': item['date']}
+                for item in NEWS_DATA if item['id'] != news_id
+            ][:5]
+
+        return context
+
+
+class CouncilorsView(TemplateView):
+    """Vista para la página de concejales (estática con datos de ejemplo)."""
+    template_name = 'core/councilors.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['councilors'] = COUNCILORS_DATA
+        context['syndicate'] = SYNDICATE_DATA
+        return context
+
+
 def HomeView(request):
-    """Tabla Principal de los modelos dinámicos"""
+    """Vista principal que combina datos dinámicos (Proxy Models) y estáticos de ejemplo."""
     context = {}
 
-    # 1. Documentos desde BD (if any)
+    # Carga de documentos y gacetas desde la BD (si existen)
     try:
         context['documentos_destacados'] = Document.objects.select_related('gazette', 'document_type').order_by('-publication_date')[:2]
         context['ultimas_gacetas'] = Gazette.objects.all()[:3]
@@ -124,15 +261,14 @@ def HomeView(request):
         context['documentos_destacados'] = []
         context['ultimas_gacetas'] = []
 
-    # 2. Noticias (or static data for demo)
+    # Carga de noticias (Proxy Models o fallback estático)
     try:
-        context['news_list'] = News.objects.all()[:3]
-        if not context['news_list']:
-            context['news_list'] = NEWS_DATA  # Fallback to static data
+        news_qs = News.objects.all()
+        context['news_list'] = news_qs[:3] if news_qs.exists() else NEWS_DATA
     except Exception:
         context['news_list'] = NEWS_DATA
 
-    # 3. Otros proxy models (if any)
+    # Otros contenidos del Home (Proxy Models)
     try:
         context['councilors'] = Councilor.objects.all()
     except Exception:

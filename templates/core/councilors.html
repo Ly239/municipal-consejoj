@@ -1,0 +1,131 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Concejales - Concejo Municipal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .councilor-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: none;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    .councilor-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+    .councilor-card .card-img-top {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 50%;
+        margin: 1.5rem auto 0.5rem;
+        border: 4px solid #f0f4f8;
+        background: #f0f4f8; /* fallback si la imagen no carga */
+    }
+    .councilor-card .card-body {
+        padding: 1.25rem;
+        text-align: center;
+    }
+    .councilor-card .card-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #003B4F;
+        margin-bottom: 0.25rem;
+    }
+    .councilor-card .card-subtitle {
+        font-size: 0.85rem;
+        color: #6b7280;
+        font-weight: 500;
+        margin-bottom: 0.75rem;
+    }
+    .councilor-card .card-text {
+        font-size: 0.9rem;
+        color: #4b5563;
+        line-height: 1.5;
+        text-align: left;
+    }
+    .councilor-card .btn-outline-primary {
+        border-radius: 50px;
+        font-size: 0.8rem;
+        padding: 0.25rem 1rem;
+    }
+    .section-title {
+        font-weight: 700;
+        color: #003B4F;
+        border-left: 4px solid #0AB1D4;
+        padding-left: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- INCLUIMOS EL NAVBAR AQUÍ (Solo en el Home) -->
+{% include 'core/includes/_navbar_public.html' %}
+
+<div class="container mt-4">
+    <h1 class="mb-4">Concejales</h1>
+
+    <!-- Presidencia y Vicepresidencia -->
+    <h4 class="section-title">Presidencia</h4>
+    <div class="row g-4 mb-5">
+        {% for councilor in councilors|slice:":3" %}
+        <div class="col-md-4">
+            <div class="card councilor-card h-100">
+                <!-- ✅ Sin onerror, solo la URL externa -->
+                <img src="{{ councilor.image }}" class="card-img-top" alt="{{ councilor.name }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ councilor.name }}</h5>
+                    <p class="card-subtitle">{{ councilor.position }}</p>
+                    <p class="card-text small">{{ councilor.bio|truncatechars:100 }}</p>
+                    <a href="#" class="btn btn-outline-primary btn-sm">Ver más</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Comisiones -->
+    <h4 class="section-title">Comisiones</h4>
+    <div class="row g-4 mb-5">
+        {% for councilor in councilors|slice:"3:" %}
+        <div class="col-md-4 col-lg-3">
+            <div class="card councilor-card h-100">
+                <img src="{{ councilor.image }}" class="card-img-top" alt="{{ councilor.name }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ councilor.name }}</h5>
+                    <p class="card-subtitle">{{ councilor.position }}</p>
+                    <p class="card-text small">{{ councilor.bio|truncatechars:80 }}</p>
+                    <a href="#" class="btn btn-outline-primary btn-sm">Ver más</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Síndico y Secretaria -->
+    <h4 class="section-title">Síndico y Secretaria Municipal</h4>
+    <div class="row g-4">
+        {% for official in syndicate %}
+        <div class="col-md-6">
+            <div class="card councilor-card h-100">
+                <img src="{{ official.image }}" class="card-img-top" alt="{{ official.name }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ official.name }}</h5>
+                    <p class="card-subtitle">{{ official.position }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- INCLUIMOS EL FOOTER-->
+{% include 'core/includes/_footer.html' %}
+{% endblock %}
+
+
+

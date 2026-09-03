@@ -16,35 +16,35 @@
         <div class="col-lg-8">
             <h1 class="mb-3">{{ news.title }}</h1>
             <p class="text-muted">{{ news.date }}</p>
-            <img src="{% static news.image %}" class="img-fluid rounded mb-4" alt="{{ news.title }}" style="width: 100%; max-height: 400px; object-fit: cover;">
+            <img src="{{ news.image }}" class="img-fluid rounded mb-4" alt="{{ news.title }}" style="width: 100%; max-height: 400px; object-fit: cover;">
             <p>{{ news.description }}</p>
             <a href="{% url 'home' %}" class="btn btn-secondary">← Volver al inicio</a>
         </div>
-        
-            <!-- Barra lateral Latest posts (static example)  -->
-            
-            <div class="col-lg-4">
-            <!-- Últimas noticias -->
-                <div class="card shadow-sm">
-                 <div class="card-header bg-light">
+
+        <!-- Barra lateral -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
                     <h5 class="mb-0">Últimas Noticias</h5>
                 </div>
                 <ul class="list-group list-group-flush">
-                {% for new in latest_news %}
+                    {% for new in latest_news %}
                     <li class="list-group-item">
-                    <a href="{% url 'news_detail' new.id %}" class="text-decoration-none">
-                    {{ new.title|truncatechars:50 }}
-                    <br>
-                    <small class="text-muted">{{ new.date }}</small>
-                    </a>
+                        <a href="{% url 'news_detail' new.id %}" class="text-decoration-none">
+                            {{ new.title|truncatechars:50 }}
+                            <br>
+                            <small class="text-muted">{{ new.date }}</small>
+                        </a>
                     </li>
-                {% empty %}
+                    {% empty %}
                     <li class="list-group-item text-muted">No hay noticias disponibles.</li>
-                {% endfor %}
+                    {% endfor %}
                 </ul>
-                </div>
             </div>
-
+        </div>
     </div>
 </div>
+
+<!-- INCLUIMOS EL FOOTER-->
+{% include 'core/includes/_footer.html' %}
 {% endblock %}

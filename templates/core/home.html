@@ -8,9 +8,8 @@
 {% include 'core/includes/_navbar_public.html' %}
 
 <!-- ============================================ -->
-<!-- 1. HERO CARRUSEL (3 imágenes)                 -->
+<!-- 1. HERO CARRUSEL (con imágenes externas)     -->
 <!-- ============================================ -->
-
 <div id="heroCarousel" class="carousel slide hero-carousel mb-5" data-bs-ride="carousel">
     <div class="carousel-indicators">
         {% for news in news_list|slice:":3" %}
@@ -29,7 +28,8 @@
                         <p>{{ news.description|truncatechars:120 }}</p>
                         <span class="btn-hero">Leer más <i class="fas fa-arrow-right ms-2"></i></span>
                     </div>
-                    <img src="{% static news.image %}" class="slide-img" alt="{{ news.title }}">
+                    <!-- Usar src directo (sin static) para URLs externas -->
+                    <img src="{{ news.image }}" class="slide-img" alt="{{ news.title }}">
                 </div>
             </a>
         </div>
@@ -39,7 +39,6 @@
     <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
     </button>
-
     <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
         <span class="carousel-control-next-icon" aria-hidden="true"></span>
     </button>
@@ -125,4 +124,7 @@
     </div>
 
 </div>
+
+<!-- INCLUIMOS EL FOOTER-->
+{% include 'core/includes/_footer.html' %}
 {% endblock %}
