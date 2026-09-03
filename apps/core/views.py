@@ -124,67 +124,6 @@ SYNDICATE_DATA = [
 ]
 
 
-class NewsDetailView(TemplateView):
-    template_name = 'core/news_detail.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        news_id = self.kwargs.get('pk')
-
-        # Obtener la noticia actual
-        try:
-            news = News.objects.get(pk=news_id)
-            context['news'] = {
-                'id': news.id,
-                'title': news.title,
-                'description': news.description,
-                'image': news.image.url if news.image else 'core/img/default_news.jpg',
-                'date': news.date.strftime('%d de %B de %Y'),
-                'category': news.content_type,
-            }
-        except Exception:
-            for item in NEWS_DATA:
-                if item['id'] == news_id:
-                    context['news'] = item
-                    break
-
-        # Últimas noticias (excluyendo la actual)
-        try:
-            latest = News.objects.exclude(pk=news_id).order_by('-publication_date')[:5]
-            context['latest_news'] = [
-                {
-                    'id': new.id,
-                    'title': new.title,
-                    'date': new.date.strftime('%d/%m/%Y'),
-                }
-                for new in latest
-            ]
-        except Exception:
-            context['latest_news'] = [
-                {'id': item['id'], 'title': item['title'], 'date': item['date']}
-                for item in NEWS_DATA if item['id'] != news_id
-            ][:5]
-
-        # Fallback si no hay noticias
-        if not context.get('latest_news'):
-            context['latest_news'] = [
-                {'id': item['id'], 'title': item['title'], 'date': item['date']}
-                for item in NEWS_DATA if item['id'] != news_id
-            ][:5]
-
-        return context
-
-
-class CouncilorsView(TemplateView):  
-    """Vista para la página de concejales (estática con datos de ejemplo)."""
-    template_name = 'core/councilors.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['councilors'] = COUNCILORS_DATA
-        context['syndicate'] = SYNDICATE_DATA
-        return context
-
 
 class NewsDetailView(TemplateView):
     """Vista para el detalle de una noticia."""
@@ -247,6 +186,10 @@ class CouncilorsView(TemplateView):
         context['councilors'] = COUNCILORS_DATA
         context['syndicate'] = SYNDICATE_DATA
         return context
+
+
+class AboutUsView(TemplateView):
+    template_name = 'core/about_us.html'
 
 
 def HomeView(request):
