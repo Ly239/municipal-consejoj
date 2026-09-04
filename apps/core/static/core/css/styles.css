@@ -4,7 +4,7 @@
 :root {
     --color-dark-blue: #003B4F;   /* Azul oscuro corporativo */
     --color-light-blue: #0AB1D4;  /* Aguamarina/azul claro */
-    --color-bg: #FFFFFF;          /* Fondo principal: BLANCO (Da luz) */
+    --color-bg: #FFFFFF;          /* Fondo principal: BLANCO */
     --color-soft-bg: #F8F6F2;     /* Beige para secciones suaves */
     --color-text: #1A1A1A;
     --font-title: 'Bebas Neue', 'Inter', cursive; 
@@ -17,63 +17,29 @@ body {
 }
 
 /* ============================================ */
-/* NAVBAR                                       */
+/* NAVBAR (Integrado con el carrusel)           */
 /* ============================================ */
 .navbar {
     background-color: #FFFFFF;
-    box-shadow: 0 2px 10px rgba(0, 59, 79, 0.05);
-    padding: 12px 0;
-}
-.navbar-brand img {
-    height: 45px;
-}
-.nav-link {
-    font-weight: 500;
-    color: var(--color-dark-blue) !important;
-    margin: 0 15px;
-    font-size: 1rem;
-}
-.nav-link.active {
-    border-bottom: 3px solid var(--color-light-blue);
-    color: var(--color-light-blue) !important;
-}
-.btn-nav-outline {
-    border: 2px solid var(--color-dark-blue);
-    color: var(--color-dark-blue);
-    border-radius: 50px;
-    padding: 6px 20px;
-    font-weight: 600;
-    background: transparent;
-}
-.btn-nav-outline:hover {
-    background-color: var(--color-dark-blue);
-    color: white;
-}
-.btn-nav-fill {
-    background-color: var(--color-light-blue);
-    color: white;
-    border-radius: 50px;
-    padding: 6px 20px;
-    font-weight: 600;
-    border: none;
-}
-.btn-nav-fill:hover {
-    background-color: #008da8;
-    color: white;
+    box-shadow: 0 2px 10px rgba(0, 59, 79, 0.03); /* Sombra muy sutil */
+    padding: 10px 0;
+    position: relative;
+    z-index: 10;
 }
 
 /* ============================================ */
-/* HERO CARRUSEL (ESTILO EL HATILLO)            */
+/* HERO CARRUSEL (Estilo Miku + El Hatillo)     */
 /* ============================================ */
 .hero-carousel {
     border-radius: 0;
     overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0, 59, 79, 0.15);
-    background-color: #000; /* Fondo oscuro de respaldo */
+    background-color: #FFFFFF;
+    margin-bottom: 0; /* Integrado con el navbar */
+    position: relative;
 }
 .hero-slide {
     position: relative;
-    height: 460px;
+    height: 420px; /* Altura reducida */
     background-size: cover;
     background-position: center;
     display: flex;
@@ -84,33 +50,51 @@ body {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.35) 60%, rgba(0, 0, 0, 0) 100%);
+    background: linear-gradient(to top, rgba(0, 59, 79, 0.85) 0%, rgba(0, 59, 79, 0.4) 50%, rgba(0, 59, 79, 0.05) 90%);
     z-index: 1;
 }
 .slide-content {
     position: relative;
     z-index: 2;
-    padding: 2.5rem 3rem;
+    padding: 2rem 3rem;
     max-width: 700px;
+    color: white;
 }
 .slide-content h1 {
     font-family: var(--font-title);
-    font-size: 3rem;
+    font-size: 2.8rem; /* Reducido para que no se vea gigante */
     font-weight: 700;
-    color: #ffffff;
-    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
+    color: white;
+    text-shadow: 2px 2px 6px rgba(0, 59, 79, 0.6);
     margin-bottom: 0.8rem;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Máximo 2 líneas */
+    -webkit-box-orient: vertical;
+    max-height: 3.5rem;
+}
+.slide-content .news-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+    margin-bottom: 1rem;
+}
+.slide-content .news-meta i {
+    color: var(--color-light-blue);
+    margin-right: 0.3rem;
 }
 .slide-content p {
     font-size: 1.1rem;
-    color: #e2e8f0;
-    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.6);
+    color: rgba(255, 255, 255, 0.85);
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
     margin-bottom: 1.5rem;
 }
-.hero-slide .btn-hero {
+.slide-content .btn-hero {
     background-color: var(--color-light-blue);
-    color: #ffffff;
-    border: none;
+    color: white;
     border-radius: 5px;
     padding: 12px 28px;
     font-weight: 700;
@@ -118,7 +102,7 @@ body {
     display: inline-block;
     transition: background 0.3s;
 }
-.hero-slide .btn-hero:hover {
+.slide-content .btn-hero:hover {
     background-color: var(--color-dark-blue);
 }
 .carousel-indicators {
@@ -129,7 +113,7 @@ body {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background-color: #ffffff;
+    background-color: white;
     opacity: 0.5;
 }
 .carousel-indicators button.active {
@@ -193,39 +177,62 @@ body {
     background: var(--color-dark-blue);
 }
 
+
 /* ============================================ */
-/* LO ÚLTIMO (NOTICIAS)                         */
+/* LO ÚLTIMO (NOTICIAS) - ESTILO "MARCO DE FOTO" */
 /* ============================================ */
 .news-card {
-    border: none;
+    background: #ffffff;
+    border: 1px solid #e9ecef;
     border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0, 59, 79, 0.08);
-    transition: transform 0.3s ease;
-    background: white;
+    padding: 1rem;
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 10px rgba(0, 59, 79, 0.08);
+    transition: transform 0.3s, box-shadow 0.3s;
 }
 .news-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 20px rgba(0, 59, 79, 0.15);
 }
 .news-card .news-img {
+    width: 100%;
     height: 200px;
     object-fit: cover;
-    width: 100%;
+}
+.news-card .news-frame {
+    border: 5px solid #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 1rem;
 }
 .news-card .news-body {
-    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
 }
 .news-card .news-date {
-    color: #6c757d;
     font-size: 0.85rem;
+    color: #6c757d;
     margin-bottom: 0.5rem;
 }
 .news-card .news-title {
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--color-dark-blue);
+    text-transform: uppercase;
+    line-height: 1.4;
+    min-height: 3.2rem;
     margin-bottom: 0.75rem;
+    overflow: hidden;
+}
+.news-card .news-description {
+    font-size: 0.9rem;
+    color: #6c757d;
+    flex-grow: 1;
+    margin-bottom: 0.5rem;
 }
 .news-card .btn-primary-custom {
     background-color: var(--color-dark-blue);
@@ -234,10 +241,12 @@ body {
     padding: 8px 20px;
     text-decoration: none;
     font-weight: 600;
+    margin-top: auto;
 }
 .news-card .btn-primary-custom:hover {
     background-color: var(--color-light-blue);
 }
+
 
 /* ============================================ */
 /* ACTIVIDADES Y DESCARGABLES                   */
