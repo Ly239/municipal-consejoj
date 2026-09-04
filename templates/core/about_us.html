@@ -1,104 +1,33 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Sobre Nosotros - Concejo Municipal{% endblock %}
-
-{% block extra_css %}
-<style>
-    .about-section {
-        background-color: #f8fafc;
-        border-radius: 16px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-    }
-    .about-section h3 {
-        color: #003B4F;
-        font-weight: 700;
-        border-left: 4px solid #0AB1D4;
-        padding-left: 0.75rem;
-        margin-bottom: 1.25rem;
-    }
-    .structure-card {
-        border: none;
-        border-radius: 12px;
-        background: #ffffff;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-        padding: 1.25rem;
-        height: 100%;
-        transition: transform 0.2s ease;
-    }
-    .structure-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.10);
-    }
-    .structure-card .icon {
-        font-size: 2rem;
-        color: #0AB1D4;
-        margin-bottom: 0.5rem;
-    }
-    .structure-card h5 {
-        font-weight: 700;
-        color: #003B4F;
-    }
-    .structure-card p {
-        font-size: 0.9rem;
-        color: #4b5563;
-        margin-bottom: 0;
-    }
-    .legislature-list {
-        list-style: none;
-        padding: 0;
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 0.75rem;
-    }
-    .legislature-list li {
-        background: #ffffff;
-        padding: 0.6rem 1rem;
-        border-radius: 8px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-        border-left: 3px solid #0AB1D4;
-        font-weight: 500;
-        color: #003B4F;
-        font-size: 0.9rem;
-    }
-    .legislature-list li small {
-        display: block;
-        font-weight: 400;
-        color: #6b7280;
-        font-size: 0.8rem;
-    }
-    .btn-outline-custom {
-        border-color: #003B4F;
-        color: #003B4F;
-        border-radius: 50px;
-        padding: 0.4rem 1.5rem;
-        font-weight: 500;
-        transition: all 0.2s;
-    }
-    .btn-outline-custom:hover {
-        background-color: #003B4F;
-        color: #ffffff;
-    }
-    .flag-img {
-        max-height: 80px;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-</style>
-{% endblock %}
+{% block title %}Sobre Nosotros - Concejo Municipal de Junín{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'home' %}">Inicio</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Sobre Nosotros</li>
-        </ol>
-    </nav>
+<!-- NAVBAR  -->
+{% include 'core/includes/_navbar_public.html' %}
 
-    <h1 class="mb-4">Sobre Nosotros</h1>
+<div class="container mt-4 mb-5">
+    <!-- ============================================ -->
+    <!-- HERO (Imagen de fondo, texto grande)          -->
+    <!-- ============================================ -->
+    <div class="about-hero" style="background-image: url('{% static 'core/img/about_us_banner.jpg' %}');">
+        <div class="container">
+            <div class="about-hero-content">
+                <h1>Sobre Nosotros</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Inicio</a></li>
+                        <li class="breadcrumb-item active">Sobre Nosotros</li>
+                    </ol>
+                </nav>
+                <p>El Concejo Municipal de Junín, trabajamos con dedicación para servir a nuestra comunidad.</p>
+                <a href="{% url 'councilors' %}" class="btn-hero">
+                    <i class="fas fa-users"></i> Conoce a los Concejales
+                </a>
+            </div>
+        </div>
+    </div>
 
     <!-- ============================================ -->
     <!-- 1. INTRODUCCIÓN INSTITUCIONAL                -->
@@ -106,17 +35,17 @@
     <div class="about-section">
         <div class="row align-items-center">
             <div class="col-md-8">
-                <p class="lead">
-                    En el Concejo Municipal de Junín, trabajamos con dedicación para servir a nuestra comunidad. 
-                    Nuestro objetivo es promover el bienestar de los ciudadanos a través de la gestión transparente y participativa.
+                <h2>Nuestra Institución</h2>
+                <p>
+                    El Concejo Municipal de Junín es el órgano legislativo del municipio, encargado de dictar ordenanzas, acuerdos y resoluciones que regulan la vida comunal y promueven el desarrollo integral de Rubio y sus habitantes.
                 </p>
                 <p>
-                    El Concejo Municipal es el órgano legislativo del municipio, encargado de dictar ordenanzas, acuerdos y resoluciones 
-                    que regulan la vida comunal y promueven el desarrollo integral de Rubio y sus habitantes.
+                    Trabajamos con transparencia y participación ciudadana, garantizando que cada decisión legislativa esté alineada con el bienestar de nuestra comunidad.
                 </p>
             </div>
             <div class="col-md-4 text-center">
-                <img src="{% static 'core/img/escudo.jpg' %}" alt="Bandera" class="flag-img" onerror="this.style.display='none'">
+                <!-- Aquí va tu escudo (agrandado) -->
+                <img src="{% static 'core/img/escudo.jpg' %}" alt="Escudo del Municipio" class="about-escudo">
             </div>
         </div>
     </div>
@@ -125,14 +54,14 @@
     <!-- 2. ESTRUCTURA DEL CONCEJO                    -->
     <!-- ============================================ -->
     <div class="about-section">
-        <h3>Estructura del Concejo</h3>
+        <h2>Estructura del Concejo</h2>
         <div class="row g-4">
             <!-- Presidente -->
             <div class="col-md-3">
                 <div class="structure-card text-center">
                     <div class="icon"><i class="fas fa-gavel"></i></div>
                     <h5>Presidente</h5>
-                    <p class="fw-bold">Leonardo Canache</p>
+                    <p class="fw-bold">Danny Carrillo</p>
                     <p class="small text-muted">Representante legal del Concejo</p>
                 </div>
             </div>
@@ -141,7 +70,7 @@
                 <div class="structure-card text-center">
                     <div class="icon"><i class="fas fa-handshake"></i></div>
                     <h5>Vicepresidencia</h5>
-                    <p class="fw-bold">Yolanda de Moya</p>
+                    <p class="fw-bold">F. Kempes</p>
                     <p class="small text-muted">Apoyo a la presidencia</p>
                 </div>
             </div>
@@ -150,7 +79,7 @@
                 <div class="structure-card text-center">
                     <div class="icon"><i class="fas fa-file-alt"></i></div>
                     <h5>Secretaría Municipal</h5>
-                    <p class="fw-bold">Arianna Galarraga</p>
+                    <p class="fw-bold">Daymar C.</p>
                     <p class="small text-muted">Gestión administrativa y documental</p>
                 </div>
             </div>
@@ -170,8 +99,8 @@
     <!-- 3. LEGISLATURAS                             -->
     <!-- ============================================ -->
     <div class="about-section">
-        <h3>Legislaturas</h3>
-        <p class="text-muted">Composición del Concejo Municipal a lo largo de los años</p>
+        <h2>Legislaturas</h2>
+        <p class="text-muted mb-4">Composición del Concejo Municipal a lo largo de los años.</p>
         <ul class="legislature-list">
             <li>
                 I Legislatura (1992 - 1995)
@@ -208,16 +137,17 @@
     <!-- 4. BOTONES DE NAVEGACIÓN                     -->
     <!-- ============================================ -->
     <div class="about-section text-center">
-        <p class="mb-3">Conoce más sobre nuestra institución:</p>
-        <div class="d-flex flex-wrap justify-content-center gap-3">
-            <a href="{% url 'councilors' %}" class="btn btn-outline-custom">
-                <i class="fas fa-user-tie me-2"></i>Concejales
+        <h2>Conoce Más</h2>
+        <p class="mb-4">Explora las diferentes secciones de nuestro portal institucional.</p>
+        <div class="about-buttons">
+            <a href="{% url 'councilors' %}">
+                <i class="fas fa-user-tie"></i> Concejales
             </a>
-            <a href="{% url 'home' %}" class="btn btn-outline-custom">
-                <i class="fas fa-file-alt me-2"></i>Ordenanzas
+            <a href="{% url 'home' %}#documents">
+                <i class="fas fa-file-alt"></i> Ordenanzas
             </a>
-            <a href="#" class="btn btn-outline-custom">
-                <i class="fas fa-envelope me-2"></i>Contacto
+            <a href="#">
+                <i class="fas fa-envelope"></i> Contacto
             </a>
         </div>
     </div>

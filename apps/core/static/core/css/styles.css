@@ -1,12 +1,13 @@
 /* ============================================ */
-/* IDENTIDAD DE MARCA */
+/* IDENTIDAD DE MARCA                           */
 /* ============================================ */
 :root {
     --color-dark-blue: #003B4F;   /* Azul oscuro corporativo */
     --color-light-blue: #0AB1D4;  /* Aguamarina/azul claro */
-    --color-bg: #F8F6F2;          /* Beige/gris de fondo del manual */
+    --color-bg: #FFFFFF;          /* Fondo principal: BLANCO (Da luz) */
+    --color-soft-bg: #F8F6F2;     /* Beige para secciones suaves */
     --color-text: #1A1A1A;
-    --font-title: 'Bebas Neue', 'Inter', cursive; /* Si no cargas Bebas, usa Inter */
+    --font-title: 'Bebas Neue', 'Inter', cursive; 
 }
 
 body {
@@ -15,14 +16,16 @@ body {
     color: var(--color-text);
 }
 
-/* --- Estilos del Navbar (para mantenerlo limpio) --- */
+/* ============================================ */
+/* NAVBAR                                       */
+/* ============================================ */
 .navbar {
     background-color: #FFFFFF;
     box-shadow: 0 2px 10px rgba(0, 59, 79, 0.05);
     padding: 12px 0;
 }
 .navbar-brand img {
-    height: 45px; /* Ajusta según tu logo */
+    height: 45px;
 }
 .nav-link {
     font-weight: 500;
@@ -59,54 +62,90 @@ body {
     color: white;
 }
 
-/* --- CARRUSEL HERO (Reemplazando a Miku) --- */
+/* ============================================ */
+/* HERO CARRUSEL (ESTILO EL HATILLO)            */
+/* ============================================ */
 .hero-carousel {
-    border-radius: 20px;
+    border-radius: 0;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 59, 79, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 59, 79, 0.15);
+    background-color: #000; /* Fondo oscuro de respaldo */
 }
 .hero-slide {
-    height: 350px; /* Altura fija como en tu imagen */
     position: relative;
+    height: 460px;
+    background-size: cover;
+    background-position: center;
     display: flex;
-    align-items: center;
-    padding: 40px 60px;
+    align-items: flex-end;
+    color: white;
 }
-.hero-slide .slide-content {
+.hero-slide::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.35) 60%, rgba(0, 0, 0, 0) 100%);
+    z-index: 1;
+}
+.slide-content {
     position: relative;
     z-index: 2;
-    max-width: 50%;
+    padding: 2.5rem 3rem;
+    max-width: 700px;
 }
-.hero-slide h1 {
-    font-size: 3.5rem;
+.slide-content h1 {
     font-family: var(--font-title);
-    color: #003B4F;
+    font-size: 3rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
+    margin-bottom: 0.8rem;
 }
-.hero-slide p {
+.slide-content p {
     font-size: 1.1rem;
-    color: #333;
+    color: #e2e8f0;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.6);
+    margin-bottom: 1.5rem;
 }
 .hero-slide .btn-hero {
-    background-color: var(--color-dark-blue);
-    color: white;
-    border-radius: 50px;
-    padding: 10px 30px;
+    background-color: var(--color-light-blue);
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    padding: 12px 28px;
+    font-weight: 700;
     text-decoration: none;
-    font-weight: 600;
+    display: inline-block;
+    transition: background 0.3s;
 }
-.hero-slide .slide-img {
-    position: absolute;
-    right: 0;
-    top: 0;
-    height: 100%;
-    width: 50%;
-    object-fit: cover;
-    border-radius: 0 20px 20px 0;
-    mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 40%);
-    -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 40%);
+.hero-slide .btn-hero:hover {
+    background-color: var(--color-dark-blue);
+}
+.carousel-indicators {
+    bottom: 20px;
+    z-index: 3;
+}
+.carousel-indicators button {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    opacity: 0.5;
+}
+.carousel-indicators button.active {
+    background-color: var(--color-light-blue);
+    opacity: 1;
+}
+.carousel-control-prev,
+.carousel-control-next {
+    width: 5%;
+    z-index: 3;
+    filter: invert(1);
 }
 
-/* --- TARJETAS Y SECCIONES --- */
+/* ============================================ */
+/* TARJETAS Y SECCIONES (BASE)                  */
+/* ============================================ */
 .section-title {
     font-family: var(--font-title);
     color: var(--color-dark-blue);
@@ -154,10 +193,716 @@ body {
     background: var(--color-dark-blue);
 }
 
+/* ============================================ */
+/* LO ÚLTIMO (NOTICIAS)                         */
+/* ============================================ */
+.news-card {
+    border: none;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 59, 79, 0.08);
+    transition: transform 0.3s ease;
+    background: white;
+    height: 100%;
+}
+.news-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 59, 79, 0.15);
+}
+.news-card .news-img {
+    height: 200px;
+    object-fit: cover;
+    width: 100%;
+}
+.news-card .news-body {
+    padding: 1.5rem;
+}
+.news-card .news-date {
+    color: #6c757d;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+}
+.news-card .news-title {
+    font-weight: 700;
+    color: var(--color-dark-blue);
+    margin-bottom: 0.75rem;
+}
+.news-card .btn-primary-custom {
+    background-color: var(--color-dark-blue);
+    color: white;
+    border-radius: 5px;
+    padding: 8px 20px;
+    text-decoration: none;
+    font-weight: 600;
+}
+.news-card .btn-primary-custom:hover {
+    background-color: var(--color-light-blue);
+}
 
-/*message*/
+/* ============================================ */
+/* ACTIVIDADES Y DESCARGABLES                   */
+/* ============================================ */
+.downloads-section {
+    background-color: var(--color-soft-bg);
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    padding: 2rem;
+}
+.downloads-search {
+    background: white;
+    border: 1px solid #ced4da;
+    border-radius: 50px;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+.downloads-search input {
+    border: none;
+    outline: none;
+    width: 100%;
+    color: var(--color-dark-blue);
+}
+.downloads-search i {
+    color: var(--color-light-blue);
+}
+.download-list-item {
+    background: white;
+    border: 1px solid var(--color-dark-blue);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: background 0.3s;
+}
+.download-list-item:hover {
+    background: rgba(0, 59, 79, 0.05);
+}
+.download-list-item a {
+    color: var(--color-dark-blue);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+/* ============================================ */
+/* CONSULTAS PÚBLICAS                           */
+/* ============================================ */
+.consulta-card {
+    border: none;
+    border-top: 4px solid var(--color-light-blue);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 59, 79, 0.08);
+    transition: transform 0.3s ease;
+}
+.consulta-card:hover {
+    transform: translateY(-3px);
+}
+
+/* ============================================ */
+/* DOCUMENTOS (TABS)                            */
+/* ============================================ */
+.documents-section {
+    margin-top: 3rem;
+    margin-bottom: 3rem;
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 59, 79, 0.08);
+}
+.documents-header {
+    font-family: var(--font-title);
+    color: var(--color-dark-blue);
+    font-size: 2.2rem;
+    border-bottom: 3px solid var(--color-light-blue);
+    display: inline-block;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+.documents-search {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background-color: var(--color-soft-bg);
+    border: 1px solid #dee2e6;
+    border-radius: 50px;
+    margin-bottom: 2rem;
+}
+.documents-search input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    color: var(--color-dark-blue);
+    font-size: 1rem;
+}
+.documents-search input::placeholder {
+    color: #6c757d;
+}
+.documents-search button {
+    background-color: var(--color-dark-blue);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+.documents-search button:hover {
+    background-color: var(--color-light-blue);
+}
+.documents-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: none;
+}
+.documents-tabs .nav-link {
+    font-family: var(--font-title);
+    font-size: 1.2rem;
+    color: var(--color-dark-blue);
+    border: 2px solid var(--color-dark-blue);
+    border-radius: 8px;
+    padding: 0.5rem 1.5rem;
+    background-color: transparent;
+    transition: all 0.3s;
+}
+.documents-tabs .nav-link.active {
+    background-color: var(--color-dark-blue);
+    color: white;
+}
+.documents-tabs .nav-link:hover {
+    background-color: rgba(0, 59, 79, 0.1);
+}
+.documents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+.documents-card {
+    background: #ffffff;
+    border: 4px solid var(--color-dark-blue);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+.documents-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 59, 79, 0.15);
+}
+.documents-card-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--color-dark-blue);
+    line-height: 1.4;
+    margin-bottom: 1.5rem;
+}
+.documents-card-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: var(--color-light-blue);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    font-size: 1.2rem;
+    transition: background 0.3s;
+}
+.documents-card:hover .documents-card-icon {
+    background-color: var(--color-dark-blue);
+}
+.documents-card-category {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* ============================================ */
+/* FOOTER ESTILO EL HATILLO                    */
+/* ============================================ */
+.footer-hatillo {
+    background-color: #ffffff;
+    border-top: 3px solid var(--color-light-blue);
+    padding: 3rem 0;
+    color: var(--color-dark-blue);
+}
+.footer-hatillo .container {
+    max-width: 1140px;
+}
+.footer-column h5 {
+    font-family: var(--font-title);
+    color: var(--color-dark-blue);
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+}
+.footer-column ul {
+    list-style: none;
+    padding: 0;
+}
+.footer-column ul li a {
+    color: var(--color-dark-blue);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+.footer-column ul li a:hover {
+    color: var(--color-light-blue);
+}
+.footer-social {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 1rem;
+}
+.footer-social a {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--color-dark-blue);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: background 0.3s;
+}
+.footer-social a:hover {
+    background-color: var(--color-light-blue);
+}
+.footer-bottom {
+    background-color: var(--color-dark-blue);
+    color: white;
+    text-align: center;
+    padding: 1rem 0;
+    font-size: 0.85rem;
+    margin-top: 2rem;
+}
+
+/* ============================================ */
+/* MENSAJES DE ALERTA                          */
+/* ============================================ */
 .alert-error {
     background-color: #f8d7da;
     border-color: #f5c2c7;
     color: #842029;
+}
+
+
+/* ============================================ */
+/* DETALLE DE NOTICIA (Estilo El Hatillo)      */
+/* ============================================ */
+
+/* Encabezado del artículo */
+.news-article-header {
+    margin-bottom: 2rem;
+    border-bottom: 3px solid var(--color-light-blue);
+    padding-bottom: 1.5rem;
+}
+.news-title {
+    font-family: var(--font-title);
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--color-dark-blue);
+    line-height: 1.2;
+    margin-bottom: 1rem;
+}
+.news-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    color: #6c757d;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+.news-meta i {
+    color: var(--color-light-blue);
+    margin-right: 0.4rem;
+}
+.news-featured-img {
+    width: 100%;
+    max-height: 450px;
+    object-fit: cover;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 59, 79, 0.12);
+    margin-bottom: 2rem;
+}
+.news-body {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #333;
+}
+.news-body p {
+    margin-bottom: 1.5rem;
+}
+
+/* Botones de compartir (En el cuerpo del artículo) */
+.share-section {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.share-title {
+    font-weight: 600;
+    color: var(--color-dark-blue);
+    margin-right: 0.5rem;
+}
+
+/* ============================================ */
+/* SIDEBAR WIDGETS (Categorías + Redes)         */
+/* ============================================ */
+
+/* Categorías estilo El Hatillo (Grid 2x2) */
+.category-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background: #ffffff;
+    border: 3px solid var(--color-dark-blue);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 0;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+.category-card:hover {
+    border-color: var(--color-light-blue);
+    box-shadow: 0 4px 12px rgba(0, 59, 79, 0.15);
+}
+.category-card .category-icon {
+    font-size: 2.5rem;
+    color: var(--color-dark-blue);
+    margin-bottom: 0.75rem;
+}
+.category-card .category-label {
+    font-family: var(--font-title);
+    font-size: 1.2rem;
+    color: var(--color-dark-blue);
+    font-weight: 600;
+    text-align: center;
+}
+
+/* Sidebar mejorado (Para últimas noticias) */
+.sidebar-card {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 59, 79, 0.05);
+}
+.sidebar-header {
+    background-color: var(--color-dark-blue);
+    color: white;
+    padding: 1rem 1.25rem;
+    font-family: var(--font-title);
+    font-size: 1.5rem;
+    border-bottom: 4px solid var(--color-light-blue);
+}
+.sidebar-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.sidebar-list li {
+    border-bottom: 1px solid #f1f5f9;
+}
+.sidebar-list li a {
+    display: block;
+    padding: 1rem 1.25rem;
+    color: var(--color-dark-blue);
+    text-decoration: none;
+    transition: background 0.2s;
+}
+.sidebar-list li a:hover {
+    background-color: rgba(10, 177, 212, 0.1);
+    color: var(--color-light-blue);
+}
+.sidebar-list .news-item-title {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.3rem;
+}
+.sidebar-list .news-item-date {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+/* Redes sociales de colores (en sidebar) */
+.share-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    color: white;
+    text-decoration: none;
+    margin-right: 0.5rem;
+    transition: all 0.3s ease;
+}
+.share-btn:hover {
+    filter: brightness(0.9);
+    transform: translateY(-3px);
+}
+.share-btn.facebook {
+    background-color: #1877F2;
+}
+.share-btn.twitter {
+    background-color: #000000;
+}
+.share-btn.whatsapp {
+    background-color: #25D366;
+}
+.share-btn.instagram {
+    background-color: #E4405F;
+}
+.share-btn.threads {
+    background-color: #000000;
+}
+
+/* ============================================ */
+/* SECCIÓN DE OTRAS NOTICIAS                    */
+/* ============================================ */
+.related-news-section {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 3px solid var(--color-light-blue);
+}
+.related-title {
+    font-family: var(--font-title);
+    color: var(--color-dark-blue);
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+}
+.related-card {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: transform 0.3s, box-shadow 0.3s;
+    height: 100%;
+}
+.related-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 59, 79, 0.1);
+}
+.related-card h5 {
+    font-weight: 700;
+    color: var(--color-dark-blue);
+    margin-bottom: 0.75rem;
+}
+.related-card a {
+    text-decoration: none;
+}
+
+
+
+/* ============================================ */
+/* SOBRE NOSOTROS (Estilo El Hatillo)           */
+/* ============================================ */
+
+/* Hero Banner con imagen de fondo */
+.about-hero {
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    padding: 5rem 0;
+    color: white;
+    text-align: left;
+    margin-bottom: 3rem;
+    overflow: hidden;
+}
+.about-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0.2) 100%);
+    z-index: 1;
+}
+.about-hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 700px;
+}
+.about-hero h1 {
+    font-family: var(--font-title);
+    font-size: 4rem;
+    font-weight: 700;
+    color: white;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+    line-height: 1.1;
+    margin-bottom: 1rem;
+}
+.about-hero .breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 1rem;
+}
+.about-hero .breadcrumb-item a {
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+}
+.about-hero .breadcrumb-item.active {
+    color: rgba(255, 255, 255, 0.8);
+}
+.about-hero p {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.6);
+    margin-bottom: 2rem;
+}
+
+/* Botones de acción en el hero */
+.about-hero .btn-hero {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: var(--color-light-blue);
+    color: white;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    font-weight: 700;
+    transition: all 0.3s;
+}
+.about-hero .btn-hero:hover {
+    background-color: var(--color-dark-blue);
+}
+
+/* Secciones institucionales */
+.about-section {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 16px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 59, 79, 0.05);
+}
+.about-section h2 {
+    font-family: var(--font-title);
+    font-size: 2rem;
+    color: var(--color-dark-blue);
+    border-bottom: 3px solid var(--color-light-blue);
+    display: inline-block;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+.about-section p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #333;
+}
+
+/* Imagen del escudo */
+.about-escudo {
+    width: 100%;
+    max-width: 200px;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 59, 79, 0.15);
+    margin: 0 auto;
+    display: block;
+}
+
+/* Estructura del Concejo (Tarjetas) */
+.structure-card {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+    height: 100%;
+    margin-bottom: 1rem;
+}
+.structure-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 59, 79, 0.1);
+}
+.structure-card .icon {
+    font-size: 2.5rem;
+    color: var(--color-light-blue);
+    margin-bottom: 0.75rem;
+}
+.structure-card h5 {
+    font-weight: 700;
+    color: var(--color-dark-blue);
+    margin-bottom: 0.5rem;
+}
+.structure-card p {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 0;
+}
+
+/* Legislaturas (Tarjetas pequeñas) */
+.legislature-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+}
+.legislature-list li {
+    background: white;
+    border-left: 4px solid var(--color-light-blue);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 59, 79, 0.05);
+    font-weight: 600;
+    color: var(--color-dark-blue);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+.legislature-list li:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0, 59, 79, 0.1);
+}
+.legislature-list li small {
+    display: block;
+    font-weight: 400;
+    color: #6c757d;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+}
+
+/* Botones de navegación */
+.about-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+}
+.about-buttons a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: var(--color-dark-blue);
+    color: white;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background 0.3s;
+}
+.about-buttons a:hover {
+    background-color: var(--color-light-blue);
+    color: white;
+}
+
+
+.about-escudo {
+    width: 100%;
+    max-width: 300px; /* Aumenta a 300px para que se vea más grande */
+    ...
 }

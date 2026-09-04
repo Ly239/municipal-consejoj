@@ -8,7 +8,7 @@
 {% include 'core/includes/_navbar_public.html' %}
 
 <!-- ============================================ -->
-<!-- 1. HERO CARRUSEL (con imágenes externas)     -->
+<!-- 1. HERO CARRUSEL (Estilo El Hatillo)        -->
 <!-- ============================================ -->
 <div id="heroCarousel" class="carousel slide hero-carousel mb-5" data-bs-ride="carousel">
     <div class="carousel-indicators">
@@ -21,14 +21,14 @@
     <div class="carousel-inner">
         {% for news in news_list|slice:":3" %}
         <div class="carousel-item {% if forloop.first %}active{% endif %}">
-            <a href="{% url 'news_detail' news.id %}" class="text-decoration-none">
-                <div class="hero-slide" style="background: linear-gradient(135deg, #e0f7fa, #b2ebf2);">
+            <!-- Enlace a detalle de noticia -->
+            <a href="{% url 'news_detail' news.id %}" class="text-decoration-none d-block">
+                <div class="hero-slide" style="background-image: url('{{ news.image }}');">
                     <div class="slide-content">
                         <h1>{{ news.title }}</h1>
                         <p>{{ news.description|truncatechars:120 }}</p>
                         <span class="btn-hero">Leer más <i class="fas fa-arrow-right ms-2"></i></span>
                     </div>
-                    <img src="{{ news.image }}" class="slide-img" alt="{{ news.title }}">
                 </div>
             </a>
         </div>
@@ -53,48 +53,46 @@
         <div class="row g-4">
             <!-- Noticia 1 -->
             <div class="col-md-4">
-                <div class="card card-concejo h-100">
-                    <img src="{% static 'core/img/noticia1.jpg' %}" class="card-img-top" alt="Noticia 1" style="height: 200px; object-fit: cover;">
-                    <div class="card-body">
-                        <h5 class="card-title fw-bold">Concejo Municipal impulsa jornada de bienestar animal</h5>
-                        <p class="text-muted small"><i class="fas fa-calendar-alt me-1"></i> 27 de abril de 2026</p>
-                        <p class="card-text small">El Concejo Municipal realizó una jornada de atención para mascotas en la plaza Bolívar...</p>
-                        <a href="{% url 'news_detail' 1 %}" class="btn btn-primary btn-sm">Leer más</a>
+                <div class="card news-card">
+                    <img src="{% static 'core/img/noticia1.jpg' %}" class="news-img" alt="Noticia 1">
+                    <div class="news-body">
+                        <p class="news-date"><i class="fas fa-calendar-alt me-1"></i> 27 de abril de 2026 · <i class="fas fa-clock"></i> 12:05 pm</p>
+                        <h5 class="news-title">Concejo Municipal impulsa jornada de bienestar animal</h5>
+                        <p class="text-muted small">El Concejo Municipal realizó una jornada de atención para mascotas en la plaza Bolívar...</p>
+                        <a href="{% url 'news_detail' 1 %}" class="btn btn-primary-custom">Leer más</a>
                     </div>
                 </div>
             </div>
 
             <!-- Noticia 2 -->
             <div class="col-md-4">
-                <div class="card card-concejo h-100">
-                    <img src="{% static 'core/img/noticia2.jpg' %}" class="card-img-top" alt="Noticia 2" style="height: 200px; object-fit: cover;">
-                    <div class="card-body">
-                        <h5 class="card-title fw-bold">Llamado a concurso abierto N° 007-2026</h5>
-                        <p class="text-muted small"><i class="fas fa-calendar-alt me-1"></i> 20 de abril de 2026</p>
-                        <p class="card-text small">El Concejo Municipal invita a empresas a participar en el concurso para servicios de mantenimiento...</p>
-                        <a href="{% url 'news_detail' 2 %}" class="btn btn-primary btn-sm">Leer más</a>
+                <div class="card news-card">
+                    <img src="{% static 'core/img/noticia2.jpg' %}" class="news-img" alt="Noticia 2">
+                    <div class="news-body">
+                        <p class="news-date"><i class="fas fa-calendar-alt me-1"></i> 20 de abril de 2026 · <i class="fas fa-clock"></i> 10:16 am</p>
+                        <h5 class="news-title">Llamado a concurso abierto N° 007-2026</h5>
+                        <p class="text-muted small">El Concejo Municipal invita a empresas a participar en el concurso para servicios de mantenimiento...</p>
+                        <a href="{% url 'news_detail' 2 %}" class="btn btn-primary-custom">Leer más</a>
                     </div>
                 </div>
             </div>
 
             <!-- Noticia 3 -->
             <div class="col-md-4">
-                <div class="card card-concejo h-100">
-                    <img src="{% static 'core/img/noticia3.jpg' %}" class="card-img-top" alt="Noticia 3" style="height: 200px; object-fit: cover;">
-                    <div class="card-body">
-                        <h5 class="card-title fw-bold">Consulta pública sobre reforma de ordenanza</h5>
-                        <p class="text-muted small"><i class="fas fa-calendar-alt me-1"></i> 15 de abril de 2026</p>
-                        <p class="card-text small">Se abre consulta pública para la reforma de la Ordenanza del Consejo Local de Planificación...</p>
-                        <a href="{% url 'news_detail' 3 %}" class="btn btn-primary btn-sm">Leer más</a>
+                <div class="card news-card">
+                    <img src="{% static 'core/img/noticia3.jpg' %}" class="news-img" alt="Noticia 3">
+                    <div class="news-body">
+                        <p class="news-date"><i class="fas fa-calendar-alt me-1"></i> 15 de abril de 2026 · <i class="fas fa-clock"></i> 2:00 pm</p>
+                        <h5 class="news-title">Consulta pública sobre reforma de ordenanza</h5>
+                        <p class="text-muted small">Se abre consulta pública para la reforma de la Ordenanza del Consejo Local de Planificación...</p>
+                        <a href="{% url 'news_detail' 3 %}" class="btn btn-primary-custom">Leer más</a>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="text-end mt-3">
-            <a href="{% url 'home' %}#heroCarousel" class="btn btn-outline-primary">
-                Más Noticias <i class="fas fa-arrow-right ms-1"></i>
-            </a>
+            <a href="#" class="btn btn-outline-primary">Más Noticias <i class="fas fa-arrow-right ms-1"></i></a>
         </div>
     </div>
 </div>
@@ -102,7 +100,7 @@
 <!-- ============================================ -->
 <!-- 3. ACTIVIDADES Y DIFUSIÓN                   -->
 <!-- ============================================ -->
-<div id="documents" class="row mt-5">
+<div class="row mt-5">
     <div class="col-12">
         <h4 class="section-title mb-3">Actividades y Difusión</h4>
 
@@ -113,20 +111,27 @@
                     <i class="fab fa-instagram fa-3x" style="color: #E4405F;"></i>
                     <h5 class="mt-2">Síguenos en Instagram</h5>
                     <p class="text-muted small">Mantente al día con nuestras actividades y noticias.</p>
-                    <a href="#" class="btn btn-outline-primary">@concejomunicipaljunin</a>
+                    <a href="#" class="btn btn-primary-custom">@concejomunicipaljunin</a>
                 </div>
             </div>
 
-            <!-- Descargables -->
+            <!-- Descargables (Con buscador visual) -->
             <div class="col-md-6">
-                <div class="card card-concejo p-4">
+                <div class="downloads-section">
                     <h5><i class="fas fa-download me-2"></i>Descargables</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="#" class="text-decoration-none"><i class="fas fa-file-pdf me-2"></i>Ordenanza de tránsito</a></li>
-                        <li><a href="#" class="text-decoration-none"><i class="fas fa-file-pdf me-2"></i>Informe de gestión 2025</a></li>
-                        <li><a href="#" class="text-decoration-none"><i class="fas fa-file-pdf me-2"></i>Proyecto de reforma CLPP</a></li>
-                        <li><a href="#" class="text-decoration-none"><i class="fas fa-file-pdf me-2"></i>Reglamento interno</a></li>
-                    </ul>
+                    <div class="downloads-search">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Buscar Descargable...">
+                    </div>
+                    <div class="download-list-item">
+                        <a href="#"><i class="fas fa-file-pdf me-2"></i>Reforma Parcial de la Ordenanza de Tránsito</a>
+                    </div>
+                    <div class="download-list-item">
+                        <a href="#"><i class="fas fa-file-pdf me-2"></i>Informe de Gestión 2025</a>
+                    </div>
+                    <div class="download-list-item">
+                        <a href="#"><i class="fas fa-file-pdf me-2"></i>Proyecto de Reforma CLPP</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -143,40 +148,170 @@
         <div class="row g-4">
             <!-- Consulta 1 -->
             <div class="col-md-4">
-                <div class="card card-concejo h-100">
+                <div class="card consulta-card h-100">
                     <div class="card-body">
                         <h5 class="card-title fw-bold">Proyecto de Ordenanza CLPP</h5>
                         <p class="card-text small">Reforma parcial de la Ordenanza del Consejo Local de Planificación Pública.</p>
                         <p class="text-muted small"><i class="fas fa-calendar-alt me-1"></i> Inicio: 31/10/2025</p>
                         <p class="text-muted small"><i class="fas fa-calendar-check me-1"></i> Culminación: 13/11/2025</p>
-                        <a href="#" class="btn btn-primary btn-sm">Ver documento</a>
+                        <a href="#" class="btn btn-primary-custom btn-sm">Ver documento</a>
                     </div>
                 </div>
             </div>
 
             <!-- Consulta 2 -->
             <div class="col-md-4">
-                <div class="card card-concejo h-100">
+                <div class="card consulta-card h-100">
                     <div class="card-body">
                         <h5 class="card-title fw-bold">Proyecto de Ordenanza de Tránsito</h5>
                         <p class="card-text small">Actualización de la normativa de circulación de vehículos y personas.</p>
                         <p class="text-muted small"><i class="fas fa-calendar-alt me-1"></i> Inicio: 15/09/2025</p>
                         <p class="text-muted small"><i class="fas fa-calendar-check me-1"></i> Culminación: 30/09/2025</p>
-                        <a href="#" class="btn btn-primary btn-sm">Ver documento</a>
+                        <a href="#" class="btn btn-primary-custom btn-sm">Ver documento</a>
                     </div>
                 </div>
             </div>
 
             <!-- Consulta 3 -->
             <div class="col-md-4">
-                <div class="card card-concejo h-100">
+                <div class="card consulta-card h-100">
                     <div class="card-body">
                         <h5 class="card-title fw-bold">Proyecto de Ordenanza Ambiental</h5>
                         <p class="card-text small">Regulación de residuos sólidos y protección de espacios naturales.</p>
                         <p class="text-muted small"><i class="fas fa-calendar-alt me-1"></i> Inicio: 20/08/2025</p>
                         <p class="text-muted small"><i class="fas fa-calendar-check me-1"></i> Culminación: 05/09/2025</p>
-                        <a href="#" class="btn btn-primary btn-sm">Ver documento</a>
+                        <a href="#" class="btn btn-primary-custom btn-sm">Ver documento</a>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- 5. DOCUMENTOS DEL CONCEJO (TABS)            -->
+<!-- ============================================ -->
+<div id="documents" class="documents-section mt-5">
+    <h2 class="documents-header"><i class="fas fa-folder-open me-2"></i>Documentos del Concejo</h2>
+    
+    <!-- Buscador visual -->
+    <div class="downloads-search mt-3" style="max-width: 500px;">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Buscar documento...">
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs documents-tabs mt-4" id="docsTabs" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#ordenanzas">Ordenanzas</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#informes">Informes de Comisión</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#trimestrales">Informes Trimestrales</button></li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Ordenanzas (6 ejemplos) -->
+        <div class="tab-pane fade show active" id="ordenanzas">
+            <div class="documents-grid">
+                <div class="documents-card">
+                    <div class="documents-card-title">Ordenanza de Protección y Fomento del Café en el Municipio Junín</div>
+                    <div class="documents-card-icon"><i class="fas fa-download"></i></div>
+                    <div class="documents-card-category">Año 2025</div>
+                </div>
+                <div class="documents-card">
+                    <div class="documents-card-title">Ordenanza de Convivencia Ciudadana y Espacios Públicos en Rubio</div>
+                    <div class="documents-card-icon"><i class="fas fa-download"></i></div>
+                    <div class="documents-card-category">Año 2024</div>
+                </div>
+                <div class="documents-card">
+                    <div class="documents-card-title">Ordenanza para la Gestión Integral de Residuos Sólidos Urbanos</div>
+                    <div class="documents-card-icon"><i class="fas fa-download"></i></div>
+                    <div class="documents-card-category">Año 2024</div>
+                </div>
+                <div class="documents-card">
+                    <div class="documents-card-title">Ordenanza sobre la Regulación de Publicidad Exterior</div>
+                    <div class="documents-card-icon"><i class="fas fa-download"></i></div>
+                    <div class="documents-card-category">Año 2023</div>
+                </div>
+                <div class="documents-card">
+                    <div class="documents-card-title">Ordenanza para la Conservación del Patrimonio Histórico de Rubio</div>
+                    <div class="documents-card-icon"><i class="fas fa-download"></i></div>
+                    <div class="documents-card-category">Año 2023</div>
+                </div>
+                <div class="documents-card">
+                    <div class="documents-card-title">Ordenanza de Promoción del Turismo Sostenible en el Municipio Junín</div>
+                    <div class="documents-card-icon"><i class="fas fa-download"></i></div>
+                    <div class="documents-card-category">Año 2022</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informes de Comisión (6 ejemplos) -->
+        <div class="tab-pane fade" id="informes">
+            <div class="documents-grid">
+                <div class="documents-card">
+                    <div class="documents-card-title">Informe de la Comisión Permanente de Servicios Públicos, Concejal Leonardo Canache</div>
+                    <div class="documents-card-icon"><i class="fas fa-download"></i></div>
+                    <div class="documents-card-category">Año 2025</div>
+                </div>
+                <div class="documents-card">
+                    <div class="documents-card-title">Informe de la Comisión Permanente de Seguridad Ciudadana y Participación Ciudadana</div>
+                    <div class="documents-card-icon"><i class="fas fa-download"></i></div>
+                    <div class="documents-card-category">Año 2025</div>
+                </div>
+                <div class="documents-card">
+                    <div class="documents-card-title">Informe de la Comisión Permanente de Educación, Cultura y Deporte</div>
+                    <div class="documents-card-icon"><i class="fas fa-download"></i></div>
+                    <div class="documents-card-category">Año 2024</div>
+                </div>
+                <div class="documents-card">
+                    <div class="documents-card-title">Informe de la Comisión Permanente de Salud y Desarrollo Social</div>
+                    <div class="documents-card-icon"><i class="fas fa-download"></i></div>
+                    <div class="documents-card-category">Año 2024</div>
+                </div>
+                <div class="documents-card">
+                    <div class="documents-card-title">Informe de la Comisión Permanente de Infraestructura y Vivienda</div>
+                    <div class="documents-card-icon"><i class="fas fa-download"></i></div>
+                    <div class="documents-card-category">Año 2023</div>
+                </div>
+                <div class="documents-card">
+                    <div class="documents-card-title">Informe de la Comisión Permanente de Finanzas y Presupuesto</div>
+                    <div class="documents-card-icon"><i class="fas fa-download"></i></div>
+                    <div class="documents-card-category">Año 2023</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informes Trimestrales (6 ejemplos) -->
+        <div class="tab-pane fade" id="trimestrales">
+            <div class="documents-grid">
+                <div class="documents-card">
+                    <div class="documents-card-title">Informe Trimestral de Gestión - Enero a Marzo 2026</div>
+                    <div class="documents-card-icon"><i class="fas fa-download"></i></div>
+                    <div class="documents-card-category">Trimestre I - 2026</div>
+                </div>
+                <div class="documents-card">
+                    <div class="documents-card-title">Informe Trimestral de Gestión - Abril a Junio 2025</div>
+                    <div class="documents-card-icon"><i class="fas fa-download"></i></div>
+                    <div class="documents-card-category">Trimestre II - 2025</div>
+                </div>
+                <div class="documents-card">
+                    <div class="documents-card-title">Informe Trimestral de Gestión - Julio a Septiembre 2025</div>
+                    <div class="documents-card-icon"><i class="fas fa-download"></i></div>
+                    <div class="documents-card-category">Trimestre III - 2025</div>
+                </div>
+                <div class="documents-card">
+                    <div class="documents-card-title">Informe Trimestral de Gestión - Octubre a Diciembre 2025</div>
+                    <div class="documents-card-icon"><i class="fas fa-download"></i></div>
+                    <div class="documents-card-category">Trimestre IV - 2025</div>
+                </div>
+                <div class="documents-card">
+                    <div class="documents-card-title">Informe Trimestral de Gestión - Enero a Marzo 2025</div>
+                    <div class="documents-card-icon"><i class="fas fa-download"></i></div>
+                    <div class="documents-card-category">Trimestre I - 2025</div>
+                </div>
+                <div class="documents-card">
+                    <div class="documents-card-title">Informe Trimestral de Gestión - Abril a Junio 2024</div>
+                    <div class="documents-card-icon"><i class="fas fa-download"></i></div>
+                    <div class="documents-card-category">Trimestre II - 2024</div>
                 </div>
             </div>
         </div>

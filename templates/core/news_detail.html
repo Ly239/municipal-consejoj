@@ -1,46 +1,90 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}{{ news.title }} - Concejo Municipal{% endblock %}
+{% block title %}{{ news.title }} - Concejo Municipal de Junín{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <nav aria-label="breadcrumb">
+<div class="container mt-4 mb-5">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'home' %}">Inicio</a></li>
-            <li class="breadcrumb-item active">{{ news.title|truncatechars:30 }}</li>
+            <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none" style="color: var(--color-dark-blue);">Inicio</a></li>
+            <li class="breadcrumb-item active text-muted">{{ news.title|truncatechars:30 }}</li>
         </ol>
     </nav>
 
     <div class="row">
+        <!-- Columna Principal (Artículo) -->
         <div class="col-lg-8">
-            <h1 class="mb-3">{{ news.title }}</h1>
-            <p class="text-muted">{{ news.date }}</p>
-            <img src="{{ news.image }}" class="img-fluid rounded mb-4" alt="{{ news.title }}" style="width: 100%; max-height: 400px; object-fit: cover;">
-            <p>{{ news.description }}</p>
-            <a href="{% url 'home' %}" class="btn btn-secondary">← Volver al inicio</a>
+            <article>
+                <!-- Encabezado del artículo -->
+                <header class="news-article-header">
+                    <h1 class="news-title">{{ news.title }}</h1>
+                    <div class="news-meta">
+                        <span><i class="fas fa-calendar-alt"></i>{{ news.date }}</span>
+                        {% if news.category %}
+                        <span><i class="fas fa-tag"></i>{{ news.category }}</span>
+                        {% endif %}
+                        <span><i class="fas fa-user"></i>Concejo Municipal</span>
+                    </div>
+                </header>
+
+                <!-- Imagen destacada -->
+                <img src="{{ news.image }}" class="news-featured-img" alt="{{ news.title }}">
+
+                <!-- Contenido -->
+                <div class="news-body">
+                    <p>{{ news.description }}</p>
+                    <p>Este esfuerzo refleja el compromiso del Concejo Municipal de Junín con el bienestar de sus ciudadanos y el desarrollo sostenible de la región. Seguiremos informando sobre los avances de esta iniciativa.</p>
+                </div>
+
+                <!-- Botón Volver -->
+                <div class="mt-4">
+                    <a href="{% url 'home' %}" class="btn btn-outline-dark" style="border-color: var(--color-dark-blue); color: var(--color-dark-blue);">
+                        <i class="fas fa-arrow-left me-1"></i> Volver al inicio
+                    </a>
+                </div>
+            </article>
         </div>
 
-        <!-- Barra lateral -->
+        <!-- Barra Lateral -->
         <div class="col-lg-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">Últimas Noticias</h5>
-                </div>
-                <ul class="list-group list-group-flush">
+            <!-- Últimas Noticias -->
+            <div class="sidebar-card">
+                <div class="sidebar-header">Últimas Noticias</div>
+                <ul class="sidebar-list">
                     {% for new in latest_news %}
-                    <li class="list-group-item">
-                        <a href="{% url 'news_detail' new.id %}" class="text-decoration-none">
-                            {{ new.title|truncatechars:50 }}
-                            <br>
-                            <small class="text-muted">{{ new.date }}</small>
+                    <li>
+                        <a href="{% url 'news_detail' new.id %}">
+                            <span class="news-item-title">{{ new.title|truncatechars:50 }}</span>
+                            <span class="news-item-date"><i class="far fa-clock me-1"></i>{{ new.date }}</span>
                         </a>
                     </li>
                     {% empty %}
-                    <li class="list-group-item text-muted">No hay noticias disponibles.</li>
+                    <li class="p-3 text-muted">No hay noticias disponibles.</li>
                     {% endfor %}
                 </ul>
             </div>
+
+            <!-- Include de Categorías y Redes Sociales -->
+            {% include 'core/includes/_sidebar_widgets.html' %}
+        </div>
+    </div>
+
+    <!-- Otras Noticias (Relacionadas) -->
+    <div class="related-news-section">
+        <h2 class="related-title">Otras Noticias</h2>
+        <div class="row g-4">
+            {% for new in latest_news|slice:":3" %}
+            <div class="col-md-4">
+                <div class="related-card">
+                    <a href="{% url 'news_detail' new.id %}">
+                        <h5>{{ new.title|truncatechars:50 }}</h5>
+                        <p class="text-muted small mb-0">{{ new.date }}</p>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
 </div>
