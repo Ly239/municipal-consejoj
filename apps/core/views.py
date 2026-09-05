@@ -62,6 +62,7 @@ NEWS_DATA = [
     },
 ]
 
+
 # Datos reales de Concejales del Municipio Junín (con fotos de Unsplash)
 COUNCILORS_DATA = [
     # Bloque de Presidencia
@@ -121,6 +122,104 @@ SYNDICATE_DATA = [
         'position': 'Secretaria Municipal del Concejo',
         'image': 'https://images.unsplash.com/photo-1580894732444-8ecded7900cd?w=400',
     },
+]
+
+
+# Historial legislativo real del Municipio Junín (Táchira) para el About Us
+LEGISLATURES_DATA = [
+    {
+        'id': 'I',
+        'years': '1989 - 1992', # El primer período de alcaldes electos arrancó en 1989
+        'mayor': 'Juan de Dios Cañas',  # Primer alcalde electo directamente en Junín
+        'members': [
+            {'name': 'Armando Bautista', 'party': 'AD'},
+            {'name': 'Sonia Hernán de Bastos', 'party': 'AD'},
+            {'name': 'José Omar Boada', 'party': 'AD'},
+            {'name': 'Luis Antonio Ruda', 'party': 'AD'},
+            {'name': 'Félix Campero Sánchez', 'party': 'AD'},
+            {'name': 'Juan Abello González', 'party': 'COPEI'},
+        ]
+    },
+    {
+        'id': 'II',
+        'years': '1992 - 1995',
+        'mayor': 'Pedro Fernández',
+        'members': [
+            {'name': 'Nelson Flores Galvis', 'party': 'COPEI'},
+            {'name': 'Evaristo Monsalve', 'party': 'COPEI'},
+            {'name': 'Juan Abello González', 'party': 'COPEI'},
+            {'name': 'Sonia Hernán de Bastos', 'party': 'AD'},
+            {'name': 'Marcos Moreno', 'party': 'AD'},
+        ]
+    },
+    {
+        'id': 'III',
+        'years': '1995 - 2000', # Período extendido por transición constitucional
+        'mayor': 'Gonzalo Fuentes La Cruz',
+        'members': [
+            {'name': 'Gerardo Carrero', 'party': 'AD'},
+            {'name': 'Héctor Cabrera', 'party': 'AD'},
+            {'name': 'Marcos Moreno', 'party': 'AD'},
+            {'name': 'Pedro Chirinos', 'party': 'COPEI'},
+            {'name': 'Yaneth de Carrillo', 'party': 'COPEI'},
+        ]
+    },
+    {
+        'id': 'IV',
+        'years': '2000 - 2005',
+        'mayor': 'Luis Valladares',
+        'members': [
+            {'name': 'César Vera', 'party': 'MVR'},
+            {'name': 'Luis Sandoval', 'party': 'MVR'},
+            {'name': 'María Elena Ruiz', 'party': 'AD'},
+            {'name': 'Jorge Salcedo', 'party': 'COPEI'},
+        ]
+    },
+    {
+        'id': 'V',
+        'years': '2005 - 2013',  # Período extendido nacionalmente
+        'mayor': 'Juan Peñaloza / Mercedes Chapeta', # Nombre corregido: Chapeta
+        'members': [
+            {'name': 'José Araujo', 'party': 'PSUV'},
+            {'name': 'Gladys Yáñez', 'party': 'PSUV'},
+            {'name': 'Yobel Sandoval', 'party': 'COPEI'},
+            {'name': 'Walter Chacón', 'party': 'AD'},
+        ]
+    },
+    {
+        'id': 'VI',
+        'years': '2013 - 2018',
+        'mayor': 'Yobel Sandoval',
+        'members': [
+            {'name': 'Danny Carrillo', 'party': 'COPEI'},
+            {'name': 'Sonia Mendoza', 'party': 'AD'},
+            {'name': 'Marcos Rincón', 'party': 'MUD'},
+            {'name': 'Johan Lizcano', 'party': 'MUD'},
+        ]
+    },
+    {
+        'id': 'VII',
+        'years': '2018 - 2021',
+        'mayor': 'Ángel Márquez',
+        'members': [
+            {'name': 'Herlany Rivas', 'party': 'PSUV'},
+            {'name': 'Rubén Manrique', 'party': 'PSUV'},
+            {'name': 'Elizabeth Martínez', 'party': 'PSUV'},
+        ]
+    },
+    {
+        'id': 'VIII',
+        'years': '2021 - Presente', # Gestión legislativa bajo la alcaldía de Jackson Carrillo
+        'mayor': 'Jackson Carrillo',
+        'members': [
+            {'name': 'Danny Carrillo', 'party': 'MUD'},
+            {'name': 'F. Kempes', 'party': 'MUD'},
+            {'name': 'Johan Lizcano', 'party': 'MUD'},
+            {'name': 'Sonia Mendoza', 'party': 'MUD'},
+            {'name': 'Marco Rincón', 'party': 'MUD'},
+            {'name': 'Rubén Manrique', 'party': 'Alianza Dem.'},
+        ]
+    }
 ]
 
 
@@ -190,6 +289,12 @@ class CouncilorsView(TemplateView):
 
 class AboutUsView(TemplateView):
     template_name = 'core/about_us.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['legislatures'] = LEGISLATURES_DATA  # Pasa los datos reales
+        return context
+
 
 
 def HomeView(request):

@@ -855,35 +855,81 @@ body {
     margin-bottom: 0;
 }
 
-/* Legislaturas (Tarjetas pequeñas) */
-.legislature-list {
-    list-style: none;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1rem;
-}
-.legislature-list li {
-    background: white;
-    border-left: 4px solid var(--color-light-blue);
+/* ============================================ */
+/* LEGISLATURAS (ACORDEÓN)     */
+/* ============================================ */
+
+/* Encabezado de acordeón */
+.accordion-item {
+    border: none;
     border-radius: 8px;
-    padding: 1rem;
-    box-shadow: 0 2px 8px rgba(0, 59, 79, 0.05);
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 59, 79, 0.1);
+}
+.accordion-button {
+    background-color: var(--color-dark-blue);
+    color: white;
+    font-family: var(--font-title);
+    font-size: 1.2rem;
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    border: none;
+    box-shadow: none;
+    text-align: center;
+}
+.accordion-button:not(.collapsed) {
+    background-color: var(--color-dark-blue);
+    color: white;
+    box-shadow: none;
+}
+.accordion-button::after {
+    filter: invert(1);
+}
+.accordion-button:hover {
+    background-color: #005a75;
+}
+.accordion-body {
+    background: #f8f9fa;
+    padding: 1.5rem;
+}
+.accordion-body p {
+    font-size: 0.95rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+/* Tabla de concejales */
+.legislature-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.legislature-table th {
+    background-color: #e9ecef;
+    color: var(--color-dark-blue);
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.legislature-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.95rem;
+}
+.legislature-table tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+.legislature-table td:last-child {
     font-weight: 600;
     color: var(--color-dark-blue);
-    transition: transform 0.3s, box-shadow 0.3s;
 }
-.legislature-list li:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 16px rgba(0, 59, 79, 0.1);
-}
-.legislature-list li small {
-    display: block;
-    font-weight: 400;
-    color: #6c757d;
-    font-size: 0.85rem;
-    margin-top: 0.5rem;
-}
+
 
 /* Botones de navegación */
 .about-buttons {

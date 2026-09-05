@@ -96,41 +96,55 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- 3. LEGISLATURAS                             -->
+    <!-- LEGISLATURAS (DATOS REALES DESDE VIEW.PY)   -->
     <!-- ============================================ -->
     <div class="about-section">
-        <h2>Legislaturas</h2>
+        <h2>Concejales - Legislaturas</h2>
         <p class="text-muted mb-4">Composición del Concejo Municipal a lo largo de los años.</p>
-        <ul class="legislature-list">
-            <li>
-                I Legislatura (1992 - 1995)
-                <small>Salvador Prieto, Margarita Franco, Rubén Hernández</small>
-            </li>
-            <li>
-                II Legislatura (1996 - 2000)
-                <small>Felipe Emilio Pimentel, Virgilio Ruiz</small>
-            </li>
-            <li>
-                III Legislatura (2001 - 2005)
-                <small>Gloria del Amigo, Carlos Melo, Alicia de Zamorano</small>
-            </li>
-            <li>
-                IV Legislatura (2006 - 2010)
-                <small>Datos históricos</small>
-            </li>
-            <li>
-                V Legislatura (2011 - 2015)
-                <small>Datos históricos</small>
-            </li>
-            <li>
-                VI Legislatura (2016 - 2020)
-                <small>Datos históricos</small>
-            </li>
-            <li>
-                VII Legislatura (2021 - 2027)
-                <small>Legislatura actual</small>
-            </li>
-        </ul>
+
+        <div class="accordion" id="accordionLegislatures">
+            {% for legislature in legislatures %}
+                <div class="accordion-item mb-2 border-0 shadow-sm rounded-3 overflow-hidden">
+                <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                <button class="accordion-button collapsed text-white fw-bold" type="button" 
+                        data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" 
+                        style="background-color: #1e3a8a;">
+                    {{ legislature.id }} Legislatura ({{ legislature.years }})
+                </button>
+                </h2>
+                <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse" data-bs-parent="#accordionLegislatures">
+                <div class="accordion-body bg-light">
+                    <p class="small text-muted mb-3">
+                        <i class="bi bi-person-badge-fill me-1"></i>
+                        <strong>Alcalde del Período:</strong> {{ legislature.mayor }}
+                    </p>
+                    <div class="table-responsive">
+                        <table class="table table-hover bg-white rounded shadow-sm align-middle mb-0">
+                        <thead>
+                            <tr class="table-secondary">
+                                <th scope="col" class="ps-3">Concejal Histórico</th>
+                                <th scope="col">Fracción Política</th>
+                            </tr>
+                            </thead>
+                        <tbody>
+                        {% for member in legislature.members %}
+                            <tr>
+                                <td class="ps-3 fw-medium text-dark">{{ member.name }}</td>
+                                <td>
+                                <span class="badge rounded-pill bg-secondary px-2.5 py-1.5 fs-7">
+                                            {{ member.party }}
+                                </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                        </table>
+                    </div>
+                    </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
     </div>
 
     <!-- ============================================ -->
