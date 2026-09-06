@@ -1,0 +1,63 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{% if editing %}Editar Crónica{% else %}Nueva Crónica{% endif %} - Concejo Municipal de Junín{% endblock %}
+
+{% block content %}
+{% include 'core/includes/_navbar_public.html' %}
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card card-concejo p-4 shadow-sm border-0">
+                <h2 class="fw-bold mb-3" style="color: var(--color-dark-blue); font-family: var(--font-title);">
+                    <i class="fas fa-edit me-2"></i> {% if editing %}Editar Crónica{% else %}Registrar Nueva Crónica{% endif %}
+                </h2>
+                <p class="text-muted mb-4">Completa los campos del formulario para actualizar el repositorio histórico.</p>
+
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Título de la Crónica</label>
+                        {{ form.title }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold small">Autor / Cronista</label>
+                            {{ form.author }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold small">Imagen Ilustrativa</label>
+                            {{ form.image }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Resumen o Bajada</label>
+                        {{ form.summary }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Contenido Completo</label>
+                        {{ form.content }}
+                    </div>
+
+                    <div class="mb-4 form-check">
+                        {{ form.is_active }}
+                        <label class="form-check-label small fw-bold">Visible en el portal público</label>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'core:manage_chronicles' %}" class="btn btn-outline-secondary rounded-pill px-4">Cancelar</a>
+                        <button type="submit" class="btn text-white fw-bold shadow-sm rounded-pill px-4" style="background-color: var(--color-dark-blue);">
+                            <i class="fas fa-save me-1"></i> {% if editing %}Actualizar Crónica{% else %}Guardar Crónica{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

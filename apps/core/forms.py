@@ -1,13 +1,11 @@
 from django import forms
 from django.utils.text import slugify
-from .models import HomeCarouselNews, MunicipalChronicle, Category
-
-
+from .models import HomeCarouselNews, Category, Chronicle  
 
 class HomeCarouselNewsForm(forms.ModelForm):
     class Meta:
         model = HomeCarouselNews
-        fields = ['title', 'summary', 'content', 'category', 'image', 'order', 'is_active']
+        fields = ['title', 'summary', 'content', 'category', 'image', 'order', 'is_active', 'pdf_file', 'show_pdf_inline', 'social_media_url']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Título de la noticia'}),
             'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Extracto o resumen'}),
@@ -20,19 +18,6 @@ class HomeCarouselNewsForm(forms.ModelForm):
             'show_pdf_inline': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'social_media_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://www.instagram.com/p/...'}),
         }
-
-class MunicipalChronicleForm(forms.ModelForm):
-    class Meta:
-        model = MunicipalChronicle
-        fields = ['title', 'content', 'image', 'publication_date', 'is_published']
-        widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Título de la crónica'}),
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Contenido detallado'}),
-            'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'publication_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'is_published': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        }
-
 
 class CategoryForm(forms.ModelForm):
     class Meta:
@@ -48,3 +33,16 @@ class CategoryForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+class ChronicleForm(forms.ModelForm):
+    class Meta:
+        model = Chronicle  # Asegúrate de usar un único modelo de crónicas en models.py
+        fields = ['title', 'summary', 'content', 'author', 'image', 'is_active']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Título de la crónica...'}),
+            'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Breve introducción o resumen...'}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 6, 'placeholder': 'Desarrollo completo de la crónica histórica...'}),
+            'author': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del cronista o autor'}),
+            'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }

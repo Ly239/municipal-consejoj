@@ -1,0 +1,55 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <!-- Contenido Principal de la Crónica -->
+        <div class="col-lg-8">
+            <article class="blog-post">
+                <h1 class="fw-bold text-dark mb-3">{{ chronicle.title }}</h1>
+                <p class="text-muted mb-4">
+                    <i class="bi bi-person-fill text-primary"></i> Por <strong>{{ chronicle.author }}</strong> | 
+                    <i class="bi bi-calendar-event text-primary ms-2"></i> {{ chronicle.created_at|date:"d de F, Y" }}
+                </p>
+
+                {% if chronicle.image %}
+                    <div class="mb-4">
+                        <img src="{{ chronicle.image.url }}" class="img-fluid rounded shadow-sm w-100" alt="{{ chronicle.title }}" style="max-height: 400px; object-fit: cover;">
+                    </div>
+                {% endif %}
+
+                <div class="lead fw-bold text-secondary mb-4 p-3 bg-light border-start border-4 border-primary rounded">
+                    {{ chronicle.summary }}
+                </div>
+
+                <div class="chronicle-content text-dark" style="line-height: 1.8; white-space: pre-line;">
+                    {{ chronicle.content }}
+                </div>
+            </article>
+
+            <div class="mt-5 pt-3 border-top">
+                <a href="{% url 'core:chronicle_public_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver al listado de crónicas
+                </a>
+            </div>
+        </div>
+
+        <!-- Barra lateral (Crónicas recientes) -->
+        <div class="col-lg-4 mt-4 mt-lg-0">
+            <div class="card shadow-sm border-0 p-3 bg-light">
+                <h4 class="fw-bold text-primary mb-3">Otras Crónicas</h4>
+                <div class="list-group list-group-flush">
+                    {% for recent in recent_chronicles %}
+                        <a href="{% url 'core:chronicle_detail' recent.slug %}" class="list-group-item list-group-item-action bg-transparent py-3">
+                            <h6 class="mb-1 fw-bold text-dark">{{ recent.title }}</h6>
+                            <small class="text-muted"><i class="bi bi-clock"></i> {{ recent.created_at|date:"d M, Y" }}</small>
+                        </a>
+                    {% empty %}
+                        <p class="text-muted small mb-0">No hay más crónicas registradas por ahora.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
