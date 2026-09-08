@@ -223,6 +223,97 @@ LEGISLATURES_DATA = [
 ]
 
 
+# Lista oficial de las 6 comisiones reales de Junín con ID de control para los Modales
+COMMISSIONS_DATA = [
+    {
+        'id': 1,
+        'emoji': '🚰',
+        'title': 'Comisión de Servicios Públicos y Espectáculos',
+        'description': 'Encargada de vigilar la distribución de agua potable, electricidad, vialidad, aseo urbano y transporte en el casco central de Rubio y sus aldeas.',
+        'image': 'core/img/comision_servicios.png',
+        'president': 'Johan Lizcano',
+        'vicepresident': 'Franklin Kempes',
+        'vocal': 'Marco Rincón'
+    },
+    {
+        'id': 2,
+        'emoji': '☕',
+        'title': 'Comisión de Economía y Desarrollo Cafetalero',
+        'description': 'Enfocada en el reimpulso comercial, el emprendimiento y el rescate del potencial histórico agrícola del café de la región andina.',
+        'image': 'core/img/comision_economia.jpg',
+        'president': 'Rubén Manrique',
+        'vicepresident': 'Danny Carrillo',
+        'vocal': 'Sonia Mendoza'
+    },
+    {
+        'id': 3,
+        'emoji': '🎓',
+        'title': 'Comisión de Educación, Cultura y Deporte',
+        'description': 'Encargada de coordinar los programas de becas locales, preservación del patrimonio colonial, eventos deportivos y apoyo a las escuelas de Junín.',
+        'image': 'core/img/comision_educacion.jpg',
+        'president': 'Sonia Mendoza',
+        'vicepresident': 'Johan Lizcano',
+        'vocal': 'Luis Sandoval' # ¡Añadido nuestro séptimo concejal!
+    },
+    {
+        'id': 4,
+        'emoji': '🛡️',
+        'title': 'Comisión de Seguridad Ciudadana y Vialidad',
+        'description': 'Trabaja de la mano con la Policía y Protección Civil para el diseño de planes de prevención vecinal, semaforización y leyes de convivencia.',
+        'image': 'core/img/comision_seguridad.jpg',
+        'president': 'Marco Rincón',
+        'vicepresident': 'Rubén Manrique',
+        'vocal': 'Danny Carrillo'
+    },
+    {
+        'id': 5,
+        'emoji': '⚖️',
+        'title': 'Comisión de Legislación y Contraloría',
+        'description': 'Supervisa los aspectos jurídicos de las nuevas ordenanzas fiscales, los impuestos y ejerce la auditoría presupuestaria de la Alcaldía de Junín.',
+        'image': 'core/img/comision_legislacion.png',
+        'president': 'Danny Carrillo',
+        'vicepresident': 'Sonia Mendoza',
+        'vocal': 'Johan Lizcano'
+    },
+    {
+        'id': 6,
+        'emoji': '⛰️',
+        'title': 'Comisión de Asuntos Parroquiales y Frontera',
+        'description': 'Mapea y canaliza las peticiones de los sectores rurales y fronterizos, impulsando el parlamentarismo de calle en la Parroquia Bramón y Quinimarí.',
+        'image': 'core/img/comision_parroquias.png',
+        'president': 'Franklin Kempes',
+        'vicepresident': 'Marco Rincón',
+        'vocal': 'Rubén Manrique'
+    }
+]
+
+
+# Información oficial de identidad para el apartado "Quiénes Somos" del Municipio Junín
+ABOUT_US_DATA = {
+    'who_we_are': (
+        'El Concejo Municipal del Municipio Junín es un órgano colegiado, legislativo y deliberante, '
+        'integrado por siete (7) concejales principales elegidos mediante el voto popular. Tiene como '
+        'deber fundamental servir a los ciudadanos de Rubio y sus parroquias, garantizando canales '
+        'efectivos de participación pública, contraloría social y el desarrollo de normativas que '
+        'impulsen el bienestar colectivo.'
+    ),
+    'mission': (
+        'Ejercer la función legislativa municipal mediante la creación, discusión y aprobación de '
+        'ordenanzas locales, así como velar por el control político y la fiscalización de los recursos '
+        'públicos de la Alcaldía del Municipio Junín, promoviendo de manera activa la participación '
+        'ciudadana, la justicia social y el desarrollo sostenible de la comunidad andina.'
+    ),
+    'vision': (
+        'Ser una institución legislativa de vanguardia, transparente, eficiente y cercana a los ciudadanos, '
+        'reconocida en el Estado Táchira por su probidad en la gestión pública, la modernización de sus '
+        'ordenanzas y su firme compromiso con la mejora de la calidad de vida, los servicios públicos '
+        'y el rescate de la identidad histórica y cafetalera del municipio Junín.'
+    ),
+    'image_main': 'core/img/quienes_somos_junin.jpg' # Imagen estática del concejo de Rubio
+}
+
+
+
 
 class NewsDetailView(TemplateView):
     """Vista para el detalle de una noticia."""
@@ -287,52 +378,66 @@ class CouncilorsView(TemplateView):
         return context
 
 
+class CommissionsView(TemplateView):
+    template_name = 'core/commissions.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['commissions'] = COMMISSIONS_DATA
+        return context
+
+
 class AboutUsView(TemplateView):
     template_name = 'core/about_us.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['about_data'] = ABOUT_US_DATA
         context['legislatures'] = LEGISLATURES_DATA  # Pasa los datos reales
+        context['about_data'] = ABOUT_US_DATA
         return context
 
 
 
-def HomeView(request):
-    """Vista principal que combina datos dinámicos (Proxy Models) y estáticos de ejemplo."""
-    context = {}
+class HomeView(TemplateView):
+    """Vista principal del Home. Combina datos estáticos de ejemplo y modelos proxy."""
+    template_name = 'core/home.html'
 
-    # Carga de documentos y gacetas desde la BD (si existen)
-    try:
-        context['documentos_destacados'] = Document.objects.select_related('gazette', 'document_type').order_by('-publication_date')[:2]
-        context['ultimas_gacetas'] = Gazette.objects.all()[:3]
-    except Exception:
-        context['documentos_destacados'] = []
-        context['ultimas_gacetas'] = []
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
-    # Carga de noticias (Proxy Models o fallback estático)
-    try:
-        news_qs = News.objects.all()
-        context['news_list'] = news_qs[:3] if news_qs.exists() else NEWS_DATA
-    except Exception:
-        context['news_list'] = NEWS_DATA
+        # 1. Carga de documentos y gacetas (desde la BD, si existen)
+        try:
+            context['documentos_destacados'] = Document.objects.select_related('gazette', 'document_type').order_by('-publication_date')[:2]
+            context['ultimas_gacetas'] = Gazette.objects.all()[:3]
+        except Exception:
+            context['documentos_destacados'] = []
+            context['ultimas_gacetas'] = []
 
-    # Otros contenidos del Home (Proxy Models)
-    try:
-        context['councilors'] = Councilor.objects.all()
-    except Exception:
-        context['councilors'] = []
+        # 2. Carga de noticias (Proxy Models o fallback estático)
+        try:
+            news_qs = News.objects.all()
+            context['news_list'] = news_qs[:3] if news_qs.exists() else NEWS_DATA
+        except Exception:
+            context['news_list'] = NEWS_DATA
 
-    try:
-        context['carousel_items'] = Carousel.objects.all()
-    except Exception:
-        context['carousel_items'] = []
+        # 3. Otros contenidos del Home (Proxy Models)
+        try:
+            context['councilors'] = Councilor.objects.all()
+        except Exception:
+            context['councilors'] = []
 
-    try:
-        context['about_us'] = AboutUs.objects.first()
-    except Exception:
-        context['about_us'] = None
+        try:
+            context['carousel_items'] = Carousel.objects.all()
+        except Exception:
+            context['carousel_items'] = []
 
-    return render(request, 'core/home.html', context)
+        try:
+            context['about_us'] = AboutUs.objects.first()
+        except Exception:
+            context['about_us'] = None
+
+        return context
 
 
 

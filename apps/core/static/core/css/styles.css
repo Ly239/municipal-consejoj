@@ -961,3 +961,169 @@ body {
     max-width: 300px; /* Aumenta a 300px para que se vea más grande */
     ...
 }
+
+
+/*Pequeño ajuste responsivo en about-us para quitar el borde lateral en celulares*/
+@media (max-width: 767.98px) {
+        #mision-block { border-start: none !important; margin-top: 3rem; }
+    }
+
+/* ============================================ */
+/* SOBRE NOSOTROS - MISIÓN Y VISIÓN             */
+/* ============================================ */
+
+.mission-vision {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 59, 79, 0.05);
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+.mission-vision:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 59, 79, 0.1);
+}
+.mission-vision .mv-icon {
+    font-size: 2.5rem;
+    color: var(--color-light-blue);
+    margin-bottom: 1rem;
+}
+.mission-vision h3 {
+    font-family: var(--font-title);
+    font-size: 1.8rem;
+    color: var(--color-dark-blue);
+    margin-bottom: 1rem;
+}
+.mission-vision p {
+    color: #6c757d;
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+/* Botón institucional */
+.btn-institutional {
+    background-color: var(--color-dark-blue);
+    color: white;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background 0.3s;
+}
+.btn-institutional:hover {
+    background-color: var(--color-light-blue);
+    color: white;
+}
+
+/* ============================================ */
+/* SECCIÓN COMISIONES (COLOR DE MARCA)          */
+/* ============================================ */
+
+/* Fondo de la sección */
+.commissions-section {
+    background-color: var(--color-soft-bg);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 59, 79, 0.05);
+}
+
+/* Tarjeta de comisión */
+.card-comision {
+    background: #ffffff;
+    border: none;
+    border-top: 4px solid var(--color-light-blue);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 59, 79, 0.08);
+    transition: transform 0.3s, box-shadow 0.3s;
+    height: 100%;
+}
+.card-comision:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 59, 79, 0.15);
+}
+
+/* Icono de comisión */
+.comision-icon-box {
+    width: 60px;
+    height: 60px;
+    background-color: rgba(10, 177, 212, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+}
+
+/* Botón "Ver Integrantes" */
+.btn-comision {
+    background-color: var(--color-dark-blue);
+    color: white;
+    border-radius: 50px;
+    padding: 0.5rem 1.5rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.3s;
+}
+.btn-comision:hover {
+    background-color: var(--color-light-blue);
+    color: white;
+}
+
+/* Título de la sección */
+.section-title-comisiones {
+    font-family: var(--font-title);
+    font-size: 2.5rem;
+    color: var(--color-dark-blue);
+    border-bottom: 3px solid var(--color-light-blue);
+    display: inline-block;
+    padding-bottom: 0.5rem;
+}
+
+
+/* ============================================ */
+/* SECCIÓN COMISIONES INTERACTIVAS              */
+/* ============================================ */
+.comision-icon-box {
+    width: 50px;
+    height: 50px;
+    background-color: rgba(0, 59, 79, 0.05);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.modal-header-custom {
+    background-color: var(--color-dark-blue);
+    color: #FFFFFF;
+}
+.modal-title-custom {
+    font-family: var(--font-title);
+    letter-spacing: 0.5px;
+}
+.team-badge-box {
+    border-left: 4px solid var(--color-light-blue) !important;
+    background-color: var(--color-soft-bg);
+}
+
+
+/* ============================================ */
+/* BOTÓN OUTLINE DARK (CORREGIDO PARA MARCA)    */
+/* ============================================ */
+
+.btn-outline-dark {
+    border: 2px solid var(--color-dark-blue);
+    color: var(--color-dark-blue);
+    background-color: transparent;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+.btn-outline-dark:hover {
+    background-color: var(--color-dark-blue);
+    color: white; /* Texto blanco en hover */
+    border-color: var(--color-dark-blue);
+}
