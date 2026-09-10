@@ -1,0 +1,225 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Sobre Nosotros - Concejo Municipal de Junín{% endblock %}
+
+{% block content %}
+<!-- NAVBAR  -->
+{% include 'core/includes/_navbar_public.html' %}
+
+<div class="container mt-4 mb-5">
+    <!-- ============================================ -->
+    <!-- HERO (Imagen de fondo, texto grande)          -->
+    <!-- ============================================ -->
+    <div class="about-hero" style="background-image: url('{% static 'core/img/about_us_banner.jpg' %}');">
+        <div class="container">
+            <div class="about-hero-content">
+                <h1>Sobre Nosotros</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Inicio</a></li>
+                        <li class="breadcrumb-item active">Sobre Nosotros</li>
+                    </ol>
+                </nav>
+                <p>El Concejo Municipal de Junín, trabajamos con dedicación para servir a nuestra comunidad.</p>
+                <a href="{% url 'councilors' %}" class="btn-hero">
+                    <i class="fas fa-users"></i> Conoce a los Concejales
+                </a>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Sección: Quiénes Somos (Fondo Claro con Imagen) -->
+    <div class="container my-5">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <span class="text-uppercase text-primary fw-bold tracking-wider" style="font-size: 0.85rem; letter-spacing: 2px;">sobre</span>
+                <h2 class="fw-bold text-dark mb-4" style="color: #003B4F;">Quiénes Somos</h2>
+                <p class="text-muted" style="line-height: 1.7; text-align: justify;">
+                {{ about_data.who_we_are }}
+                </p>
+
+                <a href="{% url 'commissions' %}" class="btn btn-institutional">
+                <i class="fas fa-users"></i> Conoce nuestras Comisiones
+                </a>
+
+            </div>
+        <div class="col-lg-6">
+            <div class="position-relative">
+                <!-- Imagen -->
+                <img src="{% static about_data.image_main %}" class="img-fluid rounded shadow" alt="Concejo Municipal de Junín" onerror="this.src='{% static 'core/img/default_consejo.jpg' %}'" style="border-radius: 12px; width: 100%; max-height: 400px; object-fit: cover;">
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Sección: Misión y Visión (Tarjetas Blancas) -->
+    <div class="py-5">
+        <div class="container py-4">
+            <div class="row g-5">
+            <!-- Bloque Visión -->
+            <div class="col-md-6">
+                <div class="mission-vision">
+                    <div class="mv-icon"><i class="fas fa-eye"></i></div>
+                    <h3>Visión</h3>
+                    <p>{{ about_data.vision }}</p>
+                </div>
+            </div>
+            <!-- Bloque Misión -->
+            <div class="col-md-6">
+                <div class="mission-vision">
+                    <div class="mv-icon"><i class="fas fa-bullseye"></i></div>
+                    <h3>Misión</h3>
+                    <p>{{ about_data.mission }}</p>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- ============================================ -->
+    <!-- 1. INTRODUCCIÓN INSTITUCIONAL                -->
+    <!-- ============================================ -->
+    <div class="about-section">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2>Nuestra Institución</h2>
+                <p>
+                    El Concejo Municipal de Junín es el órgano legislativo del municipio, encargado de dictar ordenanzas, acuerdos y resoluciones que regulan la vida comunal y promueven el desarrollo integral de Rubio y sus habitantes.
+                </p>
+                <p>
+                    Trabajamos con transparencia y participación ciudadana, garantizando que cada decisión legislativa esté alineada con el bienestar de nuestra comunidad.
+                </p>
+            </div>
+            <div class="col-md-4 text-center">
+                <!-- Aquí va tu escudo (agrandado) -->
+                <img src="{% static 'core/img/escudo.jpg' %}" alt="Escudo del Municipio" class="about-escudo">
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 2. ESTRUCTURA DEL CONCEJO                    -->
+    <!-- ============================================ -->
+    <div class="about-section">
+        <h2>Estructura del Concejo</h2>
+        <div class="row g-4">
+            <!-- Presidente -->
+            <div class="col-md-3">
+                <div class="structure-card text-center">
+                    <div class="icon"><i class="fas fa-gavel"></i></div>
+                    <h5>Presidente</h5>
+                    <p class="fw-bold">Danny Carrillo</p>
+                    <p class="small text-muted">Representante legal del Concejo</p>
+                </div>
+            </div>
+            <!-- Vicepresidencia -->
+            <div class="col-md-3">
+                <div class="structure-card text-center">
+                    <div class="icon"><i class="fas fa-handshake"></i></div>
+                    <h5>Vicepresidencia</h5>
+                    <p class="fw-bold">F. Kempes</p>
+                    <p class="small text-muted">Apoyo a la presidencia</p>
+                </div>
+            </div>
+            <!-- Secretaría -->
+            <div class="col-md-3">
+                <div class="structure-card text-center">
+                    <div class="icon"><i class="fas fa-file-alt"></i></div>
+                    <h5>Secretaría Municipal</h5>
+                    <p class="fw-bold">Daymar C.</p>
+                    <p class="small text-muted">Gestión administrativa y documental</p>
+                </div>
+            </div>
+            <!-- Comisiones -->
+            <div class="col-md-3">
+                <div class="structure-card text-center">
+                    <div class="icon"><i class="fas fa-users"></i></div>
+                    <h5>Comisiones</h5>
+                    <p class="fw-bold">Equipo de trabajo</p>
+                    <p class="small text-muted">Grupos especializados por área</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- LEGISLATURAS (DATOS REALES DESDE VIEW.PY)   -->
+    <!-- ============================================ -->
+    <div class="about-section">
+        <h2>Concejales - Legislaturas</h2>
+        <p class="text-muted mb-4">Composición del Concejo Municipal a lo largo de los años.</p>
+
+        <div class="accordion" id="accordionLegislatures">
+        {% for legislature in legislatures %}
+            <div class="accordion-item mb-2 border-0 shadow-sm rounded-3 overflow-hidden">
+            <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+            <button class="accordion-button collapsed text-white fw-bold" type="button" 
+                    data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" 
+                    style="background-color: #1e3a8a;">
+                {{ legislature.id }} Legislatura ({{ legislature.years }})
+            </button>
+            </h2>
+            <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse">
+            <div class="accordion-body bg-light">
+                <p class="small text-muted mb-3">
+                    <i class="bi bi-person-badge-fill me-1"></i>
+                    <strong>Alcalde del Período:</strong> {{ legislature.mayor }}
+                </p>
+                <div class="table-responsive">
+                    <table class="table table-hover bg-white rounded shadow-sm align-middle mb-0">
+                        <thead>
+                            <tr class="table-secondary">
+                                <th scope="col" class="ps-3">Concejal Histórico</th>
+                                <th scope="col">Fracción Política</th>
+                            </tr>
+                        </thead>
+                            <tbody>
+                            {% for member in legislature.members %}
+                            <tr>
+                                <td class="ps-3 fw-medium text-dark">{{ member.name }}</td>
+                                <td>
+                                    <span class="badge rounded-pill bg-secondary px-2.5 py-1.5 fs-7">
+                                        {{ member.party }}
+                                    </span>
+                                </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                    </table>
+                </div>
+                </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 4. BOTONES DE NAVEGACIÓN                     -->
+    <!-- ============================================ -->
+    <div class="about-section text-center">
+        <h2>Conoce Más</h2>
+        <p class="mb-4">Explora las diferentes secciones de nuestro portal institucional.</p>
+        <div class="about-buttons">
+            <a href="{% url 'councilors' %}">
+                <i class="fas fa-user-tie"></i> Concejales
+            </a>
+            <a href="{% url 'home' %}#documents">
+                <i class="fas fa-file-alt"></i> Ordenanzas
+            </a>
+
+            <a href="#">
+                <i class="fas fa-envelope"></i> Contacto
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- INCLUIMOS EL FOOTER-->
+{% include 'core/includes/_footer.html' %}
+{% endblock %}

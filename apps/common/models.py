@@ -80,6 +80,8 @@ class BaseModel(TimestampedMixin, SoftDeleteMixin):
     - TimestampedMixin (created_at, updated_at)
     - SoftDeleteMixin (deleted_at, soft_delete, restore)
     """
+    include_in_trash = True  # Si es False, el modelo no aparece en la papelera universal
+
     class Meta:
         abstract = True
 

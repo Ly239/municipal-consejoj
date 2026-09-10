@@ -1,4 +1,3 @@
-# core/urls.py
 from django.urls import path
 from .views import (
     HomeView,
@@ -16,14 +15,24 @@ from .views import (
     manage_chronicles,
     save_chronicle,
     delete_chronicle,
+    NewsDetailView,
+    CouncilorsView,
+    CommissionsView,
+    AboutUsView,
 )
 
-app_name = 'core'
+
+
 
 urlpatterns = [
+
     # Rutas Principales y Dashboard
-    path('', HomeView, name='home'),
+    path('', HomeView.as_view(), name='home'),
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
+    path('news/<int:pk>/', NewsDetailView.as_view(), name='news_detail'),
+    path('councilors/', CouncilorsView.as_view(), name='councilors'),
+    path('commissions/', CommissionsView.as_view(), name='commissions'),
+    path('about_us/', AboutUsView.as_view(), name='about_us'),
     
     # Rutas Públicas (Noticias y Crónicas)
     path('noticias/', news_public_list_frontend, name='news_public_list_frontend'),

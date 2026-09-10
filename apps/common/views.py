@@ -20,13 +20,14 @@ def register_trash_model(model):
     if model not in TRASH_MODELS:
         TRASH_MODELS.append(model)
 
-# Registrar modelos automáticamente
-from documents.models import Gazette, Document
-register_trash_model(Gazette)
-register_trash_model(Document)
-# Cuando agregues más modelos, solo añádelos aquí:
-# from logic_users.models import User
-# register_trash_model(User)
+# NOTA: el registro de modelos ya NO se hace aquí con imports directos
+# (from documents.models import ...) porque eso provocaba un import
+# circular entre common <-> documents al arrancar Django.
+# Ahora el registro ocurre en common/apps.py -> CommonConfig.ready(),
+# que se ejecuta una sola vez cuando TODOS los modelos ya están
+# cargados en el App Registry. Ahí se detectan automáticamente todos
+# los modelos que heredan de BaseModel, así que no hace falta tocar
+# este archivo cuando se agregue un modelo nuevo (ej. User).
 
 
 class TrashListView(LoginRequiredMixin, ListView):
@@ -73,7 +74,16 @@ class TrashListView(LoginRequiredMixin, ListView):
 
 class RestoreTrashItemView(LoginRequiredMixin, PermissionRequiredMixin, View):
     """Restaura un elemento de la papelera."""
-    permission_required = 'documents.restore_document'
+
+    def get_permission_required(self):
+        """
+        Calcula el permiso requerido dinámicamente según el modelo real
+        (en vez de dejarlo fijo en 'documents.restore_document').
+        Así funciona igual para Document, Gazette, o el futuro User.
+        """
+        model = TRASH_MODELS[self.kwargs['model_index']]
+        permission_name = model.get_restore_permission_name()  # ej: restore_document
+        return (f"{model._meta.app_label}.{permission_name}",)
 
     def handle_no_permission(self):
         messages.error(self.request, "No tienes permiso para restaurar elementos.")
@@ -97,11 +107,15 @@ class RestoreTrashItemView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
 class HardDeleteTrashItemView(LoginRequiredMixin, PermissionRequiredMixin, View):
     """Elimina permanentemente un elemento de la papelera."""
-    permission_required = 'documents.delete_document'
+
+    def get_permission_required(self):
+        model = TRASH_MODELS[self.kwargs['model_index']]
+        return (f"{model._meta.app_label}.delete_{model._meta.model_name}",)
 
     def handle_no_permission(self):
         messages.error(self.request, "No tienes permiso para eliminar permanentemente.")
         return redirect('common:trash_list')
+
 
     def post(self, request, model_index, pk):
         try:
@@ -119,23 +133,15 @@ class HardDeleteTrashItemView(LoginRequiredMixin, PermissionRequiredMixin, View)
         return redirect('common:trash_list')
 
 
-class BulkTrashActionView(LoginRequiredMixin, PermissionRequiredMixin, View):
-    """Acciones masivas en la papelera (restaurar o eliminar permanentemente)."""
-    permission_required = 'documents.restore_document'  # Se requiere al menos restore
 
-    def handle_no_permission(self):
-        messages.error(self.request, "No tienes permiso para realizar acciones masivas en la papelera.")
-        return redirect('common:trash_list')
+class BulkTrashActionView(LoginRequiredMixin, View):
+    """Acciones masivas en la papelera (restaurar o eliminar permanentemente)."""
 
     def post(self, request):
         action = request.POST.get('bulk_action')
         selected = request.POST.getlist('selected_items')
 
-        # ============================================================
-        # 1. MANEJAR "RESTAURAR TODO" Y "ELIMINAR TODO"
-        # ============================================================
         if action in ['restore_all', 'delete_all']:
-            # Obtener todos los elementos de la papelera
             selected = []
             for model in TRASH_MODELS:
                 for obj in model.all_objects.filter(deleted_at__isnull=False):
@@ -145,27 +151,14 @@ class BulkTrashActionView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 messages.warning(request, "No hay elementos en la papelera.")
                 return redirect('common:trash_list')
 
-        # ============================================================
-        # 2. VERIFICAR PERMISOS SEGÚN LA ACCIÓN
-        # ============================================================
-        if action in ['restore', 'restore_all'] and not request.user.has_perm('documents.restore_document'):
-            messages.error(request, "No tienes permiso para restaurar elementos.")
-            return redirect('common:trash_list')
-
-        if action in ['delete', 'delete_all'] and not request.user.has_perm('documents.delete_document'):
-            messages.error(request, "No tienes permiso para eliminar permanentemente.")
-            return redirect('common:trash_list')
-
         if not selected:
             messages.warning(request, "No se seleccionaron elementos.")
             return redirect('common:trash_list')
 
-        # ============================================================
-        # 3. PROCESAR LAS ACCIONES
-        # ============================================================
         restored = 0
         deleted = 0
         errors = 0
+        denied = 0  # ✅ nuevo: cuenta los que se saltaron por falta de permiso
 
         for token in selected:
             try:
@@ -174,9 +167,19 @@ class BulkTrashActionView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 obj = model.all_objects.get(pk=pk)
 
                 if action in ['restore', 'restore_all']:
+                    # Permiso calculado según el modelo real de ESTE objeto
+                    perm = f"{app_label}.{model.get_restore_permission_name()}"
+                    if not request.user.has_perm(perm):
+                        denied += 1
+                        continue
                     obj.restore()
                     restored += 1
+
                 elif action in ['delete', 'delete_all']:
+                    perm = f"{app_label}.delete_{model_name}"
+                    if not request.user.has_perm(perm):
+                        denied += 1
+                        continue
                     obj.hard_delete()
                     deleted += 1
 
@@ -190,14 +193,12 @@ class BulkTrashActionView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 errors += 1
                 logger.error(f"Error en bulk action para {token}: {e}")
 
-        # ============================================================
-        # 4. MENSAJES DE RESULTADO
-        # ============================================================
-        if action in ['restore', 'restore_all'] and restored > 0:
+        if restored > 0:
             messages.success(request, f"{restored} elemento(s) restaurado(s).")
-        elif action in ['delete', 'delete_all'] and deleted > 0:
+        if deleted > 0:
             messages.success(request, f"{deleted} elemento(s) eliminado(s) permanentemente.")
-
+        if denied > 0:
+            messages.warning(request, f"{denied} elemento(s) no se procesaron por falta de permiso.")
         if errors > 0:
             messages.warning(request, f"{errors} elemento(s) no pudieron procesarse.")
 
