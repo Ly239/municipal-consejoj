@@ -5,28 +5,45 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no" />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#003B4F" /> 
+    <meta name="theme-color" content="#003B4F" />
 
     <title>{% block title %}Concejo Municipal de Junín{% endblock %}</title>
 
-    <!-- Google Fonts (Inter) -->
+    <!-- ============================================================ -->
+    <!-- Google Fonts (Inter) - ACTIVO (requiere internet)             -->
+    <!-- Si no hay internet, el navegador usa la fuente del sistema.   -->
+    <!-- ============================================================ -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
-    <!-- Bootstrap CSS (CDN - Principal) -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" 
-          rel="stylesheet" 
-          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" 
-          crossorigin="anonymous" 
-          onerror="this.onerror=null;this.href='{% static "core/bootstrapk/css/bootstrap.min.css" %}';" />
+    <!-- ============================================================ -->
+    <!-- BOOTSTRAP CSS - LOCAL (ACTIVO)                                -->
+    <!-- Se usa local para evitar conflictos de doble carga que rompen -->
+    <!-- los componentes (acordeones, modales, dropdowns).             -->
+    <!-- ============================================================ -->
+    <link rel="stylesheet" href="{% static 'core/bootstrapk/css/bootstrap.min.css' %}" />
 
-    <!-- Font Awesome (CDN) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" 
-          integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" 
+    <!-- ============================================================ -->
+    <!-- BOOTSTRAP CSS - CDN (COMENTADO)                               -->
+    <!-- Descomentar SOLO si se desactiva el local. NUNCA ambos.       -->
+    <!-- ============================================================ -->
+    <!--
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+          crossorigin="anonymous" />
+    -->
+
+    <!-- ============================================================ -->
+    <!-- Font Awesome - ACTIVO (requiere internet para iconos)         -->
+    <!-- Si no hay internet, los iconos no cargan pero nada se rompe.  -->
+    <!-- ============================================================ -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+          integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
           crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-    <!-- Estilos personalizados -->
+    <!-- Estilos personalizados del proyecto -->
     <link rel="stylesheet" href="{% static 'core/css/styles.css' %}" />
 
     {% block extra_css %}{% endblock %}
@@ -34,7 +51,7 @@
 
   <body class="d-flex flex-column h-100">
     <!-- ============================================ -->
-    <!-- MENSAJES DEL SISTEMA (Siempre arriba) -->
+    <!-- MENSAJES DEL SISTEMA                         -->
     <!-- ============================================ -->
     {% if messages %}
     <div class="container mt-3">
@@ -48,33 +65,39 @@
     {% endif %}
 
     <!-- ============================================ -->
-    <!-- CONTENIDO PRINCIPAL -->
+    <!-- CONTENIDO PRINCIPAL                          -->
     <!-- ============================================ -->
     <main class="flex-shrink-0">
       <div class="container mt-4">
         {% block content %}{% endblock %}
       </div>
     </main>
-   
-    <!-- ============================================ -->
-    <!-- SCRIPTS -->
-    <!-- ============================================ -->
-    <!-- Bootstrap JS (CDN - Principal) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" 
-            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" 
-            crossorigin="anonymous"></script>
 
-    <!-- Fallback Local inteligente: solo carga el archivo local si el CDN falla -->
-    <script>
-      if (typeof bootstrap === 'undefined') {
-        document.write('<script src="{% static "core/bootstrapk/js/bootstrap.bundle.min.js" %}"><\/script>');
-      }
-    </script>
+    <!-- ============================================================ -->
+    <!-- BOOTSTRAP JS - LOCAL (ACTIVO)                                 -->
+    <!-- ============================================================ -->
+    <script src="{% static 'core/bootstrapk/js/bootstrap.bundle.min.js' %}"></script>
+
+    <!-- ============================================================ -->
+    <!-- BOOTSTRAP JS - CDN (COMENTADO)                                -->
+    <!-- Descomentar SOLO si se desactiva el local. NUNCA ambos.       -->
+    <!-- ============================================================ -->
+    <!--
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+            crossorigin="anonymous"></script>
+    -->
 
     {% block extra_scripts %}{% endblock %}
 
+    <!-- ============================================================ -->
+    <!-- Auto-cierre de mensajes (guardado contra fallo de Bootstrap)  -->
+    <!-- ============================================================ -->
     <script>
       document.addEventListener("DOMContentLoaded", function () {
+        // Guarda defensiva: si Bootstrap no está disponible, no ejecutar
+        if (typeof bootstrap === "undefined") return;
+
         const alerts = document.querySelectorAll(".alert");
         alerts.forEach((alert) => {
           setTimeout(() => {
