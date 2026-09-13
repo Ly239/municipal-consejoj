@@ -4,7 +4,7 @@
 {% block title %}{{ news_item.title }} - Concejo Municipal de Junín{% endblock %}
 
 {% block content %}
-{% include 'core/includes/_navbar_public.html' %}
+
 
 <div class="container mt-4 mb-5">
     <!-- Breadcrumb de navegación -->
@@ -124,7 +124,7 @@
                 <ul class="sidebar-list">
                     {% for rel in related_news %}
                     <li>
-                        <a href="{% url 'core:news_detail_frontend' rel.pk %}">
+                        <a href="{% url 'core:news_detail' rel.pk %}">
                             <span class="news-item-title">{{ rel.title|truncatechars:50 }}</span>
                             <span class="news-item-date"><i class="far fa-clock me-1"></i>{{ rel.created_at|date:"d M, Y" }}</span>
                         </a>

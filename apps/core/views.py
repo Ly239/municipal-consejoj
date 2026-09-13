@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 """
+from types import SimpleNamespace 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin #Para autenticacion de usuario
@@ -322,6 +323,47 @@ ABOUT_US_DATA = {
 # ==========================================
 # 1. VISTAS DEL PORTAL PÚBLICO (FRONTEND)
 # ==========================================
+class NewsDetailView(TemplateView):
+    """Vista de detalle de noticia. Lee de BD; si no existe, usa datos de demo estática."""
+    template_name = 'core/news_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        news_id = self.kwargs.get('pk')
+
+        # 1. Intentar cargar desde BD
+        try:
+            context['news_item'] = News.objects.get(pk=news_id)
+        except News.DoesNotExist:
+            # 2. Fallback estático (solo si no está en BD)
+            fallback = next((item for item in NEWS_DATA if item['id'] == news_id), None)
+            if fallback:
+                context['news_item'] = self._adapt_static_item(fallback)
+
+        # 3. Noticias relacionadas
+        try:
+            context['related_news'] = News.objects.exclude(pk=news_id).order_by('-publication_date')[:3]
+        except Exception:
+            context['related_news'] = []
+
+        return context
+
+    @staticmethod
+    def _adapt_static_item(item):
+        """Adapta un dict de NEWS_DATA a un objeto compatible con el template."""
+        return SimpleNamespace(
+            id=item['id'],
+            title=item['title'],
+            summary=item['description'],
+            content=item['description'],
+            image={'url': item['image']},
+            category={'name': item['category']},
+            created_at=None,
+            pdf_file=None,
+            show_pdf_inline=False,
+            social_media_url=None,
+        )
+
 
 class CouncilorsView(TemplateView):
     """Vista para la página de concejales (estática con datos de ejemplo)."""
@@ -474,7 +516,7 @@ def chronicle_detail(request, slug):
     """Vista de lectura detallada para una crónica específica."""
     chronicle = get_object_or_404(Chronicle, slug=slug, is_active=True)
     recent_chronicles = Chronicle.objects.filter(is_active=True).exclude(pk=chronicle.pk)[:3]
-    return render(request, 'core/chronicle_detail.html', {
+    return render(request, 'core/chronicles_detail.html', {
         'chronicle': chronicle,
         'recent_chronicles': recent_chronicles
     })

@@ -21,14 +21,14 @@ class UserLoginView(View):
     def get(self, request, *args, **kwargs):
         """Muestra el formulario de login. Si ya está autenticado, redirige al home."""
         if request.user.is_authenticated:
-            return redirect('home')
+            return redirect('core:home')
         form = LoginForm()
         return render(request, self.template_name, {'form': form})
 
     def post(self, request, *args, **kwargs):
         """Procesa el formulario de login y autentica al usuario."""
         if request.user.is_authenticated:
-            return redirect('home')
+            return redirect('core:home')
 
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -38,7 +38,7 @@ class UserLoginView(View):
 
             if user is not None:
                 login(request, user)
-                return redirect('home')
+                return redirect('core:home')
 
         return render(request, self.template_name, {
             'form': form,
@@ -56,14 +56,14 @@ class UserRegisterView(View):
     def get(self, request, *args, **kwargs):
         """Muestra el formulario de registro. Si ya está autenticado, redirige al home."""
         if request.user.is_authenticated:
-            return redirect('home')
+            return redirect('core:home')
         form = RegisterForm()
         return render(request, self.template_name, {'form': form})
 
     def post(self, request, *args, **kwargs):
         """Procesa el formulario de registro y crea un nuevo usuario."""
         if request.user.is_authenticated:
-            return redirect('home')
+            return redirect('core:home')
 
         form = RegisterForm(request.POST)
         if form.is_valid():
@@ -91,7 +91,7 @@ class UserProfileView(LoginRequiredMixin, UpdateView):
     model = User
     form_class = UserProfileForm
     template_name = 'core/profile.html'
-    success_url = reverse_lazy('home')
+    success_url = reverse_lazy('core:home')
 
     def get_object(self, queryset=None):
         """Retorna el usuario actual (siempre edita su propio perfil)."""
@@ -125,4 +125,4 @@ class UserLogoutView(View):
     """Vista para cerrar sesión. Redirige al home después del logout."""
     def get(self, request, *args, **kwargs):
         logout(request)
-        return redirect('home')
+        return redirect('core:home')
