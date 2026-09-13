@@ -6,7 +6,7 @@
   <div class="container">
 
       <!-- ✅ BOTÓN VOLVER (Con respaldo si no hay historial) -->
-    {% if request.resolver_match.url_name != 'home' and request.resolver_match.url_name != 'dashboard' %}
+    {% if request.resolver_match.url_name != 'core:home' and request.resolver_match.url_name != 'core:dashboard' %}
     <a href="#" onclick="if (history.length > 1) { history.back(); } else { window.location.href = '{% url 'documents:document_list' %}'; }" class="btn btn-outline-secondary btn-sm me-3" title="Volver" style="border-radius: 50px; border: 1px solid #003B4F; color: #003B4F;">
       <i class="fas fa-arrow-left"></i>
     </a>

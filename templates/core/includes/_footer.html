@@ -4,7 +4,7 @@
         <div class="row">
             <!-- Columna 1: Logo y descripción -->
             <div class="col-md-4 footer-column">
-                <a href="{% url 'home' %}" class="text-decoration-none">
+                <a href="{% url 'core:home' %}" class="text-decoration-none">
                     <img src="{% static 'core/img/logo_concejo.jpg' %}" alt="Logo" style="height: 60px;">
                 </a>
                 <p class="mt-3" style="color: #6c757d;">En el Concejo Municipal de Junín trabajamos con dedicación para servir a nuestra comunidad.</p>
@@ -14,10 +14,10 @@
             <div class="col-md-2 footer-column">
                 <h5>Contenido</h5>
                 <ul>
-                    <li><a href="{% url 'home' %}">Inicio</a></li>
-                    <li><a href="{% url 'home' %}#heroCarousel">Noticias</a></li>
-                    <li><a href="{% url 'councilors' %}">Concejales</a></li>
-                    <li><a href="{% url 'home' %}#documents">Ordenanzas</a></li>
+                    <li><a href="{% url 'core:home' %}">Inicio</a></li>
+                    <li><a href="{% url 'core:home' %}#heroCarousel">Noticias</a></li>
+                    <li><a href="{% url 'core:councilors' %}">Concejales</a></li>
+                    <li><a href="{% url 'core:home' %}#documents">Ordenanzas</a></li>
                 </ul>
             </div>
 

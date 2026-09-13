@@ -27,14 +27,14 @@
     <div class="container">
 
         <!-- BOTÓN VOLVER (Con respaldo si no hay historial) -->
-        {% if request.resolver_match.url_name != 'home' and request.resolver_match.url_name != 'dashboard' %}
+        {% if request.resolver_match.url_name != 'core:home' and request.resolver_match.url_name != 'core:dashboard' %}
             <a href="#" onclick="if (history.length > 1) { history.back(); } else { window.location.href = '{% url 'documents:document_list' %}'; }" class="btn btn-outline-secondary btn-sm me-3" title="Volver" style="border-radius: 50px; border: 1px solid #003B4F; color: #003B4F;">
             <i class="fas fa-arrow-left"></i>
             </a>
         {% endif %}
 
         <!-- LOGO -->
-        <a class="navbar-brand" href="{% url 'home' %}">
+        <a class="navbar-brand" href="{% url 'core:home' %}">
             <img src="{% static 'core/img/logo_concejo.jpg' %}" alt="Concejo Municipal de Junín" style="height: 45px;">
         </a>
 
@@ -48,11 +48,11 @@
         <div class="collapse navbar-collapse justify-content-center" id="navbarPublic">
             <!-- CAMBIO: flex-wrap para que los enlaces bajen de línea si son muchos -->
             <ul class="navbar-nav gap-lg-2 flex-wrap">
-                <li class="nav-item"><a class="nav-link active" href="{% url 'home' %}" style="color: #003B4F; font-weight: 500;">Inicio</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'home' %}#heroCarousel" style="color: #003B4F; font-weight: 500;">Noticias</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'councilors' %}" style="color: #003B4F; font-weight: 500;">Concejales</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'home' %}#documents" style="color: #003B4F; font-weight: 500;">Documentos</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'about_us' %}" style="color: #003B4F; font-weight: 500;">Sobre Nosotros</a></li>
+                <li class="nav-item"><a class="nav-link active" href="{% url 'core:home' %}" style="color: #003B4F; font-weight: 500;">Inicio</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'core:home' %}#heroCarousel" style="color: #003B4F; font-weight: 500;">Noticias</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'core:councilors' %}" style="color: #003B4F; font-weight: 500;">Concejales</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'core:home' %}#documents" style="color: #003B4F; font-weight: 500;">Documentos</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'core:about_us' %}" style="color: #003B4F; font-weight: 500;">Sobre Nosotros</a></li>
             </ul>
         </div>
 
@@ -62,7 +62,7 @@
                 <a href="{% url 'profile' %}" class="btn btn-outline-dark btn-sm" style="border-radius: 50px; padding: 6px 16px; border: 1px solid #003B4F; color: #003B4F; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                     <i class="fas fa-user me-1"></i> {{ user.username }}
                 </a>
-                <a href="{% url 'dashboard' %}" class="btn btn-sm" style="background-color: #0AB1D4; color: #003B4F; font-weight: 600; border-radius: 50px; padding: 6px 20px; border: none;">
+                <a href="{% url 'core:dashboard' %}" class="btn btn-sm" style="background-color: #0AB1D4; color: #003B4F; font-weight: 600; border-radius: 50px; padding: 6px 20px; border: none;">
                     <i class="fas fa-tachometer-alt me-1"></i> Gestión
                 </a>
                 <a href="{% url 'logout' %}" class="btn btn-outline-dark btn-sm" style="border-radius: 50px; padding: 6px 16px; border: 1px solid #003B4F; color: #003B4F;">

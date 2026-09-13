@@ -19,12 +19,17 @@ from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin #Para autenticacion de usuario
 from django.contrib.auth import authenticate,login, get_user_model,logout
 from django.views import View
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, ListView
 from django.core.paginator import Paginator
 from django.contrib import messages                      # <- necesario para mostrar mensajes
 from documents.models import Document, Gazette
-# Importamos los modelos proxy para el contenido dinámico del home
-from .models import HomeCarouselNews, Category, Chronicle, Councilor, News, Carousel, AboutUs
+
+
+# Imports de modelos de core (unificados tras merge home-core)
+from .models import (
+    HomeCarouselNews, Category, Chronicle,
+    Councilor, News, Carousel, AboutUs,
+)
 from .forms import HomeCarouselNewsForm, CategoryForm, ChronicleForm
 
 User = get_user_model()
@@ -130,8 +135,8 @@ SYNDICATE_DATA = [
 LEGISLATURES_DATA = [
     {
         'id': 'I',
-        'years': '1989 - 1992', # El primer período de alcaldes electos arrancó en 1989
-        'mayor': 'Juan de Dios Cañas',  # Primer alcalde electo directamente en Junín
+        'years': '1989 - 1992',
+        'mayor': 'Juan de Dios Cañas',
         'members': [
             {'name': 'Armando Bautista', 'party': 'AD'},
             {'name': 'Sonia Hernán de Bastos', 'party': 'AD'},
@@ -155,7 +160,7 @@ LEGISLATURES_DATA = [
     },
     {
         'id': 'III',
-        'years': '1995 - 2000', # Período extendido por transición constitucional
+        'years': '1995 - 2000',
         'mayor': 'Gonzalo Fuentes La Cruz',
         'members': [
             {'name': 'Gerardo Carrero', 'party': 'AD'},
@@ -178,8 +183,8 @@ LEGISLATURES_DATA = [
     },
     {
         'id': 'V',
-        'years': '2005 - 2013',  # Período extendido nacionalmente
-        'mayor': 'Juan Peñaloza / Mercedes Chapeta', # Nombre corregido: Chapeta
+        'years': '2005 - 2013',
+        'mayor': 'Juan Peñaloza / Mercedes Chapeta',
         'members': [
             {'name': 'José Araujo', 'party': 'PSUV'},
             {'name': 'Gladys Yáñez', 'party': 'PSUV'},
@@ -210,7 +215,7 @@ LEGISLATURES_DATA = [
     },
     {
         'id': 'VIII',
-        'years': '2021 - Presente', # Gestión legislativa bajo la alcaldía de Jackson Carrillo
+        'years': '2021 - Presente',
         'mayor': 'Jackson Carrillo',
         'members': [
             {'name': 'Danny Carrillo', 'party': 'MUD'},
@@ -254,7 +259,7 @@ COMMISSIONS_DATA = [
         'image': 'core/img/comision_educacion.jpg',
         'president': 'Sonia Mendoza',
         'vicepresident': 'Johan Lizcano',
-        'vocal': 'Luis Sandoval' # ¡Añadido nuestro séptimo concejal!
+        'vocal': 'Luis Sandoval'
     },
     {
         'id': 4,
@@ -310,61 +315,13 @@ ABOUT_US_DATA = {
         'ordenanzas y su firme compromiso con la mejora de la calidad de vida, los servicios públicos '
         'y el rescate de la identidad histórica y cafetalera del municipio Junín.'
     ),
-    'image_main': 'core/img/quienes_somos_junin.jpg' # Imagen estática del concejo de Rubio
+    'image_main': 'core/img/quienes_somos_junin.jpg'
 }
 
 
-class NewsDetailView(TemplateView):
-    """Vista para el detalle de una noticia."""
-    template_name = 'core/news_detail.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        news_id = self.kwargs.get('pk')
-
-        # Obtener la noticia actual (DB o estática)
-        try:
-            news = News.objects.get(pk=news_id)
-            context['news'] = {
-                'id': news.id,
-                'title': news.title,
-                'description': news.description,
-                'image': news.image.url if news.image else 'core/img/default_news.jpg',
-                'date': news.date.strftime('%d de %B de %Y'),
-                'category': news.content_type,
-            }
-        except Exception:
-            for item in NEWS_DATA:
-                if item['id'] == news_id:
-                    context['news'] = item
-                    break
-
-        # Últimas noticias (excluyendo la actual)
-        try:
-            latest = News.objects.exclude(pk=news_id).order_by('-publication_date')[:5]
-            context['latest_news'] = [
-                {
-                    'id': new.id,
-                    'title': new.title,
-                    'date': new.date.strftime('%d/%m/%Y'),
-                }
-                for new in latest
-            ]
-        except Exception:
-            context['latest_news'] = [
-                {'id': item['id'], 'title': item['title'], 'date': item['date']}
-                for item in NEWS_DATA if item['id'] != news_id
-            ][:5]
-
-        # Fallback si no hay noticias
-        if not context.get('latest_news'):
-            context['latest_news'] = [
-                {'id': item['id'], 'title': item['title'], 'date': item['date']}
-                for item in NEWS_DATA if item['id'] != news_id
-            ][:5]
-
-        return context
-
+# ==========================================
+# 1. VISTAS DEL PORTAL PÚBLICO (FRONTEND)
+# ==========================================
 
 class CouncilorsView(TemplateView):
     """Vista para la página de concejales (estática con datos de ejemplo)."""
@@ -392,35 +349,52 @@ class AboutUsView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['about_data'] = ABOUT_US_DATA
-        context['legislatures'] = LEGISLATURES_DATA  # Pasa los datos reales
-        context['about_data'] = ABOUT_US_DATA
+        context['legislatures'] = LEGISLATURES_DATA
         return context
 
 
 
 class HomeView(TemplateView):
-    """Vista principal del Home. Combina datos estáticos de ejemplo y modelos proxy."""
+    """
+    Vista principal del Home.
+    Combina datos de BD (documentos, gacetas, carrusel, crónicas)
+    con datos estáticos de ejemplo y modelos proxy.
+    """
     template_name = 'core/home.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # 1. Carga de documentos y gacetas (desde la BD, si existen)
+        # 1. Documentos y gacetas (desde BD, si existen)
         try:
-            context['documentos_destacados'] = Document.objects.select_related('gazette', 'document_type').order_by('-publication_date')[:2]
+            context['documentos_destacados'] = Document.objects.select_related(
+                'gazette', 'document_type'
+            ).order_by('-publication_date')[:2]
             context['ultimas_gacetas'] = Gazette.objects.all()[:3]
         except Exception:
             context['documentos_destacados'] = []
             context['ultimas_gacetas'] = []
 
-        # 2. Carga de noticias (Proxy Models o fallback estático)
+        # 2. Carrusel de noticias activas (integración home-core)
+        try:
+            context['carousel_news'] = HomeCarouselNews.objects.filter(is_active=True)
+        except Exception:
+            context['carousel_news'] = []
+
+        # 3. Crónicas municipales recientes (integración home-core)
+        try:
+            context['chronicles'] = Chronicle.objects.filter(is_active=True)[:3]
+        except Exception:
+            context['chronicles'] = []
+
+        # 4. Noticias (Proxy Models o fallback estático)
         try:
             news_qs = News.objects.all()
             context['news_list'] = news_qs[:3] if news_qs.exists() else NEWS_DATA
         except Exception:
             context['news_list'] = NEWS_DATA
 
-        # 3. Otros contenidos del Home (Proxy Models)
+        # 5. Otros contenidos del Home (Proxy Models)
         try:
             context['councilors'] = Councilor.objects.all()
         except Exception:
@@ -438,9 +412,10 @@ class HomeView(TemplateView):
 
         return context
 
-
 ##################################################################
-#ACTUALIZACIÓN DE COLABORADOR 2
+# Cambios compañero colaborador 2 (Home dinámico)
+# Recomendación usar CVB (Vistas Basadas eb Clases)
+
 
 def news_public_list_frontend(request):
     """Listado público de noticias con filtros por texto, fecha y categoría."""
@@ -468,13 +443,14 @@ def news_public_list_frontend(request):
     return render(request, 'core/news_public_list.html', context)
 
 
+
 def news_detail_frontend(request, pk):
-    """Vista detallada de una noticia individual del carrusel."""
+    """Vista detallada de una noticia individual del carrusel (integración home-core)."""
     news_item = get_object_or_404(HomeCarouselNews, pk=pk, is_active=True)
-    
+
     if news_item.category:
         related_news = HomeCarouselNews.objects.filter(
-            is_active=True, 
+            is_active=True,
             category=news_item.category
         ).exclude(pk=pk)[:3]
     else:
@@ -485,6 +461,7 @@ def news_detail_frontend(request, pk):
         'related_news': related_news,
     }
     return render(request, 'core/news_detail.html', context)
+
 
 
 def chronicle_public_list(request):
@@ -532,7 +509,7 @@ def update_news_frontend(request, pk):
             return redirect('core:manage_news_frontend')
     else:
         form = HomeCarouselNewsForm(instance=news_item)
-    
+
     context = {'form': form, 'news_item': news_item}
     return render(request, 'core/update_news.html', context)
 
@@ -544,7 +521,7 @@ def delete_news_frontend(request, pk):
         news_item.delete()
         messages.success(request, 'Noticia eliminada correctamente.')
         return redirect('core:manage_news_frontend')
-    
+
     return render(request, 'core/delete_news.html', {'news_item': news_item})
 
 
@@ -557,9 +534,9 @@ def manage_chronicles(request):
 
 
 def save_chronicle(request, pk=None):
-    """Vista unificada para Crear o Editar una crónica utilizando save_chronicle.html."""
+    """Vista unificada para Crear o Editar una crónica utilizando save_chronicles.html."""
     chronicle = get_object_or_404(Chronicle, pk=pk) if pk else None
-    
+
     if request.method == 'POST':
         form = ChronicleForm(request.POST, request.FILES, instance=chronicle)
         if form.is_valid():
@@ -568,9 +545,9 @@ def save_chronicle(request, pk=None):
             return redirect('core:manage_chronicles')
     else:
         form = ChronicleForm(instance=chronicle)
-        
+
     return render(request, 'core/save_chronicles.html', {
-        'form': form, 
+        'form': form,
         'editing': bool(pk)
     })
 
@@ -624,43 +601,40 @@ def delete_category_frontend(request, pk):
         category.delete()
         messages.success(request, "Categoría eliminada exitosamente.")
         return redirect('core:manage_categories_frontend')
-    
+
     context = {'category': category}
     return render(request, 'core/delete_category.html', context)
-####################################################################
+
+#################################################################
 
 
 
 # ==========================================
 # 2. PANEL DE ADMINISTRACIÓN / GESTIÓN INTERNA
 # ==========================================
+
 class DashboardView(LoginRequiredMixin, TemplateView):
+    """Panel de control principal para usuarios autenticados (KPIs y estadísticas)."""
     template_name = 'core/dashboard.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # KPI Cards
         context['total_documents'] = Document.objects.count()
         context['total_gazettes'] = Gazette.objects.count()
         context['total_users'] = User.objects.count()
 
-        # Papelera
         from common.views import TRASH_MODELS
         trash_count = 0
         for model in TRASH_MODELS:
             trash_count += model.all_objects.filter(deleted_at__isnull=False).count()
         context['total_trash'] = trash_count
 
-        # Documentos recientes (últimos 5)
         context['recent_documents'] = Document.objects.select_related(
             'document_type', 'gazette'
         ).order_by('-created_at')[:5]
 
-        # Datos para el gráfico
         context['approved_count'] = Document.objects.filter(is_approved=True).count()
         context['pending_count'] = Document.objects.filter(is_approved=False).count()
 
         return context
-
-

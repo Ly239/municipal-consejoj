@@ -17,12 +17,12 @@
                 <h1>Sobre Nosotros</h1>
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'core:home' %}">Inicio</a></li>
                         <li class="breadcrumb-item active">Sobre Nosotros</li>
                     </ol>
                 </nav>
                 <p>El Concejo Municipal de Junín, trabajamos con dedicación para servir a nuestra comunidad.</p>
-                <a href="{% url 'councilors' %}" class="btn-hero">
+                <a href="{% url 'core:councilors' %}" class="btn-hero">
                     <i class="fas fa-users"></i> Conoce a los Concejales
                 </a>
 
@@ -41,7 +41,7 @@
                 {{ about_data.who_we_are }}
                 </p>
 
-                <a href="{% url 'commissions' %}" class="btn btn-institutional">
+                <a href="{% url 'core:commissions' %}" class="btn btn-institutional">
                 <i class="fas fa-users"></i> Conoce nuestras Comisiones
                 </a>
 
@@ -206,10 +206,10 @@
         <h2>Conoce Más</h2>
         <p class="mb-4">Explora las diferentes secciones de nuestro portal institucional.</p>
         <div class="about-buttons">
-            <a href="{% url 'councilors' %}">
+            <a href="{% url 'core:councilors' %}">
                 <i class="fas fa-user-tie"></i> Concejales
             </a>
-            <a href="{% url 'home' %}#documents">
+            <a href="{% url 'core:home' %}#documents">
                 <i class="fas fa-file-alt"></i> Ordenanzas
             </a>
 
