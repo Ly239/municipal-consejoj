@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 # ==================================================
 class SearchListMixin:
     """Mixin que añade búsqueda y filtros a las vistas de listado."""
-    # ✅ Eliminamos __slots__ para evitar conflicto con atributos de clase
+    
     search_fields = []
     filter_fields = []
 
@@ -236,7 +236,6 @@ class GazetteDetailView(LoginRequiredMixin, LoggingMixin, DetailView):
 # VISTAS PARA DOCUMENTOS
 # ==================================================
 class DocumentListView(LoginRequiredMixin, SearchListMixin, ListView):
- 
     __slots__ = ()
 
     model = Document
@@ -247,11 +246,11 @@ class DocumentListView(LoginRequiredMixin, SearchListMixin, ListView):
     filter_fields = ['document_type__name', 'issuing_entity__name', 'is_approved']
 
     def get_context_data(self, **kwargs):
-        """Añade años y tipos de documento para los filtros en el template."""
+        """Añade años (desde Gaceta) y tipos de documento para los filtros en el template."""
         context = super().get_context_data(**kwargs)
         try:
             # Extraemos los años únicos de los documentos existentes para el filtro
-            context['years'] = Document.objects.dates('emission_date', 'year', order='DESC').distinct()
+            context['years'] = Gazette.objects.dates('year', 'year', order='DESC').distinct()
             # Cargamos todos los tipos de documento para el filtro
             context['document_types'] = DocumentType.objects.all()
         except Exception as e:
@@ -261,8 +260,8 @@ class DocumentListView(LoginRequiredMixin, SearchListMixin, ListView):
         return context
 
     def get_queryset(self):
+        # Optimización: Usar select_related para evitar N+1 queries
         try:
-            # Optimización: Usar select_related para evitar N+1 queries
             queryset = super().get_queryset().select_related(
                 'gazette',
                 'document_type',
@@ -273,9 +272,17 @@ class DocumentListView(LoginRequiredMixin, SearchListMixin, ListView):
             year = self.request.GET.get('year')
             month = self.request.GET.get('month')
             if year:
-                queryset = queryset.filter(emission_date__year=year)
+                queryset = queryset.filter(gazette__year=year)
             if month:
                 queryset = queryset.filter(emission_date__month=month)
+
+            # Filtros por rango de fechas (desde/hasta)
+            date_from = self.request.GET.get('date_from')
+            date_to = self.request.GET.get('date_to')
+            if date_from:
+                queryset = queryset.filter(emission_date__gte=date_from)
+            if date_to:
+                queryset = queryset.filter(emission_date__lte=date_to)
 
             # Filtros por tipo de documento y estado
             doc_type = self.request.GET.get('doc_type')
@@ -283,13 +290,19 @@ class DocumentListView(LoginRequiredMixin, SearchListMixin, ListView):
             if doc_type:
                 queryset = queryset.filter(document_type__id=doc_type)
             if status:
-                queryset = queryset.filter(is_approved=status == 'approved')
+                if status == 'approved':
+                    queryset = queryset.filter(is_approved=True, is_annulled=False)
+                elif status == 'pending':
+                    queryset = queryset.filter(is_approved=False, is_annulled=False)
+                elif status == 'annulled':
+                    queryset = queryset.filter(is_annulled=True)
 
             return queryset
         except Exception as e:
             logger.error(f"Error al obtener listado de documentos: {e}")
             messages.error(self.request, "Ocurrió un error al cargar los documentos.")
             return Document.objects.none()
+
 
 
 class DocumentCreateView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixin, CreateView):

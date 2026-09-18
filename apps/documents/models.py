@@ -2,10 +2,15 @@
 Modelos para la gestión de documentos
 Incluye: Gaceta, Documento, Tipos de Documento y Entes Emisores.
 """
+import logging
 from django.db import models
 from common.models import BaseModel
 from django.contrib.auth import get_user_model
 
+#Para capturar errores
+logger = logging.getLogger(__name__)
+
+#usuario filtrar
 User = get_user_model()
 
 
@@ -45,6 +50,7 @@ class IssuingEntity(BaseModel):
         return self.name
 
 
+
 # ------------------------------------------------------------------------
 # 2. TABLA PRINCIPAL: GACETA
 # ------------------------------------------------------------------------
@@ -55,32 +61,54 @@ class Gazette(BaseModel):
     """
     number = models.PositiveIntegerField(verbose_name="Número")
     year = models.PositiveIntegerField(verbose_name="Año")
+    is_extraordinary = models.BooleanField(
+        default=False,
+        verbose_name="¿Extraordinaria?"
+    )
+    emission_date = models.DateField(
+        verbose_name="Fecha de Emisión"
+    )
+    publication_date = models.DateField(auto_now_add=True, verbose_name="Fecha de Publicación en el Sistema")
     description = models.TextField(blank=True, verbose_name="Descripción")
 
     class Meta:
-        unique_together = ['number', 'year']
+        unique_together = ['number', 'year', 'is_extraordinary']
         verbose_name = "Gaceta"
         verbose_name_plural = "Gacetas"
-        ordering = ['-year', '-number']
+        ordering = ['year', 'number']  # Año ascendente, número ascendente
 
     def __str__(self):
-        return f"Gaceta N° {self.number} - {self.year}"
+        tipo = "Extraordinaria" if self.is_extraordinary else "Ordinaria"
+        return f"Gaceta {tipo} N° {self.number:03d}-{self.year}"
+
+    @property
+    def formatted_number(self):
+        """Devuelve el número con ceros a la izquierda (001, 002, ..., 100)."""
+        return f"{self.number:03d}"
 
     @property
     def has_documents(self):
         """Indica si la gaceta tiene al menos un documento asociado."""
         return self.documents.exists()
 
+    def save(self, *args, **kwargs):
+        """Sobrescritura con try-except para manejar errores de integridad."""
+        try:
+            super().save(*args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error al guardar Gaceta: {e}")
+            raise
+
 
 # ------------------------------------------------------------------------
 # 3. TABLA PRINCIPAL: DOCUMENTO
 # ------------------------------------------------------------------------
 class Document(BaseModel):
-    
+
     # Relaciones (TODAS CON PROTECT)
     gazette = models.ForeignKey(
         Gazette,
-        on_delete=models.PROTECT,  # 🛡️ No permite borrar si hay documentos
+        on_delete=models.PROTECT,  # No permite borrar si hay documentos
         related_name='documents',
         verbose_name="Gaceta"
     )
@@ -109,7 +137,10 @@ class Document(BaseModel):
     description = models.TextField(verbose_name="Descripción / Reseña")
     emission_date = models.DateField(verbose_name="Fecha de Emisión")
     publication_date = models.DateField(auto_now_add=True, verbose_name="Fecha de Publicación")
+
+    # Estado: booleano (más fácil de filtrar)
     is_approved = models.BooleanField(default=False, verbose_name="¿Aprobado?")
+    is_annulled = models.BooleanField(default=False, verbose_name="¿Anulado?")
 
     # Archivos adjuntos
     pdf_file = models.FileField(
@@ -132,16 +163,40 @@ class Document(BaseModel):
         verbose_name="Otro Ente (especificar)"
     )
 
+
     class Meta:
         unique_together = ['number', 'gazette']
         verbose_name = "Documento"
         verbose_name_plural = "Documentos"
         ordering = ['-emission_date']
 
+        # Restricción de integridad a nivel de BD
+        constraints = [
+            models.CheckConstraint(
+                check=~models.Q(is_approved=True, is_annulled=True),
+                name="document_no_approved_and_annulled"
+            )
+        ]
+
+    
     def __str__(self):
-        return f"{self.document_type.name} N° {self.number:04d}-{self.gazette.year}"
+        estado = "✓" if self.is_approved else ("✗" if self.is_annulled else "⏳")
+        return f"{self.document_type.name} N° {self.number:03d}-{self.gazette.year} [{estado}]"
 
     @property
     def year(self):
         """Año del documento (obtenido desde la gaceta)."""
         return self.gazette.year
+
+    @property
+    def formatted_number(self):
+        """Devuelve el número con ceros a la izquierda (001, 002, ..., 100)."""
+        return f"{self.number:03d}"
+
+    def save(self, *args, **kwargs):
+        """Sobrescritura con try-except para manejar errores de integridad."""
+        try:
+            super().save(*args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error al guardar Documento: {e}")
+            raise

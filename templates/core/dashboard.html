@@ -208,7 +208,7 @@
 </div>
 
 <!-- ============================================ -->
-<!-- 2. GRÁFICO DE DOCUMENTOS (Aprobados vs Pendientes) -->
+<!-- 2. GRÁFICO DE DOCUMENTOS (Aprobados vs Pendientes  vs Anulados) -->
 <!-- ============================================ -->
 <div class="data-card-3d tilt-card" data-tilt-max="4" style="margin-bottom: 2rem;">
   <div class="card-shine"></div>
@@ -360,21 +360,22 @@
     });
 
     // ============================================
-    // GRÁFICO CON CHART.JS (Doughnut)
+    // GRÁFICO CON CHART.JS (3 categorías)
     // ============================================
     const ctx = document.getElementById('financeChart');
     if (ctx) {
       const approved = {{ approved_count|default:0 }};
       const pending = {{ pending_count|default:0 }};
+      const annulled = {{ annulled_count|default:0 }};
 
       new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: ['Aprobados', 'Pendientes'],
+          labels: ['Aprobados', 'Pendientes', 'Anulados'],
           datasets: [{
-            data: [approved, pending],
-            backgroundColor: ['#34d399', '#f87171'],
-            borderColor: ['#34d399', '#f87171'],
+            data: [approved, pending, annulled],
+            backgroundColor: ['#34d399', '#f87171', '#6b7280'],
+            borderColor: ['#34d399', '#f87171', '#6b7280'],
             borderWidth: 2,
             hoverOffset: 6
           }]

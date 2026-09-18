@@ -1,11 +1,14 @@
 import os
 import re
+import logging
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from datetime import date
 from .models import Gazette, Document, DocumentType, IssuingEntity
 from common.validators import validate_unique_with_trash
+
+logger = logging.getLogger(__name__)
 
 # ==================================================
 # 1. MIXIN PARA CAMPOS DE FECHA
@@ -32,44 +35,67 @@ class DateFieldMixin:
 
 def validate_positive_number(value, field_name="Número"):
     """Valida que el valor sea un número entero positivo."""
-    if value is not None and value <= 0:
-        raise ValidationError(f"{field_name} debe ser un número positivo.")
-    return value
+    try:
+        if value is not None and value <= 0:
+            raise ValidationError(f"{field_name} debe ser un número positivo.")
+        return value
+    except Exception as e:
+        logger.error(f"Error en validate_positive_number: {e}")
+        raise
 
 
 def validate_future_date(value, field_name="Fecha"):
     """Valida que la fecha no sea futura."""
-    if value and value > date.today():
-        raise ValidationError(f"{field_name} no puede ser una fecha futura.")
-    return value
+    try:
+        if value and value > date.today():
+            raise ValidationError(f"{field_name} no puede ser una fecha futura.")
+        return value
+    except Exception as e:
+        logger.error(f"Error en validate_future_date: {e}")
+        raise
 
 
 def validate_year(value, field_name="Año"):
     """Valida que el año sea válido (entre 1900 y el año actual + 1)."""
-    current_year = date.today().year
-    if value and (value < 1900 or value > current_year + 1):
-        raise ValidationError(
-            f"{field_name} debe estar entre 1900 y {current_year + 1}."
-        )
-    return value
+    try:
+        current_year = date.today().year
+        if value and (value < 1900 or value > current_year + 1):
+            raise ValidationError(
+                f"{field_name} debe estar entre 1900 y {current_year + 1}."
+            )
+        return value
+    except Exception as e:
+        logger.error(f"Error en validate_year: {e}")
+        raise
 
 
 # Extensiones permitidas para cada campo
 ALLOWED_PDF_EXTENSIONS = ['.pdf']
 ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
+MAX_PDF_SIZE = 10 * 1024 * 1024  # 10 MB
 
 def validate_pdf_file(value):
-    """Valida que el archivo sea un PDF."""
-    ext = os.path.splitext(value.name)[1].lower()
-    if ext not in ALLOWED_PDF_EXTENSIONS:
-        raise ValidationError('Solo se permiten archivos PDF en este campo.')
+    """Valida que el archivo sea un PDF y no exceda el tamaño máximo."""
+    try:
+        ext = os.path.splitext(value.name)[1].lower()
+        if ext not in ALLOWED_PDF_EXTENSIONS:
+            raise ValidationError('Solo se permiten archivos PDF en este campo.')
+        
+        if value.size > MAX_PDF_SIZE:
+            raise ValidationError(f'El archivo no puede exceder los {MAX_PDF_SIZE // (1024*1024)} MB.')
+    except Exception as e:
+        logger.error(f"Error en validate_pdf_file: {e}")
+        raise ValidationError("Error al validar el archivo PDF.")
 
 def validate_image_file(value):
     """Valida que el archivo sea una imagen."""
-    ext = os.path.splitext(value.name)[1].lower()
-    if ext not in ALLOWED_IMAGE_EXTENSIONS:
-        raise ValidationError('Solo se permiten archivos de imagen (JPG, PNG, GIF, BMP, WEBP) en este campo.')
-
+    try:
+        ext = os.path.splitext(value.name)[1].lower()
+        if ext not in ALLOWED_IMAGE_EXTENSIONS:
+            raise ValidationError('Solo se permiten archivos de imagen (JPG, PNG, GIF, BMP, WEBP) en este campo.')
+    except Exception as e:
+        logger.error(f"Error en validate_image_file: {e}")
+        raise ValidationError("Error al validar el archivo de imagen.")
 
 
 # ==================================================
@@ -80,7 +106,7 @@ class GazetteForm(DateFieldMixin, forms.ModelForm):
 
     class Meta:
         model = Gazette
-        fields = ['number', 'year', 'description']
+        fields = ['number', 'year', 'is_extraordinary', 'emission_date', 'description']
         widgets = {
             'number': forms.NumberInput(attrs={
                 'class': 'form-control',
@@ -89,6 +115,13 @@ class GazetteForm(DateFieldMixin, forms.ModelForm):
             'year': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Ej: 2026'
+            }),
+            'is_extraordinary': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+            'emission_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control'
             }),
             'description': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -99,51 +132,99 @@ class GazetteForm(DateFieldMixin, forms.ModelForm):
         labels = {
             'number': 'Número de Gaceta',
             'year': 'Año',
+            'is_extraordinary': '¿Extraordinaria?',
+            'emission_date': 'Fecha de Emisión',
             'description': 'Descripción',
         }
         help_texts = {
             'number': 'Número consecutivo de la gaceta en el año.',
             'year': 'Año de publicación.',
+            'is_extraordinary': 'Marque si la gaceta es extraordinaria (fuera de la periodicidad regular).',
+            'emission_date': 'Fecha oficial de emisión de la gaceta.',
             'description': 'Resumen opcional del contenido de la gaceta.',
         }
 
+    def __init__(self, *args, **kwargs):
+        try:
+            super().__init__(*args, **kwargs)
+            # Pre-cargar año actual si no existe
+            if not self.instance.pk and not self.initial.get('year'):
+                self.initial['year'] = date.today().year
+        except Exception as e:
+            logger.error(f"Error en __init__ de GazetteForm: {e}")
+            raise
+
     def clean_number(self):
         """Valida que el número sea positivo."""
-        return validate_positive_number(
-            self.cleaned_data.get('number'),
-            "El número de gaceta"
-        )
+        try:
+            return validate_positive_number(
+                self.cleaned_data.get('number'),
+                "El número de gaceta"
+            )
+        except Exception as e:
+            logger.error(f"Error en clean_number de GazetteForm: {e}")
+            raise
 
     def clean_year(self):
         """Valida que el año sea válido y no futuro."""
-        year = self.cleaned_data.get('year')
-        year = validate_year(year, "El año")
-        return year
+        try:
+            year = self.cleaned_data.get('year')
+            return validate_year(year, "El año")
+        except Exception as e:
+            logger.error(f"Error en clean_year de GazetteForm: {e}")
+            raise
 
+    def clean_emission_date(self):
+        """Valida que la fecha de emisión no sea futura."""
+        try:
+            emission_date = self.cleaned_data.get('emission_date')
+            if emission_date:
+                return validate_future_date(emission_date, "La fecha de emisión")
+            return emission_date
+        except Exception as e:
+            logger.error(f"Error en clean_emission_date de GazetteForm: {e}")
+            raise
 
     def clean(self):
-        cleaned_data = super().clean()
-        number = cleaned_data.get('number')
-        year = cleaned_data.get('year')
+        """
+        Validaciones cruzadas:
+        - Unicidad de (number, year, is_extraordinary) considerando papelera.
+        """
+        try:
+            cleaned_data = super().clean()
+            number = cleaned_data.get('number')
+            year = cleaned_data.get('year')
+            is_extraordinary = cleaned_data.get('is_extraordinary')
 
-        if number and year:
-            # Validar unicidad de (number, year) considerando papelera
-            existing = Gazette.all_objects.filter(number=number, year=year).first()
-            if self.instance.pk:
-                existing = Gazette.all_objects.filter(number=number, year=year).exclude(pk=self.instance.pk).first()
+            if number and year:
+                # Validar unicidad considerando papelera
+                existing = Gazette.all_objects.filter(
+                    number=number,
+                    year=year,
+                    is_extraordinary=is_extraordinary
+                ).first()
+                
+                if self.instance.pk:
+                    existing = Gazette.all_objects.filter(
+                        number=number,
+                        year=year,
+                        is_extraordinary=is_extraordinary
+                    ).exclude(pk=self.instance.pk).first()
 
-            if existing:
-                if existing.is_deleted:
-                    raise ValidationError(
-                        f"Ya existe una gaceta con el número {number} y año {year} en la papelera. "
-                        "Restáurala o elimínala definitivamente."
-                    )
-                else:
-                    raise ValidationError(
-                        f"Ya existe una gaceta con el número {number} y año {year}."
-                    )
-        return cleaned_data
-
+                if existing:
+                    if existing.is_deleted:
+                        raise ValidationError(
+                            f"Ya existe una gaceta con el número {number}, año {year} y tipo {'Extraordinaria' if is_extraordinary else 'Ordinaria'} en la papelera. "
+                            "Restáurala o elimínala definitivamente."
+                        )
+                    else:
+                        raise ValidationError(
+                            f"Ya existe una gaceta con el número {number}, año {year} y tipo {'Extraordinaria' if is_extraordinary else 'Ordinaria'}."
+                        )
+            return cleaned_data
+        except Exception as e:
+            logger.error(f"Error en clean de GazetteForm: {e}")
+            raise
 
 
 # ==================================================
@@ -157,7 +238,7 @@ class DocumentForm(DateFieldMixin, forms.ModelForm):
         fields = [
             'gazette', 'document_type', 'issuing_entity',
             'number', 'title', 'description',
-            'emission_date', 'is_approved',
+            'emission_date', 'is_approved', 'is_annulled',
             'pdf_file', 'image', 'other_entity_description'
         ]
         widgets = {
@@ -184,6 +265,9 @@ class DocumentForm(DateFieldMixin, forms.ModelForm):
             'is_approved': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
             }),
+            'is_annulled': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
             'pdf_file': forms.FileInput(attrs={
                 'class': 'form-control'
             }),
@@ -204,6 +288,7 @@ class DocumentForm(DateFieldMixin, forms.ModelForm):
             'description': 'Descripción / Reseña',
             'emission_date': 'Fecha de Emisión',
             'is_approved': '¿Aprobado?',
+            'is_annulled': '¿Anulado?',
             'pdf_file': 'Archivo PDF',
             'image': 'Imagen (opcional)',
             'other_entity_description': 'Otro Ente (especificar)',
@@ -212,50 +297,65 @@ class DocumentForm(DateFieldMixin, forms.ModelForm):
             'number': 'Número consecutivo del documento en el año.',
             'emission_date': 'Fecha en que se emitió el documento en físico.',
             'is_approved': 'Marcar si el documento ya está aprobado.',
-            'pdf_file': 'Subir el documento en formato PDF (opcional).',
+            'is_annulled': 'Marcar si el documento ha sido anulado.',
+            'pdf_file': 'Subir el documento en formato PDF (opcional). Máximo 10 MB.',
             'image': 'Subir una foto del documento físico (opcional).',
             'other_entity_description': 'Requerido si selecciona "Otros" como ente emisor.',
         }
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Hacer que el campo 'other_entity_description' no sea obligatorio inicialmente
-        # La validación condicional se hará en clean()
-        self.fields['other_entity_description'].required = False
+        try:
+            super().__init__(*args, **kwargs)
+            # Hacer que el campo 'other_entity_description' no sea obligatorio inicialmente
+            # La validación condicional se hará en clean()
+            self.fields['other_entity_description'].required = False
+        except Exception as e:
+            logger.error(f"Error en __init__ de DocumentForm: {e}")
+            raise
 
     def clean_number(self):
         """Valida que el número sea positivo."""
-        return validate_positive_number(
-            self.cleaned_data.get('number'),
-            "El número de documento"
-        )
+        try:
+            return validate_positive_number(
+                self.cleaned_data.get('number'),
+                "El número de documento"
+            )
+        except Exception as e:
+            logger.error(f"Error en clean_number de DocumentForm: {e}")
+            raise
 
     def clean_emission_date(self):
-        """
-        Valida que la fecha de emisión no sea futura.
-        """
-        emission_date = self.cleaned_data.get('emission_date')
-        if emission_date:
-            # Validar que no sea futura
-            if emission_date > date.today():
-                raise ValidationError("La fecha de emisión no puede ser una fecha futura.")
-        return emission_date
+        """Valida que la fecha de emisión no sea futura."""
+        try:
+            emission_date = self.cleaned_data.get('emission_date')
+            if emission_date:
+                return validate_future_date(emission_date, "La fecha de emisión")
+            return emission_date
+        except Exception as e:
+            logger.error(f"Error en clean_emission_date de DocumentForm: {e}")
+            raise
 
-
-    # Validación para PDF
     def clean_pdf_file(self):
-        file = self.cleaned_data.get('pdf_file')
-        if file:
-            validate_pdf_file(file)
-        return file
+        """Valida que el archivo sea un PDF y no exceda el tamaño máximo."""
+        try:
+            file = self.cleaned_data.get('pdf_file')
+            if file:
+                validate_pdf_file(file)
+            return file
+        except Exception as e:
+            logger.error(f"Error en clean_pdf_file de DocumentForm: {e}")
+            raise
 
-    # Validación para imagen
     def clean_image(self):
-        file = self.cleaned_data.get('image')
-        if file:
-            validate_image_file(file)
-        return file
-
+        """Valida que el archivo sea una imagen."""
+        try:
+            file = self.cleaned_data.get('image')
+            if file:
+                validate_image_file(file)
+            return file
+        except Exception as e:
+            logger.error(f"Error en clean_image de DocumentForm: {e}")
+            raise
 
     def clean(self):
         """
@@ -263,45 +363,61 @@ class DocumentForm(DateFieldMixin, forms.ModelForm):
         1. Si 'issuing_entity' es "Otros", 'other_entity_description' es obligatorio.
         2. Unicidad de número de documento dentro de la gaceta (considerando papelera).
         3. El año del documento debe coincidir con el año de la gaceta.
+        4. Un documento no puede estar aprobado y anulado al mismo tiempo.
         """
-        cleaned_data = super().clean()
-        gazette = cleaned_data.get('gazette')
-        number = cleaned_data.get('number')
-        issuing_entity = cleaned_data.get('issuing_entity')
-        other_desc = cleaned_data.get('other_entity_description')
-        emission_date = cleaned_data.get('emission_date')
+        try:
+            cleaned_data = super().clean()
+            gazette = cleaned_data.get('gazette')
+            number = cleaned_data.get('number')
+            issuing_entity = cleaned_data.get('issuing_entity')
+            other_desc = cleaned_data.get('other_entity_description')
+            emission_date = cleaned_data.get('emission_date')
+            is_approved = cleaned_data.get('is_approved')
+            is_annulled = cleaned_data.get('is_annulled')
 
-        # 1. Validación de "Otros" ente emisor
-        if issuing_entity and issuing_entity.name == "Otros":
-            if not other_desc or other_desc.strip() == '':
-                self.add_error(
-                    'other_entity_description',
-                    'Debe especificar el nombre del ente emisor cuando selecciona "Otros".'
-                )
-
-        # 2. Unicidad de número dentro de la gaceta (considerando papelera)
-        if gazette and number:
-            existing = Document.all_objects.filter(number=number, gazette=gazette).first()
-            if self.instance.pk:
-                existing = Document.all_objects.filter(number=number, gazette=gazette).exclude(pk=self.instance.pk).first()
-
-            if existing:
-                if existing.is_deleted:
-                    raise ValidationError(
-                        f"Ya existe un documento con el número {number} en la gaceta {gazette} en la papelera. "
-                        "Restáuralo o elimínalo definitivamente."
-                    )
-                else:
-                    raise ValidationError(
-                        f"Ya existe un documento con el número {number} en la gaceta {gazette}."
+            # 1. Validación de "Otros" ente emisor
+            if issuing_entity and issuing_entity.name == "Otros":
+                if not other_desc or other_desc.strip() == '':
+                    self.add_error(
+                        'other_entity_description',
+                        'Debe especificar el nombre del ente emisor cuando selecciona "Otros".'
                     )
 
-        # 3. El año del documento debe coincidir con el año de la gaceta
-        if gazette and emission_date:
-            if emission_date.year != gazette.year:
-                self.add_error(
-                    'emission_date',
-                    f"El año de emisión ({emission_date.year}) no coincide con el año de la gaceta ({gazette.year})."
+            # 2. Unicidad de número dentro de la gaceta (considerando papelera)
+            if gazette and number:
+                existing = Document.all_objects.filter(number=number, gazette=gazette).first()
+                if self.instance.pk:
+                    existing = Document.all_objects.filter(
+                        number=number,
+                        gazette=gazette
+                    ).exclude(pk=self.instance.pk).first()
+
+                if existing:
+                    if existing.is_deleted:
+                        raise ValidationError(
+                            f"Ya existe un documento con el número {number} en la gaceta {gazette} en la papelera. "
+                            "Restáuralo o elimínalo definitivamente."
+                        )
+                    else:
+                        raise ValidationError(
+                            f"Ya existe un documento con el número {number} en la gaceta {gazette}."
+                        )
+
+            # 3. El año del documento debe coincidir con el año de la gaceta
+            if gazette and emission_date:
+                if emission_date.year != gazette.year:
+                    self.add_error(
+                        'emission_date',
+                        f"El año de emisión ({emission_date.year}) no coincide con el año de la gaceta ({gazette.year})."
+                    )
+
+            # 4. Un documento no puede estar aprobado y anulado al mismo tiempo
+            if is_approved and is_annulled:
+                raise ValidationError(
+                    "Un documento no puede estar aprobado y anulado al mismo tiempo."
                 )
 
-        return cleaned_data
+            return cleaned_data
+        except Exception as e:
+            logger.error(f"Error en clean de DocumentForm: {e}")
+            raise

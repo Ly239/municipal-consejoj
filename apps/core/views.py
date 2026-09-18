@@ -659,24 +659,30 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     """Panel de control principal para usuarios autenticados (KPIs y estadísticas)."""
     template_name = 'core/dashboard.html'
 
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
+        # KPI Cards
         context['total_documents'] = Document.objects.count()
         context['total_gazettes'] = Gazette.objects.count()
         context['total_users'] = User.objects.count()
 
+        # Papelera
         from common.views import TRASH_MODELS
         trash_count = 0
         for model in TRASH_MODELS:
             trash_count += model.all_objects.filter(deleted_at__isnull=False).count()
         context['total_trash'] = trash_count
 
+        # Documentos recientes
         context['recent_documents'] = Document.objects.select_related(
             'document_type', 'gazette'
         ).order_by('-created_at')[:5]
 
-        context['approved_count'] = Document.objects.filter(is_approved=True).count()
-        context['pending_count'] = Document.objects.filter(is_approved=False).count()
+        # Datos para el gráfico (3 categorías)
+        context['approved_count'] = Document.objects.filter(is_approved=True, is_annulled=False).count()
+        context['pending_count'] = Document.objects.filter(is_approved=False, is_annulled=False).count()
+        context['annulled_count'] = Document.objects.filter(is_annulled=True).count()
 
         return context

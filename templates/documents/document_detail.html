@@ -52,6 +52,7 @@
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'core:home' %}"><i class="fas fa-home"></i> Inicio</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Gestión</a></li>
         <li class="breadcrumb-item"><a href="{% url 'documents:document_list' %}">Documentos</a></li>
         <li class="breadcrumb-item active">{{ document.title|truncatechars:40 }}</li>
     </ol>
@@ -63,7 +64,7 @@
         <h1 class="h3 mb-1">{{ document.title }}</h1>
         <p class="text-muted">
             <span class="badge bg-primary">{{ document.document_type.name }}</span>
-            · N° {{ document.number }} - {{ document.gazette.year }}
+            · N° {{ document.formatted_number }} - {{ document.gazette.year }}
             · {{ document.emission_date|date:"d/m/Y" }}
         </p>
     </div>
@@ -91,12 +92,12 @@
                     <dd class="col-sm-7">{{ document.document_type.name }}</dd>
 
                     <dt class="col-sm-5">N° Documento</dt>
-                    <dd class="col-sm-7"><strong>{{ document.number }}</strong></dd>
+                    <dd class="col-sm-7"><strong>{{ document.formatted_number }}</strong></dd>
 
                     <dt class="col-sm-5">Gaceta</dt>
                     <dd class="col-sm-7">
                         <a href="{% url 'documents:gazette_detail' document.gazette.pk %}">
-                            N° {{ document.gazette.number }} - {{ document.gazette.year }}
+                            N° {{ document.gazette.formatted_number }} - {{ document.gazette.year }}
                         </a>
                     </dd>
 
@@ -109,12 +110,17 @@
                     <dt class="col-sm-5">Fecha Emisión</dt>
                     <dd class="col-sm-7">{{ document.emission_date|date:"d/m/Y" }}</dd>
 
-                    <dt class="col-sm-5">Fecha Publicación</dt>
+                    <dt class="col-sm-5">Publicado en sistema</dt>
                     <dd class="col-sm-7">{{ document.publication_date|date:"d/m/Y" }}</dd>
+
+                    <dt class="col-sm-5">Última actualización</dt>
+                    <dd class="col-sm-7">{{ document.updated_at|date:"d/m/Y" }}</dd>
 
                     <dt class="col-sm-5">Estado</dt>
                     <dd class="col-sm-7">
-                        {% if document.is_approved %}
+                        {% if document.is_annulled %}
+                            <span class="badge bg-secondary"><i class="fas fa-times-circle"></i> Anulado</span>
+                        {% elif document.is_approved %}
                             <span class="badge bg-success"><i class="fas fa-check-circle"></i> Aprobado</span>
                         {% else %}
                             <span class="badge bg-warning text-dark"><i class="fas fa-clock"></i> Pendiente</span>
@@ -214,6 +220,7 @@
 
 {% block extra_scripts %}
 <!-- PDF.js (CDN) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/Chart.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
 <script>
