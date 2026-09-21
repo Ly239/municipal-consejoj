@@ -65,11 +65,17 @@ class DocumentAdmin(SoftDeleteAdminMixin, admin.ModelAdmin):
         'issuing_entity', 'is_approved', 'submitted_by', 
         'emission_date', 'deleted_at'
     )
+    
     list_filter = SoftDeleteAdminMixin.list_filter + [
         'document_type', 'issuing_entity', 'is_approved',
         'emission_date'
     ]
-    search_fields = (...)
+
+    search_fields = ('title', 'number', 'description',
+        'gazette__number', 'gazette__year',
+        'document_type__name', 'issuing_entity__name',
+        'submitted_by__username', 'submitted_by__first_name')
+    
     ordering = ('-emission_date',)
     readonly_fields = ('created_at', 'updated_at', 'deleted_at', 'publication_date')
     list_per_page = 20
