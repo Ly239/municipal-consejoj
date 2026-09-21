@@ -6,6 +6,7 @@ import logging
 from django.db import models
 from common.models import BaseModel
 from django.contrib.auth import get_user_model
+from django.core.validators import MaxValueValidator
 
 #Para capturar errores
 logger = logging.getLogger(__name__)
@@ -51,6 +52,7 @@ class IssuingEntity(BaseModel):
 
 
 
+
 # ------------------------------------------------------------------------
 # 2. TABLA PRINCIPAL: GACETA
 # ------------------------------------------------------------------------
@@ -59,7 +61,11 @@ class Gazette(BaseModel):
     Gaceta Municipal: agrupa documentos por número y año.
     Puede existir sin documentos asociados.
     """
-    number = models.PositiveIntegerField(verbose_name="Número")
+    # Límite máximo de 500 gacetas por año
+    number = models.PositiveIntegerField(
+        validators=[MaxValueValidator(500)],
+        verbose_name="Número"
+    )
     year = models.PositiveIntegerField(verbose_name="Año")
     is_extraordinary = models.BooleanField(
         default=False,
@@ -68,22 +74,32 @@ class Gazette(BaseModel):
     emission_date = models.DateField(
         verbose_name="Fecha de Emisión"
     )
-    publication_date = models.DateField(auto_now_add=True, verbose_name="Fecha de Publicación en el Sistema")
+    
     description = models.TextField(blank=True, verbose_name="Descripción")
 
     class Meta:
         unique_together = ['number', 'year', 'is_extraordinary']
         verbose_name = "Gaceta"
         verbose_name_plural = "Gacetas"
-        ordering = ['year', 'number']  # Año ascendente, número ascendente
+        ordering = ['year', 'number']
 
     def __str__(self):
         tipo = "Extraordinaria" if self.is_extraordinary else "Ordinaria"
         return f"Gaceta {tipo} N° {self.number:03d}-{self.year}"
 
     @property
+    def publication_date(self):
+        """
+        Alias semántico de created_at.
+        Mantiene compatibilidad con templates y admin que usan
+        'publication_date' para referirse a la fecha de publicación en el sistema.
+        El dato real vive en created_at (heredado de BaseModel, DateTimeField).
+        """
+        return self.created_at
+
+    @property
     def formatted_number(self):
-        """Devuelve el número con ceros a la izquierda (001, 002, ..., 100)."""
+        """Devuelve el número con ceros a la izquierda (001, 002, ..., 500)."""
         return f"{self.number:03d}"
 
     @property
@@ -108,7 +124,7 @@ class Document(BaseModel):
     # Relaciones (TODAS CON PROTECT)
     gazette = models.ForeignKey(
         Gazette,
-        on_delete=models.PROTECT,  # No permite borrar si hay documentos
+        on_delete=models.PROTECT,
         related_name='documents',
         verbose_name="Gaceta"
     )
@@ -132,11 +148,15 @@ class Document(BaseModel):
     )
 
     # Campos principales
-    number = models.PositiveIntegerField(verbose_name="Número de Documento")
+    # Límite máximo de 1000 documentos por gaceta
+    number = models.PositiveIntegerField(
+        validators=[MaxValueValidator(1000)],
+        verbose_name="Número de Documento"
+    )
     title = models.CharField(max_length=200, verbose_name="Título")
     description = models.TextField(verbose_name="Descripción / Reseña")
     emission_date = models.DateField(verbose_name="Fecha de Emisión")
-    publication_date = models.DateField(auto_now_add=True, verbose_name="Fecha de Publicación")
+    
 
     # Estado: booleano (más fácil de filtrar)
     is_approved = models.BooleanField(default=False, verbose_name="¿Aprobado?")
@@ -163,7 +183,6 @@ class Document(BaseModel):
         verbose_name="Otro Ente (especificar)"
     )
 
-
     class Meta:
         unique_together = ['number', 'gazette']
         verbose_name = "Documento"
@@ -178,10 +197,14 @@ class Document(BaseModel):
             )
         ]
 
-    
     def __str__(self):
         estado = "✓" if self.is_approved else ("✗" if self.is_annulled else "⏳")
         return f"{self.document_type.name} N° {self.number:03d}-{self.gazette.year} [{estado}]"
+
+    @property
+    def publication_date(self):
+        """Alias semántico de created_at (fecha de publicación en el sistema)."""
+        return self.created_at
 
     @property
     def year(self):
@@ -190,7 +213,7 @@ class Document(BaseModel):
 
     @property
     def formatted_number(self):
-        """Devuelve el número con ceros a la izquierda (001, 002, ..., 100)."""
+        """Devuelve el número con ceros a la izquierda (001, 002, ..., 1000)."""
         return f"{self.number:03d}"
 
     def save(self, *args, **kwargs):

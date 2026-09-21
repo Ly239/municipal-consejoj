@@ -14,12 +14,7 @@ class TimestampedMixin(models.Model):
     class Meta:
         abstract = True
 
-    def save(self, *args, **kwargs):
-        """Sobrescribe save para asegurar que updated_at siempre se actualice."""
-        self.updated_at = timezone.now()
-        super().save(*args, **kwargs)
-
-
+    
 # ------------------------------------------------------------------------
 # 2. MIXIN DE BORRADO SUAVE (soft delete)
 # ------------------------------------------------------------------------
