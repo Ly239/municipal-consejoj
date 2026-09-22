@@ -30,15 +30,14 @@
     <i class="fas fa-pencil-alt me-2"></i> {% if object %}Editar{% else %}Crear{% endif %} {% block form_heading2 %}Registro{% endblock %}
   </div>
   <div class="card-body">
-    {% if form.errors %}
+    <!-- Los field errors (ej: "Este campo es obligatorio") los renderiza automáticamente {{ form.as_p }} de forma inline, debajo de cada campo, con la clase .errorlist. -->
+    {% if form.non_field_errors %}
     <div class="alert alert-danger">
       <i class="fas fa-exclamation-circle me-2"></i>
       <strong>Corrige los errores:</strong>
       <ul class="mb-0 mt-1">
-        {% for field, errors in form.errors.items %}
-          {% for error in errors %}
-            <li>{{ error }}</li>
-          {% endfor %}
+        {% for error in form.non_field_errors %}
+          <li>{{ error }}</li>
         {% endfor %}
       </ul>
     </div>

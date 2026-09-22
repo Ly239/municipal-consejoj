@@ -549,6 +549,39 @@ body {
 }
 
 
+/* ============================================ */
+/* ERRORES INLINE DE FORMULARIOS                */
+/* Estilo para .errorlist que genera form.as_p   */
+/* ============================================ */
+.errorlist {
+    list-style: none;
+    padding: 0;
+    margin: 0.25rem 0 0 0;
+    color: #842029;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.errorlist li {
+    padding: 0.15rem 0;
+}
+
+.errorlist li::before {
+    content: "⚠️ ";
+    font-size: 0.9rem;
+}
+
+/* Resaltar el borde del campo con error */
+.form-control.is-invalid,
+.form-select.is-invalid,
+input.is-invalid,
+select.is-invalid,
+textarea.is-invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
+}
+
+
 
 /* ============================================ */
 /* DETALLE DE NOTICIA (Estilo El Hatillo)      */
