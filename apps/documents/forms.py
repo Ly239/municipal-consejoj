@@ -10,6 +10,7 @@ from common.validators import validate_unique_with_trash
 
 logger = logging.getLogger(__name__)
 
+
 # ==================================================
 # 1. MIXIN PARA CAMPOS DE FECHA
 # ==================================================
@@ -43,6 +44,23 @@ def validate_positive_number(value, field_name="Número"):
         logger.error(f"Error en validate_positive_number: {e}")
         raise
 
+#ESTA FUNCIÓN SE PUEDE OPTIMIZAR
+def validate_max_number(value, max_value, field_name="Número"):
+    """
+    Valida que el número esté dentro del rango permitido.
+    Rechaza números gigantes antes de que lleguen a la BD.
+    """
+    if value is None:
+        return value
+    if value <= 0:
+        raise ValidationError(f"{field_name} debe ser un número positivo.")
+    if value > max_value:
+        raise ValidationError(
+            f"{field_name} no puede superar {max_value}. "
+            f"El máximo permitido es {max_value}."
+        )
+    return value
+
 
 def validate_future_date(value, field_name="Fecha"):
     """Valida que la fecha no sea futura."""
@@ -74,18 +92,20 @@ ALLOWED_PDF_EXTENSIONS = ['.pdf']
 ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
 MAX_PDF_SIZE = 10 * 1024 * 1024  # 10 MB
 
+
 def validate_pdf_file(value):
     """Valida que el archivo sea un PDF y no exceda el tamaño máximo."""
     try:
         ext = os.path.splitext(value.name)[1].lower()
         if ext not in ALLOWED_PDF_EXTENSIONS:
             raise ValidationError('Solo se permiten archivos PDF en este campo.')
-        
+
         if value.size > MAX_PDF_SIZE:
             raise ValidationError(f'El archivo no puede exceder los {MAX_PDF_SIZE // (1024*1024)} MB.')
     except Exception as e:
         logger.error(f"Error en validate_pdf_file: {e}")
         raise ValidationError("Error al validar el archivo PDF.")
+
 
 def validate_image_file(value):
     """Valida que el archivo sea una imagen."""
@@ -137,7 +157,7 @@ class GazetteForm(DateFieldMixin, forms.ModelForm):
             'description': 'Descripción',
         }
         help_texts = {
-            'number': 'Número consecutivo de la gaceta en el año.',
+            'number': 'Número consecutivo de la gaceta en el año. Máximo 500.',
             'year': 'Año de publicación.',
             'is_extraordinary': 'Marque si la gaceta es extraordinaria (fuera de la periodicidad regular).',
             'emission_date': 'Fecha oficial de emisión de la gaceta.',
@@ -154,12 +174,27 @@ class GazetteForm(DateFieldMixin, forms.ModelForm):
             logger.error(f"Error en __init__ de GazetteForm: {e}")
             raise
 
+    def validate_unique(self):
+        """
+        Deshabilitar validación automática de unique_together.
+
+        Motivo: la unicidad de (number, year, is_extraordinary) se valida
+        manualmente en clean() para considerar registros en la papelera (soft delete).
+        Django, por defecto, NO considera la papelera → genera mensaje duplicado.
+
+        ⚠️ Si en el futuro se agrega un campo con unique=True individual,
+        habrá que validarlo manualmente en clean_<campo>().
+        """
+        pass
+
+
     def clean_number(self):
-        """Valida que el número sea positivo."""
+        """Valida que el número sea positivo y no supere el máximo."""
         try:
-            return validate_positive_number(
+            return validate_max_number(
                 self.cleaned_data.get('number'),
-                "El número de gaceta"
+                max_value=500,
+                field_name="El número de gaceta"
             )
         except Exception as e:
             logger.error(f"Error en clean_number de GazetteForm: {e}")
@@ -203,7 +238,7 @@ class GazetteForm(DateFieldMixin, forms.ModelForm):
                     year=year,
                     is_extraordinary=is_extraordinary
                 ).first()
-                
+
                 if self.instance.pk:
                     existing = Gazette.all_objects.filter(
                         number=number,
@@ -294,7 +329,7 @@ class DocumentForm(DateFieldMixin, forms.ModelForm):
             'other_entity_description': 'Otro Ente (especificar)',
         }
         help_texts = {
-            'number': 'Número consecutivo del documento en el año.',
+            'number': 'Número consecutivo del documento en el año. Máximo 1000.',
             'emission_date': 'Fecha en que se emitió el documento en físico.',
             'is_approved': 'Marcar si el documento ya está aprobado.',
             'is_annulled': 'Marcar si el documento ha sido anulado.',
@@ -313,12 +348,27 @@ class DocumentForm(DateFieldMixin, forms.ModelForm):
             logger.error(f"Error en __init__ de DocumentForm: {e}")
             raise
 
+    def validate_unique(self):
+        """
+        Deshabilitar validación automática de unique_together.
+
+        Motivo: la unicidad de (number, gazette) se valida manualmente en clean()
+        para considerar registros en la papelera (soft delete). Django, por
+        defecto, NO considera la papelera → genera mensaje duplicado.
+
+        ⚠️ Si en el futuro se agrega un campo con unique=True individual,
+        habrá que validarlo manualmente en clean_<campo>().
+        """
+        pass
+
+
     def clean_number(self):
-        """Valida que el número sea positivo."""
+        """Valida que el número sea positivo y no supere el máximo."""
         try:
-            return validate_positive_number(
+            return validate_max_number(
                 self.cleaned_data.get('number'),
-                "El número de documento"
+                max_value=1000,
+                field_name="El número de documento"
             )
         except Exception as e:
             logger.error(f"Error en clean_number de DocumentForm: {e}")
@@ -413,7 +463,8 @@ class DocumentForm(DateFieldMixin, forms.ModelForm):
 
             # 4. Un documento no puede estar aprobado y anulado al mismo tiempo
             if is_approved and is_annulled:
-                raise ValidationError(
+                self.add_error(
+                    'is_approved',
                     "Un documento no puede estar aprobado y anulado al mismo tiempo."
                 )
 
