@@ -13,17 +13,17 @@
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
-                    {% if form.errors %}
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            {% for field, errors in form.errors.items %}
-                                {% for error in errors %}
-                                    <li>{{ error }}</li>
+                    <!-- Los field errors los renderiza cada {{ form.campo }} inline -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
                                 {% endfor %}
-                            {% endfor %}
-                        </ul>
-                    </div>
+                            </ul>
+                        </div>
                     {% endif %}
+
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
