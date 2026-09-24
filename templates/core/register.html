@@ -13,7 +13,7 @@
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
-                    <!-- Los field errors los renderiza cada {{ form.campo }} inline -->
+                    <!-- Los field errors los renderiza cada form.campo inline -->
                     {% if form.non_field_errors %}
                         <div class="alert alert-danger">
                             <ul class="mb-0">
