@@ -1206,3 +1206,57 @@ textarea.is-invalid {
     color: white; /* Texto blanco en hover */
     border-color: var(--color-dark-blue);
 }
+
+
+/* ============================================ */
+/* TABLAS (listados)  */
+/* ============================================ */
+.table thead {
+    background-color: var(--color-soft-bg);
+    color: var(--color-dark-blue);
+    border-bottom: 2px solid var(--color-light-blue);
+}
+
+.table thead th {
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 0.75rem 0.5rem;
+}
+
+.table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(10, 177, 212, 0.05);
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 0.75rem 0.5rem;
+}
+
+/* ============================================ */
+/* INPUTS DE FECHA (marca)              */
+/* ============================================ */
+input[type="date"] {
+    color: var(--color-dark-blue);
+    border-color: rgba(10, 177, 212, 0.3);
+}
+
+input[type="date"]:focus {
+    border-color: var(--color-light-blue);
+    box-shadow: 0 0 0 0.2rem rgba(10, 177, 212, 0.2);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.7;
+    filter: invert(15%) sepia(80%) saturate(2000%) hue-rotate(170deg);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
