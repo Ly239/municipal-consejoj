@@ -9,7 +9,13 @@ User = get_user_model()
 
 @admin.register(User)
 class CustomUserAdmin(SoftDeleteAdminMixin, BaseUserAdmin):
-   
+    """
+    Administración de Usuarios.
+
+    Integración con la papelera universal (SoftDeleteAdminMixin).
+    usamos 'is_active' en vez de '_is_active'.
+    """
+
     form = CustomUserChangeForm
     model = User
 
@@ -19,15 +25,15 @@ class CustomUserAdmin(SoftDeleteAdminMixin, BaseUserAdmin):
     # Columnas en la lista de usuarios
     list_display = (
         'id', 'username', 'email', 'id_number', 'phone',
-        '_is_active', 'is_staff', 'is_superuser',
+        'is_active', 'is_staff', 'is_superuser',
         'created_at', 'updated_at', 'deleted_at', 'estado_usuario'
     )
     list_display_links = ('id', 'username')
     search_fields = ('username', 'email', 'id_number', 'phone')
-    
+
     # Filtros: el mixin ya añade el filtro de borrado, agregamos los nuestros
     list_filter = SoftDeleteAdminMixin.list_filter + [
-        '_is_active', 'is_staff', 'is_superuser'
+        'is_active', 'is_staff', 'is_superuser'
     ]
     ordering = ('-date_joined',)
     readonly_fields = ('last_login', 'date_joined', 'created_at', 'updated_at', 'deleted_at')
@@ -40,7 +46,7 @@ class CustomUserAdmin(SoftDeleteAdminMixin, BaseUserAdmin):
             'fields': ('first_name', 'last_name', 'email', 'id_number', 'phone', 'address')
         }),
         ('Permisos', {
-            'fields': ('_is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')
+            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')
         }),
         ('Fechas', {
             'fields': ('last_login', 'date_joined', 'created_at', 'updated_at', 'deleted_at')
@@ -54,7 +60,7 @@ class CustomUserAdmin(SoftDeleteAdminMixin, BaseUserAdmin):
             'fields': (
                 'username', 'email', 'id_number', 'phone', 'address',
                 'password1', 'password2',
-                '_is_active', 'is_staff', 'is_superuser'
+                'is_active', 'is_staff', 'is_superuser'
             ),
         }),
     )
@@ -62,19 +68,21 @@ class CustomUserAdmin(SoftDeleteAdminMixin, BaseUserAdmin):
     # ============================================================
     # MÉTODOS PERSONALIZADOS PARA EL ADMIN
     # ============================================================
-    @admin.display(description="Estado", ordering='_is_active')
+    @admin.display(description="Estado", ordering='is_active')
     def estado_usuario(self, obj):
         """
         Muestra el estado del usuario en formato legible.
+        - Eliminado: si tiene deleted_at marcado (papelera).
+        - Activo: si is_active=True.
+        - Inactivo: si is_active=False.
         """
         if obj.deleted_at:
             return "🗑️ Eliminado"
-        elif obj._is_active:
+        elif obj.is_active:
             return "✅ Activo"
         else:
             return "⛔ Inactivo"
-            
-            
+
     def get_actions(self, request):
         actions = super().get_actions(request)
         if request.user.is_superuser:
@@ -92,4 +100,5 @@ class CustomUserAdmin(SoftDeleteAdminMixin, BaseUserAdmin):
         for user in queryset:
             user.hard_delete()
         self.message_user(request, f"{count} usuario(s) eliminados permanentemente.")
-        hard_delete_selected.short_description = "Eliminar permanentemente (SOLO SUPERUSUARIO)"
+
+    hard_delete_selected.short_description = "Eliminar permanentemente (SOLO SUPERUSUARIO)"
