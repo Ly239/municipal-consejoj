@@ -1,16 +1,79 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from common.models import TimestampedMixin, SoftDeleteMixin
 
 
+# ============================================================
+# MANAGERS PERSONALIZADOS
+# ============================================================
+class UserManager(BaseUserManager):
+    """
+    Manager por defecto: solo devuelve usuarios NO borrados (deleted_at is None).
+    Se usa para queries normales (login, listados activos, validaciones de unicidad).
+    """
+
+    def get_queryset(self):
+        return super().get_queryset().filter(deleted_at__isnull=True)
+
+    def create_user(self, username, email=None, password=None, **extra_fields):
+        """Crea un usuario común."""
+        if not username:
+            raise ValueError("El nombre de usuario es obligatorio.")
+        email = self.normalize_email(email)
+        user = self.model(username=username, email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, username, email=None, password=None, **extra_fields):
+        """Crea un superusuario."""
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError("Un superusuario debe tener is_staff=True.")
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError("Un superusuario debe tener is_superuser=True.")
+        return self.create_user(username, email, password, **extra_fields)
+
+
+class AllUserManager(BaseUserManager):
+    """
+    Manager que devuelve TODOS los usuarios, incluidos los borrados.
+    Se usa para la papelera universal (listar, restaurar, eliminar permanentemente).
+    """
+
+    def get_queryset(self):
+        return super().get_queryset()
+
+
+# ============================================================
+# MODELO DE USUARIO PERSONALIZADO
+# ============================================================
 class User(AbstractUser, TimestampedMixin, SoftDeleteMixin):
-    # Modelo de usuario personalizado.
-    
-    # Campos adicionales
+    """
+    Modelo de usuario personalizado.
+    Hereda de:
+    - AbstractUser (Django): username, password, email, is_active, is_staff, etc.
+    - TimestampedMixin (common): created_at, updated_at.
+    - SoftDeleteMixin (common): deleted_at, soft_delete(), restore(), hard_delete().
+
+    Integrado a la papelera universal (include_in_trash = True).
+    """
+
+    # --- Managers ---
+    # objects: solo activos (no borrados). Es el default del admin y de las queries normales.
+    # all_objects: todos, incluidos borrados. Se usa en la papelera.
+    objects = UserManager()
+    all_objects = AllUserManager()
+
+    # --- Configuración de papelera ---
+    include_in_trash = True
+
+    # --- Campos adicionales ---
     email = models.EmailField(
-    blank=True,
-    null=True,
-    verbose_name="Correo electrónico"
+        blank=True,
+        null=True,
+        verbose_name="Correo electrónico"
     )
     id_number = models.CharField(
         unique=True,
@@ -31,30 +94,7 @@ class User(AbstractUser, TimestampedMixin, SoftDeleteMixin):
         verbose_name="Dirección"
     )
 
-    # Redefinimos estos campos para darles verbose_name en español
-    is_staff = models.BooleanField(
-        default=False,
-        verbose_name="¿Es miembro del staff? (acceso al admin de Django)"
-    )
-    is_superuser = models.BooleanField(
-        default=False,
-        verbose_name="¿Es superusuario? (todos los permisos)"
-    )
-    _is_active = models.BooleanField(
-        default=True,
-        verbose_name="Activo (cuenta habilitada)"
-    )
-
-    # Redefinimos campos heredados para verbose_name en español
-    first_name = models.CharField(max_length=150, verbose_name="Nombre(s)")
-    last_name = models.CharField(max_length=150, verbose_name="Apellido(s)")
-    username = models.CharField(
-        max_length=150,
-        unique=True,
-        verbose_name="Nombre de usuario"
-    )
-
-    # Configuración de autenticación
+    # --- Configuración de autenticación ---
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email', 'id_number']
 
@@ -66,19 +106,12 @@ class User(AbstractUser, TimestampedMixin, SoftDeleteMixin):
     def __str__(self):
         return f"{self.username} ({self.email})"
 
-    @property
-    def is_active(self):
-        """
-        Un usuario puede iniciar sesión solo si:
-        - No está borrado suavemente (deleted_at is None)
-        - Y la cuenta está activa (_is_active = True)
-        """
-        return self.deleted_at is None and self._is_active
-
     def delete(self, using=None, keep_parents=False):
         """
         Soft delete: desactiva la cuenta y la marca como borrada.
-        """
-        self._is_active = False
-        super().delete(using=using, keep_parents=parents)
+        Al restaurar, el admin debe reactivar manualmente is_active.
 
+        corregido typo 'parents' -> 'keep_parents'.
+        """
+        self.is_active = False
+        super().delete(using=using, keep_parents=keep_parents)

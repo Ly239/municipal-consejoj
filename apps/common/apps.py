@@ -9,12 +9,17 @@ class CommonConfig(AppConfig):
     name = 'common'
 
     def ready(self):
+        """
+        Registra automáticamente en la papelera universal todos los modelos
+        que tengan soft delete (SoftDeleteMixin) y que no estén excluidos
+        mediante include_in_trash = False.
+        """
         from .views import register_trash_model
-        from .models import BaseModel
+        from .models import SoftDeleteMixin
 
         for model in django_apps.get_models():
             try:
-                if issubclass(model, BaseModel) and not model._meta.abstract:
+                if issubclass(model, SoftDeleteMixin) and not model._meta.abstract:
                     if getattr(model, 'include_in_trash', True):
                         register_trash_model(model)
             except Exception as e:

@@ -496,14 +496,91 @@ body {
     margin-top: 2rem;
 }
 
+
 /* ============================================ */
-/* MENSAJES DE ALERTA                          */
+/* MENSAJES DE ALERTA (flotantes, sin layout    */
+/* shift) — compatible con navegadores antiguos */
 /* ============================================ */
+
+/* Contenedor flotante de mensajes */
+.messages-container {
+    position: fixed;
+    top: 90px;                 /* debajo del navbar */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1050;             /* arriba del contenido, debajo de modales */
+    max-width: 700px;
+    width: calc(100% - 2rem);
+    pointer-events: none;      /* el contenedor no bloquea clicks */
+    margin-top: 0 !important;
+}
+
+.messages-container .alert {
+    pointer-events: auto;      /* los alerts sí son clickeables */
+    box-shadow: 0 6px 20px rgba(0, 59, 79, 0.15);
+    animation: slideDown 0.25s ease-out;
+    margin-bottom: 0.75rem;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Ajuste para móvil */
+@media (max-width: 768px) {
+    .messages-container {
+        top: 80px;
+        width: calc(100% - 1rem);
+    }
+}
+
+/* Alert de error (mantener la identidad de marca) */
 .alert-error {
     background-color: #f8d7da;
     border-color: #f5c2c7;
     color: #842029;
 }
+
+
+/* ============================================ */
+/* ERRORES INLINE DE FORMULARIOS                */
+/* Estilo para .errorlist que genera form.as_p   */
+/* ============================================ */
+.errorlist {
+    list-style: none;
+    padding: 0;
+    margin: 0.25rem 0 0 0;
+    color: #842029;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.errorlist li {
+    padding: 0.15rem 0;
+}
+
+.errorlist li::before {
+    content: "⚠️ ";
+    font-size: 0.9rem;
+}
+
+/* Resaltar el borde del campo con error */
+.form-control.is-invalid,
+.form-select.is-invalid,
+input.is-invalid,
+select.is-invalid,
+textarea.is-invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
+}
+
 
 
 /* ============================================ */
@@ -1128,4 +1205,58 @@ body {
     background-color: var(--color-dark-blue);
     color: white; /* Texto blanco en hover */
     border-color: var(--color-dark-blue);
+}
+
+
+/* ============================================ */
+/* TABLAS (listados)  */
+/* ============================================ */
+.table thead {
+    background-color: var(--color-soft-bg);
+    color: var(--color-dark-blue);
+    border-bottom: 2px solid var(--color-light-blue);
+}
+
+.table thead th {
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 0.75rem 0.5rem;
+}
+
+.table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(10, 177, 212, 0.05);
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 0.75rem 0.5rem;
+}
+
+/* ============================================ */
+/* INPUTS DE FECHA (marca)              */
+/* ============================================ */
+input[type="date"] {
+    color: var(--color-dark-blue);
+    border-color: rgba(10, 177, 212, 0.3);
+}
+
+input[type="date"]:focus {
+    border-color: var(--color-light-blue);
+    box-shadow: 0 0 0 0.2rem rgba(10, 177, 212, 0.2);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.7;
+    filter: invert(15%) sepia(80%) saturate(2000%) hue-rotate(170deg);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
 }
