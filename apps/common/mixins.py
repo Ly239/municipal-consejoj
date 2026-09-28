@@ -1,3 +1,4 @@
+from django import forms as django_forms
 from django.contrib.admin import SimpleListFilter
 from django.contrib import messages
 from django.shortcuts import redirect
@@ -129,3 +130,26 @@ class SoftDeleteAdminMixin(SoftDeleteActionsAdminMixin):
                 list_filter = [f for f in list_filter if f != DeletedAtFilterMixin]
 
         return list_filter
+
+
+# ------------------------------------------------------------------------
+# 5. MIXIN DE CAMPOS DE FECHA (para formularios)
+# ------------------------------------------------------------------------
+class DateFieldMixin:
+    """
+    Mixin que configura los campos DateField para usar input type='date'
+    y formato 'YYYY-MM-DD'.
+
+    Uso:
+        class MiForm(DateFieldMixin, forms.ModelForm):
+            ...
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            if isinstance(field, django_forms.DateField):
+                field.input_formats = ['%Y-%m-%d']
+                if isinstance(field.widget, django_forms.DateInput):
+                    field.widget.attrs.update({'type': 'date', 'class': 'form-control'})
+                    field.widget.input_type = 'date'
+                    field.widget.format = '%Y-%m-%d'
