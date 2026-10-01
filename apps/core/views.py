@@ -38,6 +38,13 @@ from .forms import NewsForm, CategoryForm, ChronicleForm, CommissionForm
 User = get_user_model()
 
 
+"""
+1-ESTE VIEW DEBE SER ADAPTADO A LA NUEVA ESTRUCTURA DE MODELS AUN NO ESTA INCORPORADA (model-core)
+SE DEBE ACTUALIZAR PRIMERO LOS MODELOS
+
+"""
+
+
 # ============================================================
 # DATOS ESTÁTICOS DE RESPALDO (FALLBACK)
 # ============================================================
