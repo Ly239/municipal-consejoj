@@ -353,8 +353,3 @@ class Commission(models.Model):
 
 
 
-
-
-
-# Dentro de class Commission en apps/core/models.py
-
