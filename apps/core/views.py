@@ -113,7 +113,7 @@ ABOUT_US_DATA = {
 class HomeView(TemplateView):
     """
     Vista principal de la portada web.
-    Combina datos de Base de Datos (documentos, gacetas, carrusel, crónicas)
+    Combina datos de Base de Datos (carrusel, crónicas, noticias, concejales)
     con respaldo de datos estáticos cuando la BD está vacía.
     """
     template_name = 'core/home.html'
@@ -121,42 +121,33 @@ class HomeView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # 1. Documentos y gacetas recientes
-        try:
-            context['documentos_destacados'] = Document.objects.select_related(
-                'gazette', 'document_type'
-            ).order_by('-publication_date')[:2]
-            context['ultimas_gacetas'] = Gazette.objects.all()[:3]
-        except Exception:
-            context['documentos_destacados'] = []
-            context['ultimas_gacetas'] = []
-
-        # 2. Noticias para el carrusel principal
+        # 1. Noticias para el carrusel principal
         try:
             context['carousel_news'] = News.objects.filter(is_active=True).order_by('-created_at')[:5]
         except Exception:
             context['carousel_news'] = []
 
-        # 3. Crónicas municipales recientes
+        # 2. Crónicas municipales recientes
         try:
             context['chronicles'] = Chronicle.objects.filter(is_active=True).order_by('-created_at')[:3]
         except Exception:
             context['chronicles'] = []
 
-        # 4. Listado secundario de noticias
+        # 3. Listado secundario de noticias
         try:
             news_qs = News.objects.filter(is_active=True).order_by('-created_at')
             context['news_list'] = news_qs[:3] if news_qs.exists() else NEWS_DATA
         except Exception:
             context['news_list'] = NEWS_DATA
 
-        # 5. Listado de Concejales para la portada
+        # 4. Listado de Concejales para la portada
         try:
             context['councilors'] = Councilor.objects.all()
         except Exception:
             context['councilors'] = []
 
         return context
+
 
 
 class AboutUsView(TemplateView):
