@@ -78,7 +78,7 @@ class UserRegisterView(View):
                 password=password
             )
             messages.success(request, "¡Registro exitoso! Por favor inicia sesión.")
-            return redirect('login')
+            return redirect('users:login')
 
         return render(request, self.template_name, {'form': form})
 
@@ -112,7 +112,7 @@ class UserProfileView(LoginRequiredMixin, UpdateView):
                 self.request,
                 "¡Contraseña cambiada exitosamente! Por favor inicia sesión nuevamente."
             )
-            return redirect('login')
+            return redirect('users:login')
         else:
             messages.success(self.request, "¡Perfil actualizado correctamente!")
         return response
