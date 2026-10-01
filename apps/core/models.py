@@ -23,11 +23,11 @@ from django.conf import settings
 
 
 # ==============================================================================
-# 0. CLASE BASE ABSTRACTA
+# 0. CLASE BASE ABSTRACTA REDUNDANTE YA EXISTE EN COMMON
 # ==============================================================================
-
+#ESTO GENERA UN CONFLICTO PORQUE YA EXISTE UNA MODELS CON ESTE NOMBRE
 class BaseModel(models.Model):
-    """Clase base abstracta que aporta campos de auditoría de tiempo."""
+    """ELIMINAR."""
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Última Actualización")
 
