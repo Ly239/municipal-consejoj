@@ -21,7 +21,9 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
-from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import (
+    TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView
+)
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import Http404
@@ -34,7 +36,6 @@ from .models import HomeContent, News, Chronicle, Category, Commission, Councilo
 from .forms import NewsForm, CategoryForm, ChronicleForm, CommissionForm
 
 User = get_user_model()
-
 
 
 # ============================================================
@@ -172,9 +173,48 @@ class AboutUsView(TemplateView):
 
 
 # ============================================================
-# 2. MÓDULO DE NOTICIAS (FRONTEND Y GESTIÓN)
+# 2. PANEL DE CONTROL (DASHBOARD ADMINISTRATIVO)
 # ============================================================
 
+class DashboardView(LoginRequiredMixin, TemplateView):
+    """Panel de control con métricas generales del sistema."""
+    template_name = 'core/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # KPI Cards
+        context['total_documents'] = Document.objects.count()
+        context['total_gazettes'] = Gazette.objects.count()
+        context['total_users'] = User.objects.count()
+
+        # Papelera — try/except defensivo: si falla un contador, se
+        # muestra 0 en vez de tumbar todo el dashboard.
+        try:
+            from common.views import TRASH_MODELS
+            trash_count = 0
+            for model in TRASH_MODELS:
+                trash_count += model.all_objects.filter(deleted_at__isnull=False).count()
+            context['total_trash'] = trash_count
+        except Exception:
+            context['total_trash'] = 0
+
+        # Documentos recientes
+        context['recent_documents'] = Document.objects.select_related(
+            'document_type', 'gazette'
+        ).order_by('-created_at')[:5]
+
+        # Datos para el gráfico (3 categorías)
+        context['approved_count'] = Document.objects.filter(is_approved=True, is_annulled=False).count()
+        context['pending_count'] = Document.objects.filter(is_approved=False, is_annulled=False).count()
+        context['annulled_count'] = Document.objects.filter(is_annulled=True).count()
+
+        return context
+
+
+# ============================================================
+# 3. MÓDULO DE NOTICIAS (FRONTEND Y GESTIÓN)
+# ============================================================
 
 def news_public_list_frontend(request):
     """Listado público de noticias activas con filtros por texto, fecha y categoría."""
@@ -187,8 +227,8 @@ def news_public_list_frontend(request):
 
     if query:
         news_list = news_list.filter(
-            Q(title__icontains=query) | 
-            Q(summary__icontains=query) | 
+            Q(title__icontains=query) |
+            Q(summary__icontains=query) |
             Q(content__icontains=query)
         )
 
@@ -245,7 +285,6 @@ def news_detail_frontend(request, pk):
             )
             related_news = []
         else:
-            # En lugar de volver a consultar a la BD con get_object_or_404, lanzamos directamente Http404
             raise Http404("La noticia solicitada no existe.")
 
     context = {
@@ -301,9 +340,8 @@ def delete_news_frontend(request, pk):
     return render(request, 'core/delete_news.html', {'news_item': news_item})
 
 
-
 # ============================================================
-# 3. MÓDULO DE CRÓNICAS MUNICIPALES (FRONTEND Y GESTIÓN)
+# 4. MÓDULO DE CRÓNICAS MUNICIPALES (FRONTEND Y GESTIÓN)
 # ============================================================
 
 def chronicle_public_list(request):
@@ -361,7 +399,7 @@ def delete_chronicle(request, pk):
 
 
 # ============================================================
-# 4. MÓDULO DE CATEGORÍAS (GESTIÓN INTERNA)
+# 5. MÓDULO DE CATEGORÍAS (GESTIÓN INTERNA)
 # ============================================================
 
 @login_required
@@ -412,20 +450,7 @@ def delete_category_frontend(request, pk):
 
 
 # ============================================================
-# 5. MÓDULO DE COMISIONES PERMANENTES (PÚBLICO Y GESTIÓN)
-# ============================================================
-
-class CommissionsView(ListView):
-    """Vista pública de las Comisiones Permanentes de Trabajo."""
-    model = Commission
-    template_name = 'core/commissions.html'
-    context_object_name = 'commissions'
-
-    def get_queryset(self):
-        return Commission.objects.select_related('president', 'vice_president', 'vocal').order_by('number')
-
-# ============================================================
-# MÓDULO DE COMISIONES PERMANENTES (VISTAS BASADAS EN CLASES)
+# 6. MÓDULO DE COMISIONES PERMANENTES (PÚBLICO Y GESTIÓN)
 # ============================================================
 
 class CommissionsView(ListView):
@@ -470,8 +495,9 @@ class CommissionDeleteView(LoginRequiredMixin, DeleteView):
     template_name = 'core/commission_confirm_delete.html'
     success_url = reverse_lazy('core:commission_admin_list')
 
+
 # ============================================================
-# 6. MÓDULO DE CONCEJALES (PÚBLICO Y GESTIÓN)
+# 7. MÓDULO DE CONCEJALES (PÚBLICO Y GESTIÓN)
 # ============================================================
 
 class CouncilorListView(ListView):
@@ -534,14 +560,8 @@ class CouncilorDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('core:councilors')
 
 
-
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
-from .models import HomeContent, Legislature, BoardMember
-
 # ============================================================
-#  7. MÓDULO DE LEGISLATURAS (VISTAS BASADAS EN CLASES)
+# 8. MÓDULO DE LEGISLATURAS (PÚBLICO Y GESTIÓN)
 # ============================================================
 
 class LegislatureListView(ListView):
@@ -563,7 +583,7 @@ class LegislatureCreateView(LoginRequiredMixin, CreateView):
     model = HomeContent
     template_name = 'core/legislature_form.html'
     fields = [
-        'title', 'author', 'summary', 'content', 'image', 
+        'title', 'author', 'summary', 'content', 'image',
         'pdf_file', 'show_pdf_inline', 'order', 'is_active', 'status'
     ]
     success_url = reverse_lazy('core:legislatures_list')
@@ -580,7 +600,7 @@ class LegislatureUpdateView(LoginRequiredMixin, UpdateView):
     model = HomeContent
     template_name = 'core/legislature_form.html'
     fields = [
-        'title', 'author', 'summary', 'content', 'image', 
+        'title', 'author', 'summary', 'content', 'image',
         'pdf_file', 'show_pdf_inline', 'order', 'is_active', 'status'
     ]
     success_url = reverse_lazy('core:legislatures_list')
@@ -591,51 +611,3 @@ class LegislatureDeleteView(LoginRequiredMixin, DeleteView):
     model = HomeContent
     template_name = 'core/legislature_confirm_delete.html'
     success_url = reverse_lazy('core:legislatures_list')
-
-
-# ============================================================
-# 8. PANEL DE CONTROL (DASHBOARD ADMINISTRATIVO)
-# ============================================================
-
-class DashboardView(LoginRequiredMixin, TemplateView):
-    """Panel de control con métricas generales del sistema."""
-    template_name = 'core/dashboard.html'
-
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        # KPI Cards
-        context['total_documents'] = Document.objects.count()
-        context['total_gazettes'] = Gazette.objects.count()
-        context['total_users'] = User.objects.count()
-
-<<<<<<< HEAD
-        try:
-            from common.views import TRASH_MODELS
-            trash_count = 0
-            for model in TRASH_MODELS:
-                trash_count += model.all_objects.filter(deleted_at__isnull=False).count()
-            context['total_trash'] = trash_count
-        except Exception:
-            context['total_trash'] = 0
-=======
-        # Papelera
-        from common.views import TRASH_MODELS
-        trash_count = 0
-        for model in TRASH_MODELS:
-            trash_count += model.all_objects.filter(deleted_at__isnull=False).count()
-        context['total_trash'] = trash_count
->>>>>>> 98de90679c2c8e0c6017854ca7b146b788f0d2d5
-
-        # Documentos recientes
-        context['recent_documents'] = Document.objects.select_related(
-            'document_type', 'gazette'
-        ).order_by('-created_at')[:5]
-
-        # Datos para el gráfico (3 categorías)
-        context['approved_count'] = Document.objects.filter(is_approved=True, is_annulled=False).count()
-        context['pending_count'] = Document.objects.filter(is_approved=False, is_annulled=False).count()
-        context['annulled_count'] = Document.objects.filter(is_annulled=True).count()
-
-        return context

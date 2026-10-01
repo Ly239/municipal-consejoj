@@ -258,3 +258,6 @@ media/
 *.webp
 *.bmp
 *.ico
+
+#Excluir este archivo (Eliminar)
+apps/respaldo
