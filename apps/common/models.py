@@ -40,9 +40,20 @@ class SoftDeleteMixin(models.Model):
         self.deleted_at = timezone.now()
         self.save(using=using)
 
+
     def hard_delete(self, using=None, keep_parents=False):
-        """Borrado físico real (permanente). Usar con precaución."""
-        super().delete(using=using, keep_parents=keep_parents)
+    """
+    Borrado físico real (permanente).
+    Limpia archivos adjuntos antes de borrar la fila para no dejar
+    archivos huérfanos ocupando disco (Django NO los borra por defecto).
+    """
+    for field in self._meta.get_fields():
+        if isinstance(field, (models.FileField, models.ImageField)):
+            file = getattr(self, field.name, None)
+            if file and file.name:
+                file.delete(save=False)
+    super().delete(using=using, keep_parents=keep_parents)
+
 
     @property
     def is_deleted(self):
