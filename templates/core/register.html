@@ -1,60 +1,60 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Registro - Concejo Municipal de Junín{% endblock %}
+{% block title %}Registrar miembro - Concejo Municipal de Junín{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card shadow-sm">
-            <div class="card-header bg-success text-white">
-                <h4 class="mb-0"><i class="fas fa-user-plus me-2"></i>Registro de usuario</h4>
-            </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
+<div class="auth-wrapper">
+    <div class="auth-card">
 
-                    <!-- Errores generales del formulario (no asociados a un campo)-->
-                    {% if form.non_field_errors %}
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            {% for error in form.non_field_errors %}
-                            <li>{{ error }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    {% endif %}
+        <!-- Logo institucional -->
+        <img src="{% static 'core/img/logo_concejo.jpg' %}"
+             alt="Concejo Municipal de Junín"
+             class="auth-logo">
 
-                    <div class="mb-3">
-                        {{ form.username.label_tag }}
-                        {{ form.username }}
-                        {{ form.username.errors }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form.email.label_tag }}
-                        {{ form.email }}
-                        {{ form.email.errors }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form.password.label_tag }}
-                        {{ form.password }}
-                        {{ form.password.errors }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form.password_confirm.label_tag }}
-                        {{ form.password_confirm }}
-                        {{ form.password_confirm.errors }}
-                    </div>
-                    <button type="submit" class="btn btn-success w-100">
-                        <i class="fas fa-user-check me-2"></i>Registrarse
-                    </button>
-                </form>
-                <hr>
-                <p class="text-center mb-0">
-                    <small>¿Ya tienes cuenta? <a href="{% url 'users:login' %}">Inicia sesión aquí</a></small>
-                </p>
+        <!-- Título + subtítulo personalizados -->
+        <h2 class="auth-title">Bienvenido de nuevo, {{ user.username }}</h2>
+        <p class="auth-subtitle">¿Registrar nuevo integrante al sistema?</p>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <!-- Errores generales del formulario (no asociados a un campo)-->
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger py-2 mb-3">
+                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
             </div>
-        </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label for="{{ form.username.id_for_label }}">Usuario</label>
+                {{ form.username }}
+                {{ form.username.errors }}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.email.id_for_label }}">Email</label>
+                {{ form.email }}
+                {{ form.email.errors }}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.password.id_for_label }}">Contraseña</label>
+                {{ form.password }}
+                {{ form.password.errors }}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.password_confirm.id_for_label }}">Confirmar contraseña</label>
+                {{ form.password_confirm }}
+                {{ form.password_confirm.errors }}
+            </div>
+
+            <button type="submit" class="btn btn-corporate-filled auth-submit">
+                <i class="fas fa-user-plus"></i> Registrar integrante
+            </button>
+        </form>
+
     </div>
 </div>
 {% endblock %}
