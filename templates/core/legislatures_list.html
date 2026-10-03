@@ -1,0 +1,83 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Legislaturas - Concejo Municipal de Junín{% endblock %}
+
+{% block content %}
+{% include 'core/includes/_navbar_public.html' %}
+
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h1 class="fw-bold mb-1" style="color: var(--color-dark-blue);">Legislaturas y Períodos Anuales</h1>
+            <p class="text-muted mb-0">Histórico de períodos legislativos y ordenanzas aprobadas del Concejo Municipal.</p>
+        </div>
+        {% if user.is_authenticated %}
+            <a href="{% url 'core:legislature_create' %}" class="btn btn-primary rounded-pill px-4">
+                <i class="fas fa-plus me-1"></i> Nueva Legislatura
+            </a>
+        {% endif %}
+    </div>
+
+    <div class="row g-4">
+        {% for item in legislatures %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0 overflow-hidden">
+                    {% if item.image %}
+                        <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.title }}" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-light text-center py-5 border-bottom">
+                            <i class="fas fa-landmark fa-3x text-secondary"></i>
+                        </div>
+                    {% endif %}
+
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title fw-bold mb-0" style="color: var(--color-dark-blue);">{{ item.title }}</h5>
+                            {% if item.author %}
+                                <span class="badge bg-secondary">{{ item.author }}</span>
+                            {% endif %}
+                        </div>
+
+                        {% if item.summary %}
+                            <p class="card-text text-muted small mb-3">{{ item.summary }}</p>
+                        {% endif %}
+
+                        {% if item.content %}
+                            <div class="card-text text-secondary small mb-3">
+                                {{ item.content|truncatewords:25|linebreaks }}
+                            </div>
+                        {% endif %}
+
+                        {% if item.pdf_file %}
+                            <div class="mb-3">
+                                <a href="{{ item.pdf_file.url }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill w-100">
+                                    <i class="fas fa-file-pdf me-1"></i> Ver Gaceta / Decreto (PDF)
+                                </a>
+                            </div>
+                        {% endif %}
+
+                        {% if user.is_authenticated %}
+                            <div class="mt-auto pt-3 border-top d-flex gap-2 justify-content-end">
+                                <a href="{% url 'core:legislature_update' item.pk %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                    <i class="fas fa-edit me-1"></i> Editar
+                                </a>
+                                <a href="{% url 'core:legislature_delete' item.pk %}" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                    <i class="fas fa-trash-alt me-1"></i> Eliminar
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                <p class="text-muted fs-5">No hay períodos legislativos registrados actualmente.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% include 'core/includes/_footer.html' %}
+{% endblock %}

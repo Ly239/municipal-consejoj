@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Concejal | Panel{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card border-danger shadow-sm">
+        <div class="card-header bg-danger text-white py-3">
+          <h5 class="card-title mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Confirmar Eliminación</h5>
+        </div>
+        <div class="card-body text-center p-4">
+          <p class="fs-5">¿Estás seguro de que deseas eliminar a <strong>{{ object.title }}</strong>?</p>
+          <p class="text-muted small">Esta acción quitará al concejal del portal web.</p>
+
+          <form method="post">
+            {% csrf_token %}
+            <div class="d-flex justify-content-center gap-3 mt-4">
+              <a href="{% url 'core:councilors' %}" class="btn btn-secondary">
+                Cancelar
+              </a>
+              <button type="submit" class="btn btn-danger">
+                Sí, Eliminar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

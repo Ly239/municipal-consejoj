@@ -1,0 +1,63 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Gestión de Comisiones | Panel Administrative{% endblock %}
+
+{% block content %}
+{% include 'core/includes/_navbar_private.html' %}
+<div class="container my-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="font-weight-bold text-primary mb-1">Panel de Comisiones Permanentes</h2>
+      <p class="text-muted small mb-0">Administra las 15 comisiones de trabajo y asigna a sus concejales integrantes.</p>
+    </div>
+    <a href="{% url 'core:commission_create' %}" class="btn btn-success rounded-pill px-4">
+      <i class="fas fa-plus me-1"></i> Nueva Comisión
+    </a>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-lg overflow-hidden">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th style="width: 70px;">N°</th>
+            <th>Comisión</th>
+            <th>Presidente</th>
+            <th>Vicepresidente</th>
+            <th>Vocal</th>
+            <th class="text-center" style="width: 160px;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for com in commissions %}
+            <tr>
+              <td class="fw-bold text-center bg-light">{{ com.number }}</td>
+              <td>
+                <div class="fw-bold text-dark">{{ com.name }}</div>
+                <small class="text-muted d-block text-truncate" style="max-width: 250px;">{{ com.description }}</small>
+              </td>
+              <td><span class="badge bg-success-soft text-success">{{ com.president.title|default:"---" }}</span></td>
+              <td><span class="badge bg-info-soft text-info">{{ com.vice_president.title|default:"---" }}</span></td>
+              <td><span class="badge bg-secondary-soft text-secondary">{{ com.vocal.title|default:"---" }}</span></td>
+              <td class="text-center">
+                <a href="{% url 'core:commission_update' com.pk %}" class="btn btn-sm btn-outline-primary me-1" title="Editar">
+                  <i class="fas fa-edit"></i> Editar
+                </a>
+                <a href="{% url 'core:commission_delete' com.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                  <i class="fas fa-trash"></i>
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">
+                No hay comisiones registradas en el sistema.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
