@@ -1260,3 +1260,92 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 input[type="date"]::-webkit-calendar-picker-indicator:hover {
     opacity: 1;
 }
+
+/* ============================================ */
+/* BOTONES CORPORATIVOS (adaptable para todos 
+los botones del sistema) */
+/* ============================================ */
+
+/* --- Variante OUTLINE (fondo transparente) --- */
+.btn-corporate {
+    /* Variables de Bootstrap 5 */
+    --bs-btn-color: var(--color-dark-blue);
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: var(--color-dark-blue);
+    --bs-btn-hover-color: #ffffff;
+    --bs-btn-hover-bg: var(--color-dark-blue);
+    --bs-btn-hover-border-color: var(--color-dark-blue);
+    --bs-btn-active-color: #ffffff;
+    --bs-btn-active-bg: var(--color-light-blue);
+    --bs-btn-active-border-color: var(--color-light-blue);
+    --bs-btn-focus-shadow-rgb: 0, 59, 79;
+
+    /* Estructura propia */
+    border-width: 2px;
+    border-radius: 8px;
+    padding: 0.6rem 1.25rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.2;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+}
+
+/* --- Variante FILLED (fondo lleno) --- */
+.btn-corporate-filled {
+    --bs-btn-color: #ffffff;
+    --bs-btn-bg: var(--color-dark-blue);
+    --bs-btn-border-color: var(--color-dark-blue);
+    --bs-btn-hover-color: #ffffff;
+    --bs-btn-hover-bg: var(--color-light-blue);
+    --bs-btn-hover-border-color: var(--color-light-blue);
+    --bs-btn-active-color: #ffffff;
+    --bs-btn-active-bg: var(--color-dark-blue);
+    --bs-btn-active-border-color: var(--color-dark-blue);
+    --bs-btn-focus-shadow-rgb: 10, 177, 212;
+
+    /* Estructura propia */
+    border-width: 2px;
+    border-radius: 8px;
+    padding: 0.6rem 1.25rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.2;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+}
+
+/* --- Variante COMPACTA (botones chicos como "Volver") --- */
+.btn-corporate.btn-sm,
+.btn-corporate-filled.btn-sm {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
+    border-radius: 50px;
+}
+
+/* --- Modificador PILL (forma totalmente redondeada) --- */
+.btn-corporate.btn-pill,
+.btn-corporate-filled.btn-pill {
+    border-radius: 50px;
+}
+
+/* --- Modificador BLOCK (ancho completo) --- */
+.btn-corporate.btn-block,
+.btn-corporate-filled.btn-block {
+    display: flex;
+    width: 100%;
+}
