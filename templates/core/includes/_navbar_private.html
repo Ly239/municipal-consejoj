@@ -7,7 +7,7 @@
 
       <!-- BOTÓN VOLVER (Con respaldo si no hay historial) -->
     {% if request.resolver_match.url_name != 'core:home' and request.resolver_match.url_name != 'core:dashboard' %}
-    <a href="#" onclick="if (history.length > 1) { history.back(); } else { window.location.href = '{% url 'documents:document_list' %}'; }" class="btn btn-corporate btn-sm me-3" title="Volver" style="border-radius: 50px; border: 1px solid #003B4F; color: #003B4F;">
+    <a href="#" onclick="if (history.length > 1) { history.back(); } else { window.location.href = '{% url 'documents:document_list' %}'; }" class="btn btn-outline-secondary btn-sm me-3" title="Volver" style="border-radius: 50px; border: 1px solid #003B4F; color: #003B4F;">
       <i class="fas fa-arrow-left"></i>
     </a>
     {% endif %}
@@ -56,10 +56,10 @@
     <div class="d-flex gap-2 align-items-center ms-lg-3">
       {% if user.is_authenticated %}
         <!-- CAMBIO 3: Añadido max-width y truncado para que el nombre de usuario largo no rompa el botón -->
-        <a href="{% url 'users:profile' %}" class="btn btn-corporate text-truncate" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <a href="{% url 'users:profile' %}" class="btn btn-corporate-filled btn-sm" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
           <i class="fas fa-user me-1"></i>{{ user.username }}
         </a>
-        <a href="{% url 'users:logout' %}" class="btn btn-corporate-filled">
+        <a href="{% url 'users:logout' %}" class="btn btn-corporate-filled btn-sm">
           <i class="fas fa-sign-out-alt me-1"></i>Salir
         </a>
       {% else %}
