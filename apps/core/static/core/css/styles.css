@@ -1349,3 +1349,131 @@ los botones del sistema) */
     display: flex;
     width: 100%;
 }
+
+
+
+
+/* AUTH PAGES (Login / Register)                */
+/* ============================================ */
+
+/* --- Wrapper con fondo azul muy claro --- */
+.auth-wrapper {
+    min-height: calc(100vh - 200px);
+    background-color: #E8F4F8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+}
+
+/* --- Card del formulario --- */
+.auth-card {
+    width: 100%;
+    max-width: 450px;
+    background: #FFFFFF;
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    box-shadow: 0 10px 40px rgba(0, 59, 79, 0.08);
+    border: 1px solid rgba(0, 59, 79, 0.05);
+}
+
+/* --- Logo dentro de la card, arriba del título --- */
+.auth-card .auth-logo {
+    display: block;
+    max-height: 65px;
+    width: auto;
+    margin: 0 auto 1.25rem auto;
+}
+
+/* --- Título y subtítulo --- */
+.auth-card .auth-title {
+    color: var(--color-dark-blue);
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 0.35rem;
+    line-height: 1.3;
+}
+
+.auth-card .auth-subtitle {
+    color: #6c757d;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+/* --- Labels --- */
+.auth-card label {
+    color: var(--color-dark-blue);
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-bottom: 0.35rem;
+    display: block;
+}
+
+/* --- Inputs --- */
+.auth-card .form-control {
+    border: 1.5px solid #DDE5E8;
+    border-radius: 8px;
+    padding: 0.65rem 1rem;
+    font-size: 0.95rem;
+    background-color: #FAFCFD;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.auth-card .form-control:focus {
+    border-color: var(--color-light-blue);
+    box-shadow: 0 0 0 3px rgba(10, 177, 212, 0.15);
+    background-color: #FFFFFF;
+    outline: none;
+}
+
+/* --- Errores de campo --- */
+.auth-card .errorlist {
+    list-style: none;
+    padding: 0;
+    margin: 0.35rem 0 0 0;
+    color: #c0392b;
+    font-size: 0.8rem;
+}
+
+.auth-card .errorlist li {
+    margin-bottom: 0.2rem;
+}
+
+/* --- Botón principal (reutiliza .btn-corporate-filled) --- */
+.auth-card .auth-submit {
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+/* --- Footer con link secundario --- */
+.auth-card .auth-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.auth-card .auth-footer a {
+    color: var(--color-light-blue);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-card .auth-footer a:hover {
+    text-decoration: underline;
+}
+
+/* --- Mobile --- */
+@media (max-width: 480px) {
+    .auth-wrapper {
+        padding: 2rem 1rem;
+    }
+    .auth-card {
+        padding: 2rem 1.25rem;
+    }
+    .auth-card .auth-title {
+        font-size: 1.3rem;
+    }
+}
