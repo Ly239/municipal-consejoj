@@ -26,29 +26,13 @@
             </div>
             {% endif %}
 
+            {% for field in form %}
             <div class="mb-3">
-                <label for="{{ form.username.id_for_label }}">Usuario</label>
-                {{ form.username }}
-                {{ form.username.errors }}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {{ field.errors }}
             </div>
-
-            <div class="mb-3">
-                <label for="{{ form.email.id_for_label }}">Email</label>
-                {{ form.email }}
-                {{ form.email.errors }}
-            </div>
-
-            <div class="mb-3">
-                <label for="{{ form.password.id_for_label }}">Contraseña</label>
-                {{ form.password }}
-                {{ form.password.errors }}
-            </div>
-
-            <div class="mb-3">
-                <label for="{{ form.password_confirm.id_for_label }}">Confirmar contraseña</label>
-                {{ form.password_confirm }}
-                {{ form.password_confirm.errors }}
-            </div>
+            {% endfor %}
 
             <button type="submit" class="btn btn-corporate-filled auth-submit">
                 <i class="fas fa-user-plus"></i> Registrar integrante
