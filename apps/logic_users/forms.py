@@ -40,18 +40,17 @@ class LoginForm(forms.Form):
     )
 
     def clean(self):
-        """Autentica al usuario con las credenciales proporcionadas."""
+        """Solo valida formato. La autenticación la hace la vista."""
         cleaned_data = super().clean()
         username = cleaned_data.get('username')
         password = cleaned_data.get('password')
-        if username and password:
-            user = authenticate(username=username, password=password)
-            if user is None:
-                raise forms.ValidationError("Usuario o contraseña incorrectos.")
-            if not user.is_active:
-                raise forms.ValidationError("Esta cuenta está desactivada o ha sido eliminada.")
-            cleaned_data['user'] = user
+        if not username:
+            self.add_error('username', "El nombre de usuario es obligatorio.")
+        if not password:
+            self.add_error('password', "La contraseña es obligatoria.")
         return cleaned_data
+
+    
 
 
 # ------------------------------------------------------------
