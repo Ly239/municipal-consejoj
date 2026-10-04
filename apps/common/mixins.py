@@ -33,7 +33,7 @@ class LoggingMixin:
                 f"Ocurrió un error inesperado en {model_name}. "
                 "Por favor, revisa los datos o contacta al administrador."
             )
-            redirect_url = getattr(self, 'success_url', reverse_lazy('home'))
+            redirect_url = getattr(self, 'success_url', reverse_lazy('core:home'))
             return redirect(redirect_url)
 
 
