@@ -582,6 +582,18 @@ textarea.is-invalid {
 }
 
 
+/* Errores de campo en formularios */
+.errorlist {
+    list-style: none;
+    padding: 0;
+    margin: 0.35rem 0 0 0;
+    color: #c0392b;
+    font-size: 0.8rem;
+}
+.errorlist li {
+    margin-bottom: 0.2rem;
+}
+
 
 /* ============================================ */
 /* DETALLE DE NOTICIA (Estilo El Hatillo)      */
