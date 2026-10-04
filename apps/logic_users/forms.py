@@ -59,59 +59,214 @@ class LoginForm(forms.Form):
 # ------------------------------------------------------------
 class RegisterForm(forms.Form):
     """Formulario para registrar nuevos usuarios (no se usa actualmente)."""
+
     username = forms.CharField(
         label="Nombre de Usuario",
         max_length=150,
-        widget=forms.TextInput(attrs={
-            'placeholder': 'Define nombre de usuario',
-            'class': 'form-control'
-        })
+        widget=forms.TextInput(attrs={'placeholder': 'Define nombre de usuario', 'class': 'form-control'})
     )
+    
+    first_name = forms.CharField(
+        label="Nombre",
+        max_length=150,
+        widget=forms.TextInput(attrs={'placeholder': 'Tu nombre', 'class': 'form-control'})
+    )
+    
+    last_name = forms.CharField(
+        label="Apellido",
+        max_length=150,
+        widget=forms.TextInput(attrs={'placeholder': 'Tu apellido', 'class': 'form-control'})
+    )
+    
+    id_number = forms.CharField(
+        label="Cédula",
+        max_length=15,
+        widget=forms.TextInput(attrs={'placeholder': 'V-12345678', 'class': 'form-control'})
+    )
+    
     email = forms.EmailField(
         label="Correo electrónico",
-        widget=forms.EmailInput(attrs={
-            'placeholder': 'tu@gmail.com',
-            'class': 'form-control'
-        })
+        widget=forms.EmailInput(attrs={'placeholder': 'tu@gmail.com', 'class': 'form-control'})
     )
+    
+    phone = forms.CharField(
+        label="Teléfono",
+        max_length=20,
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder': '0414-1234567', 'class': 'form-control'})
+    )
+    
+    address = forms.CharField(
+        label="Dirección",
+        max_length=255,
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder': 'Dirección (opcional)', 'class': 'form-control'})
+    )
+    
     password = forms.CharField(
         label="Contraseña",
-        widget=forms.PasswordInput(attrs={
-            'placeholder': 'Introduce tu Contraseña',
-            'class': 'form-control'
-        })
+        widget=forms.PasswordInput(attrs={'placeholder': 'Introduce tu Contraseña', 'class': 'form-control'})
     )
+    
     password_confirm = forms.CharField(
         label="Confirmar Contraseña",
-        widget=forms.PasswordInput(attrs={
-            'placeholder': 'Repite tu Contraseña',
-            'class': 'form-control'
-        })
+        widget=forms.PasswordInput(attrs={'placeholder': 'Repite tu Contraseña', 'class': 'form-control'})
     )
+
+
+    # ============================================================
+    # VALIDACIONES
+    # ============================================================
+
+    def clean_first_name(self):
+        return validate_only_letters(self.cleaned_data.get('first_name'), "El nombre")
+
+    def clean_last_name(self):
+        return validate_only_letters(self.cleaned_data.get('last_name'), "El apellido")
 
     def clean_username(self):
         username = self.cleaned_data.get('username')
         if not username:
             return username
-        if User.all_objects.filter(username=username).exists():
-            raise forms.ValidationError("Este nombre de usuario ya está en uso.")
+
+        # Validaciones de formato
+        if len(username) < 4 or len(username) > 20:
+            raise forms.ValidationError("El nombre de usuario debe tener entre 4 y 20 caracteres.")
+        if not re.match(r'^[A-Za-z0-9_]+$', username):
+            raise forms.ValidationError(
+                "El nombre de usuario solo puede contener letras, números y guión bajo (_)."
+            )
+        if not any(c.isalpha() for c in username):
+            raise forms.ValidationError("El nombre de usuario debe contener al menos una letra.")
+        if all(c == username[0] for c in username) and username[0].isalpha():
+            raise forms.ValidationError("El nombre de usuario no puede consistir en una sola letra repetida.")
+
+        # Unicidad (considerando papelera)
+        existing = User.all_objects.filter(username=username)
+        if self.instance.pk:
+            existing = existing.exclude(pk=self.instance.pk)
+        existing = existing.first()
+        if existing:
+            if existing.is_deleted:
+                raise forms.ValidationError(
+                    "Este nombre de usuario ya existe en la papelera. "
+                    "Restáuralo o elimínalo definitivamente."
+                )
+            else:
+                raise forms.ValidationError("Este nombre de usuario ya está registrado.")
         return username
+
+    def clean_id_number(self):
+        id_number = self.cleaned_data.get('id_number')
+        if not id_number:
+            return id_number
+
+        # Validar formato de cédula
+        validate_venezuelan_id(id_number)
+
+        # Unicidad (considerando papelera)
+        existing = User.all_objects.filter(id_number=id_number)
+        if self.instance.pk:
+            existing = existing.exclude(pk=self.instance.pk)
+        existing = existing.first()
+        if existing:
+            if existing.is_deleted:
+                raise forms.ValidationError(
+                    "Esta cédula ya existe en la papelera. "
+                    "Restáurala o elimínala definitivamente."
+                )
+            else:
+                raise forms.ValidationError("Esta cédula ya está registrada.")
+        return id_number
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if not phone:
+            return phone
+
+        # Validar formato de teléfono
+        validate_venezuelan_phone(phone)
+
+        # Unicidad (considerando papelera)
+        existing = User.all_objects.filter(phone=phone)
+        if self.instance.pk:
+            existing = existing.exclude(pk=self.instance.pk)
+        existing = existing.first()
+        if existing:
+            if existing.is_deleted:
+                raise forms.ValidationError(
+                    "Este teléfono ya existe en la papelera. "
+                    "Restáuralo o elimínalo definitivamente."
+                )
+            else:
+                raise forms.ValidationError("Este teléfono ya está registrado.")
+        return phone
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if not email:
             return email
-        if User.all_objects.filter(email=email).exists():
-            raise forms.ValidationError("Este correo electrónico ya está registrado.")
+
+        # Unicidad (considerando papelera)
+        existing = User.all_objects.filter(email=email)
+        if self.instance.pk:
+            existing = existing.exclude(pk=self.instance.pk)
+        existing = existing.first()
+        if existing:
+            if existing.is_deleted:
+                raise forms.ValidationError(
+                    "Este correo ya existe en la papelera. "
+                    "Restáuralo o elimínalo definitivamente."
+                )
+            else:
+                raise forms.ValidationError("Este correo ya está registrado.")
         return email
 
+    def clean_password1(self):
+        password1 = self.cleaned_data.get('password1')
+        if not password1:
+            return password1
+
+        if len(password1) < 8 or len(password1) > 15:
+            raise forms.ValidationError("La contraseña debe tener entre 8 y 15 caracteres.")
+        if not re.search(r'[A-Z]', password1):
+            raise forms.ValidationError("La contraseña debe contener al menos una letra mayúscula.")
+        if not re.search(r'\d', password1):
+            raise forms.ValidationError("La contraseña debe contener al menos un número.")
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password1):
+            raise forms.ValidationError(
+                "La contraseña debe contener al menos un carácter especial (ej: !@#$%^&*)."
+            )
+        return password1
+
     def clean(self):
+        """Validaciones cruzadas (sin try/except — usa add_error)."""
         cleaned_data = super().clean()
-        password = cleaned_data.get('password')
-        password_confirm = cleaned_data.get('password_confirm')
-        if password and password_confirm and password != password_confirm:
-            self.add_error('password_confirm', "Las contraseñas no coinciden.")
+        old_password = cleaned_data.get('old_password')
+        password1 = cleaned_data.get('password1')
+        password2 = cleaned_data.get('password2')
+        user = self.instance
+
+        if password1 or password2:
+            if not old_password:
+                self.add_error('old_password', "Debe ingresar su contraseña actual para cambiarla.")
+            elif not user.check_password(old_password):
+                self.add_error('old_password', "Contraseña actual incorrecta.")
+            elif password1 != password2:
+                self.add_error('password2', "Las contraseñas nuevas no coinciden.")
+            elif password1 == old_password:
+                self.add_error('password1', "La nueva contraseña debe ser diferente a la actual.")
+            else:
+                cleaned_data['new_password'] = password1
         return cleaned_data
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        if self.cleaned_data.get('new_password'):
+            user.set_password(self.cleaned_data['new_password'])
+        if commit:
+            user.save()
+        return user
 
 
 # ------------------------------------------------------------
