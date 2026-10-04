@@ -25,6 +25,7 @@ class UserLoginView(View):
         form = LoginForm()
         return render(request, self.template_name, {'form': form})
 
+
     def post(self, request, *args, **kwargs):
         """Procesa el formulario de login y autentica al usuario."""
         if request.user.is_authenticated:
@@ -39,11 +40,13 @@ class UserLoginView(View):
             if user is not None:
                 login(request, user)
                 return redirect('core:home')
+        
+            else:
+                # El error va al form → un solo mensaje en pantalla
+                form.add_error(None, "Usuario o contraseña incorrectos.")
 
-        return render(request, self.template_name, {
-            'form': form,
-            'error_message': 'Nombre de usuario o contraseña incorrectos.'
-        })
+        return render(request, self.template_name, {'form': form})  # ← solo el form
+
 
 
 # ============================================================
