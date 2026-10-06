@@ -1492,3 +1492,27 @@ los botones del sistema) */
         font-size: 1.3rem;
     }
 }
+
+
+/* ============================================================ */
+/* ESTILO DE DETALLES (dl con información de documents y gazzete)                */
+/* ============================================================ */
+.detail-info {
+    padding: 1.25rem;
+}
+.detail-info dt {
+    color: var(--color-dark-blue);
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0, 59, 79, 0.05);
+}
+.detail-info dd {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0, 59, 79, 0.05);
+    margin: 0;
+    font-size: 0.9rem;
+}
+.detail-info dl {
+    margin-bottom: 0;
+}
