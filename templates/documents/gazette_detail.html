@@ -62,10 +62,10 @@
           <dd class="col-sm-8">{{ gazette.emission_date|date:"d/m/Y" }}</dd>
 
           <dt class="col-sm-4">Publicado en sistema</dt>
-          <dd class="col-sm-8">{{ gazette.publication_date|date:"d/m/Y H:i" }}</dd>
+          <dd class="col-sm-8">{{ gazette.publication_date|date:"d/m/Y  h:i A" }}</dd>
 
           <dt class="col-sm-4">Última actualización</dt>
-          <dd class="col-sm-8">{{ gazette.updated_at|date:"d/m/Y H:i" }}</dd>
+          <dd class="col-sm-8">{{ gazette.updated_at|date:"d/m/Y  h:i A" }}</dd>
 
           <dt class="col-sm-4">Documentos</dt>
           <dd class="col-sm-8">{{ gazette.documents.count }}</dd>
