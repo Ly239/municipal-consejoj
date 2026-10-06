@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.db.models import Q
 from django.contrib.auth import authenticate, login, get_user_model, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -25,9 +25,8 @@ class UserLoginView(View):
         form = LoginForm()
         return render(request, self.template_name, {'form': form})
 
-
     def post(self, request, *args, **kwargs):
-        """Procesa el formulario de login y autentica al usuario."""
+        """Procesa el login. La autenticación vive SOLO aquí (no en el form)."""
         if request.user.is_authenticated:
             return redirect('core:home')
 
@@ -40,49 +39,47 @@ class UserLoginView(View):
             if user is not None:
                 login(request, user)
                 return redirect('core:home')
-        
             else:
                 # El error va al form → un solo mensaje en pantalla
                 form.add_error(None, "Usuario o contraseña incorrectos.")
 
-        return render(request, self.template_name, {'form': form})  # ← solo el form
-
+        return render(request, self.template_name, {'form': form})
 
 
 # ============================================================
-# 2. VISTA DE REGISTRO (opcional, para uso futuro)
+# 2. VISTA DE REGISTRO (admin-only)
 # ============================================================
-class UserRegisterView(View):
-    """Vista para registrar nuevos usuarios."""
+class UserRegisterView(LoginRequiredMixin, View):
+    """
+    Vista para registrar nuevos usuarios (admin-only).
+
+    Sprint 2: agregar chequeo del grupo Administrator.
+    Ver docs/PLAN_REGISTER_Y_USUARIOS.md (sección 6.2.2).
+    """
     template_name = 'core/register.html'
+    login_url = 'users:login'
+
+    def handle_no_permission(self):
+        """Muestra un mensaje cuando alguien sin sesión intenta registrar."""
+        messages.info(
+            self.request,
+            "Debés iniciar sesión para registrar usuarios."
+        )
+        return super().handle_no_permission()
 
     def get(self, request, *args, **kwargs):
-        """Muestra el formulario de registro. Si ya está autenticado, redirige al home."""
-        if request.user.is_authenticated:
-            return redirect('core:home')
         form = RegisterForm()
         return render(request, self.template_name, {'form': form})
 
     def post(self, request, *args, **kwargs):
-        """Procesa el formulario de registro y crea un nuevo usuario."""
-        if request.user.is_authenticated:
-            return redirect('core:home')
-
         form = RegisterForm(request.POST)
         if form.is_valid():
-            username = form.cleaned_data['username']
-            email = form.cleaned_data['email']
-            password = form.cleaned_data['password']
-
-            # Crear usuario con los datos del formulario
-            user = User.objects.create_user(
-                username=username,
-                email=email,
-                password=password
+            user = form.save()
+            messages.success(
+                request,
+                f"Usuario '{user.username}' creado exitosamente. Podés crear otro."
             )
-            messages.success(request, "¡Registro exitoso! Por favor inicia sesión.")
-            return redirect('users:login')
-
+            return redirect('users:register')
         return render(request, self.template_name, {'form': form})
 
 
