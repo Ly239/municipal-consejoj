@@ -51,7 +51,7 @@ class UserLoginView(View):
 # ============================================================
 class UserRegisterView(LoginRequiredMixin, View):
     """
-    Vista para registrar nuevos usuarios (admin-only).
+    Vista para registrar nuevos usuarios (admin-only) NO SE USA AUN ESTA PENDIENTE.
 
     Sprint 2: agregar chequeo del grupo Administrator.
     Ver docs/PLAN_REGISTER_Y_USUARIOS.md (sección 6.2.2).
