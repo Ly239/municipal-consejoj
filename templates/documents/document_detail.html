@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
             renderPage(1);
         }).catch(function(error) {
             console.error('Error al cargar PDF:', error);
-            loading.innerHTML = '<div class="alert alert-danger mb-0">No se pudo cargar el PDF. <a href="' + url + '" target="_blank">Descárgalo aquí</a>.</div>';
+            loading.innerHTML = '<div class="alert alert-danger mb-0">No se pudo cargar el PDF. <a href="' + url + '" target="_blank"> Abrir en pestaña nueva</a>.</div>';
         });
 
         function renderPage(num) {
