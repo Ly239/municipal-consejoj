@@ -120,17 +120,26 @@
           </span>
         {% endif %}
 
+
         {% if request.GET.doc_type %}
-          <span class="badge rounded-pill me-1" style="background-color: var(--color-light-blue); color: white;">
-            Tipo aplicado
+          <span class="badge rounded-pill me-1" style="background-color: var(--color-light-blue); color: white;">Tipo:
+            {% for type in document_types %}
+              {% if type.id|stringformat:"s" == request.GET.doc_type %}{{ type.name }}{% endif %}
+            {% endfor %}
           </span>
         {% endif %}
 
+
         {% if request.GET.status %}
-          <span class="badge rounded-pill me-1" style="background-color: var(--color-light-blue); color: white;">
-            Estado: {{ request.GET.status }}
+          <span class="badge rounded-pill me-1" style="background-color: var(--color-light-blue); color: white;">Estado:
+            {% if request.GET.status == "approved" %}
+            Aprobado
+            {% elif request.GET.status == "pending" %}Pendiente
+            {% elif request.GET.status == "annulled" %}Anulado
+            {% endif %}
           </span>
         {% endif %}
+
 
         {% if request.GET.date_from %}
           <span class="badge rounded-pill me-1" style="background-color: var(--color-light-blue); color: white;">
