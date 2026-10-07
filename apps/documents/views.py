@@ -242,7 +242,6 @@ class SearchListMixin:
 # ==================================================
 # VISTAS PARA GACETAS
 # ==================================================
-
 class GazetteListView(LoginRequiredMixin, SearchListMixin, ListView):
     """Listado de gacetas con búsqueda y filtros."""
     model = Gazette
@@ -252,6 +251,20 @@ class GazetteListView(LoginRequiredMixin, SearchListMixin, ListView):
     search_fields = ['number', 'year', 'description']
     numeric_fields = ['number', 'year']
     filter_fields = ['year']
+
+    def get_queryset(self):
+        """
+        Filtra por tipo (ordinaria/extraordinaria) además de los
+        filtros heredados del SearchListMixin.
+        """
+        qs = super().get_queryset()
+        tipo = self.request.GET.get('tipo', '')
+        if tipo == 'ordinaria':
+            qs = qs.filter(is_extraordinary=False)
+        elif tipo == 'extraordinaria':
+            qs = qs.filter(is_extraordinary=True)
+        return qs
+        
 
 
 class GazetteCreateView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixin, CreateView):
