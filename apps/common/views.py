@@ -31,24 +31,51 @@ def register_trash_model(model):
 # este archivo cuando se agregue un modelo nuevo (ej. User).
 
 
+
 class TrashListView(LoginRequiredMixin, ListView):
     """
     Vista que muestra todos los elementos eliminados (papelera).
     Usa ListView con paginación real.
+
+    Filtra por key de dominio (nombre, cédula, número de gaceta/documento).
     """
     template_name = 'common/trash_list.html'
     context_object_name = 'trash_items'
-    paginate_by = 20  # Paginación de 20 elementos por página
+    paginate_by = 20 # Paginación de 20 elementos por página
 
     def get_queryset(self):
         """
         Construye la lista de elementos eliminados de todos los modelos registrados.
+        Si hay un query param 'q', filtra por texto libre en la key de dominio.
         """
         trash_items = []
+        query = self.request.GET.get('q', '').strip().lower()
+
         for model in TRASH_MODELS:
             try:
-                queryset = model.all_objects.filter(deleted_at__isnull=False).order_by('-deleted_at')
+                queryset = model.all_objects.filter(
+                    deleted_at__isnull=False
+                ).order_by('-deleted_at')
+
                 for obj in queryset:
+                    # Construir texto searchable (key de dominio)
+                    search_parts = [str(obj).lower()]
+
+                    # User → cédula
+                    if hasattr(obj, 'id_number') and obj.id_number:
+                        search_parts.append(str(obj.id_number).lower())
+
+                    # Gazette / Document → número
+                    if hasattr(obj, 'number') and obj.number is not None:
+                        search_parts.append(f"{obj.number:03d}")
+                        search_parts.append(str(obj.number))
+
+                    search_text = ' '.join(search_parts)
+
+                    # Filtrar si hay query
+                    if query and query not in search_text:
+                        continue
+
                     trash_items.append({
                         'id': obj.pk,
                         'model_name': model._meta.verbose_name,
@@ -56,7 +83,7 @@ class TrashListView(LoginRequiredMixin, ListView):
                         'deleted_at': obj.deleted_at,
                         'model_index': TRASH_MODELS.index(model),
                         'app_label': model._meta.app_label,
-                        'token': f"{model._meta.app_label}|{model._meta.model_name}|{obj.pk}",  # ✅ Para bulk actions
+                        'token': f"{model._meta.app_label}|{model._meta.model_name}|{obj.pk}",
                         'icon': 'fas fa-file',
                         'details': [],
                     })
@@ -65,25 +92,26 @@ class TrashListView(LoginRequiredMixin, ListView):
         return trash_items
 
     def get_context_data(self, **kwargs):
-        """
-        Añade el total de elementos al contexto.
-        """
+        """Añade total y search_query al contexto."""
         context = super().get_context_data(**kwargs)
-        context['total'] = len(self.get_queryset())  # Total real de elementos
+        context['total'] = len(self.get_queryset()) # Total real de elementos
+        context['search_query'] = self.request.GET.get('q', '') 
         return context
 
 
 class RestoreTrashItemView(LoginRequiredMixin, PermissionRequiredMixin, View):
-    """Restaura un elemento de la papelera."""
+    """Restaura un elemento de la papelera.
+
+    Usa ObjectDoesNotExist genérico (no `model.DoesNotExist` que falla
+    con NameError si el IndexError se dispara antes).
+    """
 
     def get_permission_required(self):
-        """
-        Calcula el permiso requerido dinámicamente según el modelo real
+        """Calcula el permiso requerido dinámicamente según el modelo real
         (en vez de dejarlo fijo en 'documents.restore_document').
-        Así funciona igual para Document, Gazette, o el futuro User.
-        """
+        Así funciona igual para Document, Gazette, o el futuro User."""
         model = TRASH_MODELS[self.kwargs['model_index']]
-        permission_name = model.get_restore_permission_name()  # ej: restore_document
+        permission_name = model.get_restore_permission_name() # ej: restore_document
         return (f"{model._meta.app_label}.{permission_name}",)
 
     def handle_no_permission(self):
@@ -98,7 +126,7 @@ class RestoreTrashItemView(LoginRequiredMixin, PermissionRequiredMixin, View):
             messages.success(request, f'"{obj}" restaurado correctamente.')
         except IndexError:
             messages.error(request, "Modelo no encontrado.")
-        except model.DoesNotExist:
+        except ObjectDoesNotExist:
             messages.error(request, "El registro no existe en la papelera.")
         except Exception as e:
             logger.error(f"Error al restaurar: {e}")
@@ -107,8 +135,10 @@ class RestoreTrashItemView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
 
 class HardDeleteTrashItemView(LoginRequiredMixin, PermissionRequiredMixin, View):
-    """Elimina permanentemente un elemento de la papelera."""
+    """Elimina permanentemente un elemento de la papelera.
 
+    Usa ObjectDoesNotExist genérico.
+    """
     def get_permission_required(self):
         model = TRASH_MODELS[self.kwargs['model_index']]
         return (f"{model._meta.app_label}.delete_{model._meta.model_name}",)
@@ -116,7 +146,6 @@ class HardDeleteTrashItemView(LoginRequiredMixin, PermissionRequiredMixin, View)
     def handle_no_permission(self):
         messages.error(self.request, "No tienes permiso para eliminar permanentemente.")
         return redirect('common:trash_list')
-
 
     def post(self, request, model_index, pk):
         try:
@@ -126,7 +155,7 @@ class HardDeleteTrashItemView(LoginRequiredMixin, PermissionRequiredMixin, View)
             messages.success(request, f'"{obj}" eliminado definitivamente.')
         except IndexError:
             messages.error(request, "Modelo no encontrado.")
-        except model.DoesNotExist:
+        except ObjectDoesNotExist:
             messages.error(request, "El registro no existe en la papelera.")
         except Exception as e:
             logger.error(f"Error al eliminar permanentemente: {e}")
@@ -134,15 +163,26 @@ class HardDeleteTrashItemView(LoginRequiredMixin, PermissionRequiredMixin, View)
         return redirect('common:trash_list')
 
 
-
 class BulkTrashActionView(LoginRequiredMixin, View):
-    """Acciones masivas en la papelera (restaurar o eliminar permanentemente)."""
+    """Acciones masivas en la papelera (restaurar o eliminar permanentemente).
+
+    Usa ObjectDoesNotExist genérico.
+    Si action es restore_all/delete_all Y hay selección, solo procesa
+         los seleccionados. Si no hay selección, procesa todo.
+    """
 
     def post(self, request):
         action = request.POST.get('bulk_action')
         selected = request.POST.getlist('selected_items')
 
-        if action in ['restore_all', 'delete_all']:
+        #Si action es restore_all/delete_all y hay selección,
+        # normalizamos a restore/delete para procesar solo los seleccionados.
+        if action in ['restore_all', 'delete_all'] and selected:
+            action = action.replace('_all', '')
+
+        #Si action es restore_all/delete_all y NO hay selección,
+        # procesamos todo.
+        if action in ['restore_all', 'delete_all'] and not selected:
             selected = []
             for model in TRASH_MODELS:
                 for obj in model.all_objects.filter(deleted_at__isnull=False):
@@ -159,7 +199,7 @@ class BulkTrashActionView(LoginRequiredMixin, View):
         restored = 0
         deleted = 0
         errors = 0
-        denied = 0  # ✅ nuevo: cuenta los que se saltaron por falta de permiso
+        denied = 0 # Cuenta los que se saltaron por falta de permiso
 
         for token in selected:
             try:
@@ -168,7 +208,6 @@ class BulkTrashActionView(LoginRequiredMixin, View):
                 obj = model.all_objects.get(pk=pk)
 
                 if action in ['restore', 'restore_all']:
-                    # Permiso calculado según el modelo real de ESTE objeto
                     perm = f"{app_label}.{model.get_restore_permission_name()}"
                     if not request.user.has_perm(perm):
                         denied += 1
@@ -187,7 +226,7 @@ class BulkTrashActionView(LoginRequiredMixin, View):
             except ValueError:
                 errors += 1
                 logger.error(f"Token inválido: {token}")
-            except model.DoesNotExist:
+            except ObjectDoesNotExist:
                 errors += 1
                 logger.error(f"Objeto no encontrado: {token}")
             except Exception as e:
