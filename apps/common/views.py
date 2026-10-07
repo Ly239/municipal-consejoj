@@ -4,13 +4,14 @@ Vistas para la papelera (soft delete, restore y hard delete).
 import logging
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib import messages
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import redirect
 from django.views import View
-from django.views.generic import TemplateView, ListView
+from django.views.generic import ListView
 from django.apps import apps
-from django.core.exceptions import PermissionDenied
 
 logger = logging.getLogger(__name__)
+
 
 # Modelos que pueden aparecer en la papelera
 TRASH_MODELS = []
