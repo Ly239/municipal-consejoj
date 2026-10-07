@@ -9,11 +9,30 @@
 {% block page_subtitle %}Gacetas municipales publicadas{% endblock %}
 {% block table_title %}Listado de Gacetas{% endblock %}
 
+
+{% block header_actions %}
+<div class="btn-group btn-group-sm me-2" role="group" aria-label="Filtro por tipo">
+  <a href="{% url 'documents:gazette_list' %}"
+     class="btn btn-outline-primary {% if not request.GET.tipo %}active{% endif %}">
+    Todas
+  </a>
+  <a href="{% url 'documents:gazette_list' %}?tipo=ordinaria"
+     class="btn btn-outline-primary {% if request.GET.tipo == 'ordinaria' %}active{% endif %}">
+    Ordinarias
+  </a>
+  <a href="{% url 'documents:gazette_list' %}?tipo=extraordinaria"
+     class="btn btn-outline-primary {% if request.GET.tipo == 'extraordinaria' %}active{% endif %}">
+    Extraordinarias
+  </a>
+</div>
+{% endblock %}
+
 {% block create_button %}
 <a href="{% url 'documents:gazette_create' %}" class="btn btn-primary btn-sm">
   <i class="fas fa-plus"></i> Nueva Gaceta
 </a>
 {% endblock %}
+
 
 {% block table_content %}
 <!-- Breadcrumb de navegación -->
