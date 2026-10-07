@@ -325,13 +325,16 @@ class GazetteDeleteView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixi
         return redirect('documents:gazette_list')
 
     def form_valid(self, form):
+        """El mensaje de éxito se muestra SOLO si el delete funcionó."""
         try:
+            response = super().form_valid(form)   # ← primero la acción
             messages.success(self.request, "Gaceta movida a la papelera. Puedes restaurarla si lo deseas.")
-            return super().form_valid(form)
+            return response
         except Exception as e:
             logger.error(f"Error al eliminar gaceta: {e}")
             messages.error(self.request, "Ocurrió un error al mover la gaceta a la papelera.")
             return redirect('documents:gazette_list')
+
 
 
 class GazetteDetailView(LoginRequiredMixin, LoggingMixin, DetailView):
