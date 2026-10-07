@@ -56,21 +56,16 @@ class SearchListMixin:
         """
         Filtros activos parseados del request (formato 'campo|valor').
         Cacheado para no re-parsear 3 veces por request.
-
-        B58: solo acepta campos declarados en filter_fields (whitelist).
-        Evita FieldError cuando alguien manipula la URL con un campo no permitido.
         """
         filters = []
-        allowed = set(self.filter_fields)   # ← NUEVO
         for item in self.request.GET.getlist('active_filter'):
             if '|' in item:
                 field_name, value = item.split('|', 1)
-                if field_name in allowed:   # ← NUEVO
-                    filters.append((field_name, value))
+                filters.append((field_name, value))
         # Compatibilidad con formato antiguo (?filter=X&value=Y)
         filter_name = self.request.GET.get('filter')
         filter_value = self.request.GET.get('value')
-        if filter_name and filter_value and filter_name in allowed and not filters:
+        if filter_name and filter_value and not filters:
             filters.append((filter_name, filter_value))
         return filters
 
@@ -200,30 +195,7 @@ class SearchListMixin:
         return tags
 
     def get_filter_label(self, field_name, value):
-        """
-        Devuelve el label legible de un valor de filtro.
-
-        B60: traduce booleanos (True/False) a español antes de mostrar.
-        """
-        # B60: traducciones específicas de booleanos
-        TRANSLATIONS = {
-            'is_approved': {
-                True: 'Aprobado',
-                False: 'Pendiente',
-            },
-            'is_annulled': {
-                True: 'Anulado',
-                False: 'Vigente',
-            },
-            'is_extraordinary': {
-                True: 'Extraordinaria',
-                False: 'Ordinaria',
-            },
-        }
-        if field_name in TRANSLATIONS:
-            return TRANSLATIONS[field_name].get(value, value)
-
-        # Fallback: choices del modelo si existen
+        """Devuelve el label legible de un valor de filtro."""
         try:
             field = self.model._meta.get_field(field_name)
             if getattr(field, 'choices', None):
@@ -237,8 +209,6 @@ class SearchListMixin:
         context['search_query'] = self.request.GET.get('q', '')
         context['filter_tags'] = self.filter_tags
         return context
-        
-
 
 
 # ==================================================
