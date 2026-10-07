@@ -57,7 +57,7 @@ class SearchListMixin:
         Filtros activos parseados del request (formato 'campo|valor').
         Cacheado para no re-parsear 3 veces por request.
 
-        B58: solo acepta campos declarados en filter_fields (whitelist).
+        solo acepta campos declarados en filter_fields (whitelist).
         Evita FieldError cuando alguien manipula la URL con un campo no permitido.
         """
         filters = []
@@ -203,7 +203,7 @@ class SearchListMixin:
         """
         Devuelve el label legible de un valor de filtro.
 
-        B60: traduce booleanos (True/False) a español antes de mostrar.
+        Traduce booleanos (True/False) a español antes de mostrar.
         """
         # B60: traducciones específicas de booleanos
         TRANSLATIONS = {
