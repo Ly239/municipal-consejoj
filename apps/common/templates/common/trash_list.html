@@ -93,7 +93,7 @@
           <strong>{{ item.title }}</strong>
           <div class="small text-muted">{{ item.app_label }}</div>
         </td>
-        <td>{{ item.deleted_at|date:"d/m/Y H:i" }}</td>
+        <td>{{ item.deleted_at|date:"d/m/Y h:i A" }}</td>
         <td style="text-align: center;">
           <form method="post" action="{% url 'common:trash_restore' item.model_index item.id %}" style="display: inline;">
             {% csrf_token %}
