@@ -497,9 +497,11 @@ class DocumentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMix
         return redirect('documents:document_list')
 
     def form_valid(self, form):
+        """El mensaje de éxito se muestra SOLO si el delete funcionó."""
         try:
-            messages.success(self.request, "Documento movido a la papelera. Puedes restaurarla si lo deseas.")
-            return super().form_valid(form)
+            response = super().form_valid(form)   # ← primero la acción
+            messages.success(self.request, "Documento movido a la papelera. Puedes restaurarlo si lo deseas.")
+            return response
         except Exception as e:
             logger.error(f"Error al eliminar documento: {e}")
             messages.error(self.request, "Ocurrió un error al mover el documento a la papelera.")
