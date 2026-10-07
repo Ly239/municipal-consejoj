@@ -10,14 +10,20 @@
 <!-- Acciones masivas (siempre visibles) -->
 {% block header_actions %}
 <div class="d-flex gap-2">
-  <form method="post" action="{% url 'common:bulk_trash_action' %}" onsubmit="return confirm('¿Restaurar TODOS los elementos de la papelera?');">
+  <form method="post" action="{% url 'common:bulk_trash_action' %}"
+        class="bulk-all-form"
+        data-action="restore_all"
+        onsubmit="return confirm('¿Restaurar elementos? Si hay selección, solo esos. Si no, todos.');">
     {% csrf_token %}
     <input type="hidden" name="bulk_action" value="restore_all">
     <button type="submit" class="btn btn-success btn-sm">
       <i class="fas fa-undo-alt me-1"></i> Restaurar todo
     </button>
   </form>
-  <form method="post" action="{% url 'common:bulk_trash_action' %}" onsubmit="return confirm('¿Eliminar TODOS los elementos de la papelera permanentemente? Esta acción no se puede deshacer.');">
+  <form method="post" action="{% url 'common:bulk_trash_action' %}"
+        class="bulk-all-form"
+        data-action="delete_all"
+        onsubmit="return confirm('¿Eliminar permanentemente? Si hay selección, solo esos. Si no, todos.');">
     {% csrf_token %}
     <input type="hidden" name="bulk_action" value="delete_all">
     <button type="submit" class="btn btn-danger btn-sm">
@@ -43,14 +49,14 @@
   <form method="post" action="{% url 'common:bulk_trash_action' %}" id="trashForm" class="d-flex align-items-center gap-3">
     {% csrf_token %}
     <span class="small fw-bold text-muted me-2">
-      <i class="fas fa-check-circle me-1" style="color: var(--color-light-blue);"></i> 
+      <i class="fas fa-check-circle me-1" style="color: var(--color-light-blue);"></i>
       <span id="trashSelectedCount">0</span> seleccionados
     </span>
-    
+
     <button type="submit" class="btn btn-sm btn-success px-3" name="bulk_action" value="restore" disabled>
       <i class="fas fa-undo-alt me-1"></i> Restaurar
     </button>
-    
+
     <button type="submit" class="btn btn-sm btn-danger px-3" name="bulk_action" value="delete" disabled onclick="return confirm('¿Eliminar permanentemente los seleccionados?');">
       <i class="fas fa-skull-crossbones me-1"></i> Eliminar
     </button>
@@ -89,15 +95,12 @@
         </td>
         <td>{{ item.deleted_at|date:"d/m/Y H:i" }}</td>
         <td style="text-align: center;">
-          <!-- BOTÓN RESTAURAR (individual) -->
           <form method="post" action="{% url 'common:trash_restore' item.model_index item.id %}" style="display: inline;">
             {% csrf_token %}
             <button type="submit" class="btn btn-sm btn-success" title="Restaurar">
               <i class="fas fa-undo-alt"></i>
             </button>
           </form>
-
-          <!-- BOTÓN ELIMINAR PERMANENTEMENTE (individual) -->
           <form method="post" action="{% url 'common:trash_hard_delete' item.model_index item.id %}" style="display: inline;" onsubmit="return confirm('¿Eliminar permanentemente este registro?');">
             {% csrf_token %}
             <button type="submit" class="btn btn-sm btn-danger" title="Eliminar permanentemente">
@@ -115,8 +118,20 @@
   <div style="font-size: 4rem; color: #d1d5db;">
     <i class="fas fa-trash-alt"></i>
   </div>
-  <h5 class="text-muted mt-3">La papelera está vacía</h5>
-  <p class="text-muted small">Los registros eliminados aparecerán aquí.</p>
+  <h5 class="text-muted mt-3">
+    {% if search_query %}
+      No se encontraron resultados para "{{ search_query }}"
+    {% else %}
+      La papelera está vacía
+    {% endif %}
+  </h5>
+  <p class="text-muted small">
+    {% if search_query %}
+      Intenta con otro término o <a href="{% url 'common:trash_list' %}">limpia la búsqueda</a>.
+    {% else %}
+      Los registros eliminados aparecerán aquí.
+    {% endif %}
+  </p>
 </div>
 {% endif %}
 {% endblock %}
@@ -153,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const checked = document.querySelectorAll('.trash-item-check:checked');
     const count = checked.length;
     trashSelectedCount.textContent = count;
-    
+
     if (count > 0 && !bulkActionsBar.classList.contains('d-none')) {
       bulkActionsBar.classList.remove('d-none');
       restoreBtn.disabled = false;
@@ -199,6 +214,27 @@ document.addEventListener('DOMContentLoaded', function() {
     if (count === 0 || !confirm('¿Eliminar permanentemente ' + count + ' elemento' + (count !== 1 ? 's' : '') + '?')) {
       e.preventDefault();
     }
+  });
+
+  // Inyecta la selección en los forms de "Restaurar todo" / "Eliminar todo"
+  // si hay checkboxes seleccionados.
+  document.querySelectorAll('.bulk-all-form').forEach(form => {
+    form.addEventListener('submit', function() {
+      const checked = document.querySelectorAll('.trash-item-check:checked');
+      if (checked.length === 0) return;  // sin selección → procesa todo normalmente
+
+      // Eliminar inputs previos por si el form se envió antes
+      form.querySelectorAll('input[name="selected_items"]').forEach(i => i.remove());
+
+      // Agregar los seleccionados
+      checked.forEach(cb => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'selected_items';
+        input.value = cb.value;
+        form.appendChild(input);
+      });
+    });
   });
 
   toggleBulkMode(false);
