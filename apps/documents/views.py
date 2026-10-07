@@ -324,15 +324,18 @@ class GazetteDeleteView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixi
         messages.error(self.request, "No tienes permiso para eliminar gacetas.")
         return redirect('documents:gazette_list')
 
-    def form_valid(self, form):
-        """El mensaje de éxito se muestra SOLO si el delete funcionó."""
+    def delete(self, request, *args, **kwargs):
+        """
+        El mensaje se muestra SOLO si el delete funcionó.
+        Nota: Django 3.2 DeleteView usa delete(), NO form_valid().
+        """
         try:
-            response = super().form_valid(form)   # ← primero la acción
-            messages.success(self.request, "Gaceta movida a la papelera. Puedes restaurarla si lo deseas.")
+            response = super().delete(request, *args, **kwargs)   # ← primero la acción
+            messages.success(request, "Gaceta movida a la papelera. Puedes restaurarla si lo deseas.")
             return response
         except Exception as e:
             logger.error(f"Error al eliminar gaceta: {e}")
-            messages.error(self.request, "Ocurrió un error al mover la gaceta a la papelera.")
+            messages.error(request, "Ocurrió un error al mover la gaceta a la papelera.")
             return redirect('documents:gazette_list')
 
 
@@ -496,15 +499,18 @@ class DocumentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMix
         messages.error(self.request, "No tienes permiso para eliminar documentos.")
         return redirect('documents:document_list')
 
-    def form_valid(self, form):
-        """El mensaje de éxito se muestra SOLO si el delete funcionó."""
+    def delete(self, request, *args, **kwargs):
+        """
+        El mensaje se muestra SOLO si el delete funcionó.
+        Nota: Django 3.2 DeleteView usa delete(), NO form_valid().
+        """
         try:
-            response = super().form_valid(form)   # ← primero la acción
-            messages.success(self.request, "Documento movido a la papelera. Puedes restaurarlo si lo deseas.")
+            response = super().delete(request, *args, **kwargs)   # ← primero la acción
+            messages.success(request, "Documento movido a la papelera. Puedes restaurarlo si lo deseas.")
             return response
         except Exception as e:
             logger.error(f"Error al eliminar documento: {e}")
-            messages.error(self.request, "Ocurrió un error al mover el documento a la papelera.")
+            messages.error(request, "Ocurrió un error al mover el documento a la papelera.")
             return redirect('documents:document_list')
 
 
