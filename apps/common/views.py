@@ -2,6 +2,7 @@
 Vistas para la papelera (soft delete, restore y hard delete).
 """
 import logging
+from django.db.models import ProtectedError #Mensaje claro en español
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
@@ -99,19 +100,24 @@ class TrashListView(LoginRequiredMixin, ListView):
         return context
 
 
-class RestoreTrashItemView(LoginRequiredMixin, PermissionRequiredMixin, View):
-    """Restaura un elemento de la papelera.
 
-    Usa ObjectDoesNotExist genérico (no `model.DoesNotExist` que falla
-    con NameError si el IndexError se dispara antes).
-    """
+class RestoreTrashItemView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """Restaura un elemento de la papelera."""
+
+    def dispatch(self, request, *args, **kwargs):
+        """Valida el model_index ANTES de que PermissionRequiredMixin lo use."""
+        model_index = kwargs.get('model_index')
+        if model_index is None or model_index < 0 or model_index >= len(TRASH_MODELS):
+            messages.error(request, "Modelo no encontrado.")
+            return redirect('common:trash_list')
+        return super().dispatch(request, *args, **kwargs)
 
     def get_permission_required(self):
         """Calcula el permiso requerido dinámicamente según el modelo real
         (en vez de dejarlo fijo en 'documents.restore_document').
         Así funciona igual para Document, Gazette, o el futuro User."""
         model = TRASH_MODELS[self.kwargs['model_index']]
-        permission_name = model.get_restore_permission_name() # ej: restore_document
+        permission_name = model.get_restore_permission_name()
         return (f"{model._meta.app_label}.{permission_name}",)
 
     def handle_no_permission(self):
@@ -134,11 +140,22 @@ class RestoreTrashItemView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return redirect('common:trash_list')
 
 
+
 class HardDeleteTrashItemView(LoginRequiredMixin, PermissionRequiredMixin, View):
     """Elimina permanentemente un elemento de la papelera.
 
-    Usa ObjectDoesNotExist genérico.
+    dispatch valida el model_index antes que PermissionRequiredMixin.
+    catcha ProtectedError con mensaje amigable.
     """
+
+    def dispatch(self, request, *args, **kwargs):
+        """B69: valida el model_index ANTES de que PermissionRequiredMixin lo use."""
+        model_index = kwargs.get('model_index')
+        if model_index is None or model_index < 0 or model_index >= len(TRASH_MODELS):
+            messages.error(request, "Modelo no encontrado.")
+            return redirect('common:trash_list')
+        return super().dispatch(request, *args, **kwargs)
+
     def get_permission_required(self):
         model = TRASH_MODELS[self.kwargs['model_index']]
         return (f"{model._meta.app_label}.delete_{model._meta.model_name}",)
@@ -153,16 +170,29 @@ class HardDeleteTrashItemView(LoginRequiredMixin, PermissionRequiredMixin, View)
             obj = model.all_objects.get(pk=pk)
             obj.hard_delete()
             messages.success(request, f'"{obj}" eliminado definitivamente.')
+
         except IndexError:
             messages.error(request, "Modelo no encontrado.")
+
         except ObjectDoesNotExist:
             messages.error(request, "El registro no existe en la papelera.")
+
+        except ProtectedError:
+            # Mensaje amigable cuando hay dependencias con PROTECT
+            messages.error(
+                request,
+                f'No se puede eliminar "{obj}" porque tiene registros asociados. '
+                'Eliminá primero sus dependencias (documentos, etc.).'
+            )
+
         except Exception as e:
             logger.error(f"Error al eliminar permanentemente: {e}")
             messages.error(request, f'Error al eliminar: {e}')
+
         return redirect('common:trash_list')
-
-
+        
+        
+  
 class BulkTrashActionView(LoginRequiredMixin, View):
     """Acciones masivas en la papelera (restaurar o eliminar permanentemente).
 
