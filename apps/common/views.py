@@ -149,7 +149,7 @@ class HardDeleteTrashItemView(LoginRequiredMixin, PermissionRequiredMixin, View)
     """
 
     def dispatch(self, request, *args, **kwargs):
-        """B69: valida el model_index ANTES de que PermissionRequiredMixin lo use."""
+        """valida el model_index ANTES de que PermissionRequiredMixin lo use."""
         model_index = kwargs.get('model_index')
         if model_index is None or model_index < 0 or model_index >= len(TRASH_MODELS):
             messages.error(request, "Modelo no encontrado.")
@@ -230,6 +230,7 @@ class BulkTrashActionView(LoginRequiredMixin, View):
         deleted = 0
         errors = 0
         denied = 0 # Cuenta los que se saltaron por falta de permiso
+        protected_count = 0   # Contar objetos con protect ejm gazzete 1-N con doc
 
         for token in selected:
             try:
@@ -259,6 +260,11 @@ class BulkTrashActionView(LoginRequiredMixin, View):
             except ObjectDoesNotExist:
                 errors += 1
                 logger.error(f"Objeto no encontrado: {token}")
+            
+            except ProtectedError:                          
+                protected_count += 1                        
+                logger.info(f"Delete bloqueado por PROTECT: {token}") 
+            
             except Exception as e:
                 errors += 1
                 logger.error(f"Error en bulk action para {token}: {e}")
@@ -267,6 +273,14 @@ class BulkTrashActionView(LoginRequiredMixin, View):
             messages.success(request, f"{restored} elemento(s) restaurado(s).")
         if deleted > 0:
             messages.success(request, f"{deleted} elemento(s) eliminado(s) permanentemente.")
+        
+        if protected_count > 0:                             
+            messages.warning(                             
+            request,
+            f"{protected_count} elemento(s) no se pudieron eliminar porque tienen "
+            "registros asociados. Eliminá primero sus dependencias (documentos, etc.)."
+            )
+        
         if denied > 0:
             messages.warning(request, f"{denied} elemento(s) no se procesaron por falta de permiso.")
         if errors > 0:
