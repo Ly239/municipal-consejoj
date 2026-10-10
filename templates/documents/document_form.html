@@ -1,4 +1,6 @@
 {% extends 'core/form_base.html' %}
+{% load static %}
+{% load groups %}
 
 {% block form_title %}Documento{% endblock %}
 {% block breadcrumb_list %}Documentos{% endblock %}
@@ -8,30 +10,180 @@
 {% block form_heading2 %}Documento{% endblock %}
 
 {% block back_url %}{% url 'documents:document_list' %}{% endblock %}
+{% block volver_url %}{% url 'documents:document_list' %}{% endblock %}
 {% block cancel_url %}{% url 'documents:document_list' %}{% endblock %}
 
-{% block extra_form %}
-    {% if object %}
-        {% if object.pdf_file or object.image %}
-        <div class="row mt-3">
-            <div class="col-12">
-                <div class="card bg-light border-0">
-                    <div class="card-body py-2">
-                        <strong><i class="fas fa-paperclip me-1"></i> Archivos actuales:</strong>
-                        {% if object.pdf_file %}
-                            <a href="{{ object.pdf_file.url }}" target="_blank" class="badge bg-primary text-decoration-none me-1">
-                                <i class="fas fa-file-pdf"></i> PDF
-                            </a>
-                        {% endif %}
-                        {% if object.image %}
-                            <a href="{{ object.image.url }}" target="_blank" class="badge bg-success text-decoration-none me-1">
-                                <i class="fas fa-image"></i> Imagen
-                            </a>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
+{% block form_fields %}
+
+  <!-- Sección: Datos Generales -->
+  <div class="form-section">
+    <div class="form-section-title">
+      <i class="fas fa-info-circle"></i> Datos Generales
+    </div>
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label for="{{ form.gazette.id_for_label }}">{{ form.gazette.label }}</label>
+        {{ form.gazette }}
+        {{ form.gazette.errors }}
+      </div>
+      <div class="col-md-4 mb-3">
+        <label for="{{ form.document_type.id_for_label }}">{{ form.document_type.label }}</label>
+        {{ form.document_type }}
+        {{ form.document_type.errors }}
+      </div>
+      <div class="col-md-4 mb-3">
+        <label for="{{ form.issuing_entity.id_for_label }}">{{ form.issuing_entity.label }}</label>
+        {{ form.issuing_entity }}
+        {{ form.issuing_entity.errors }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección: Identificación -->
+  <div class="form-section">
+    <div class="form-section-title">
+      <i class="fas fa-tag"></i> Identificación
+    </div>
+    <div class="row">
+      <div class="col-md-3 mb-3">
+        <label for="{{ form.number.id_for_label }}">{{ form.number.label }}</label>
+        {{ form.number }}
+        {% if form.number.help_text %}<small class="form-text">{{ form.number.help_text }}</small>{% endif %}
+        {{ form.number.errors }}
+      </div>
+      <div class="col-md-9 mb-3">
+        <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+        {{ form.title }}
+        {{ form.title.errors }}
+      </div>
+      <div class="col-12 mb-3">
+        <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+        {{ form.description }}
+        {{ form.description.errors }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección: Fechas y Estado -->
+  <div class="form-section">
+    <div class="form-section-title">
+      <i class="fas fa-calendar-check"></i> Fechas y Estado
+    </div>
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label for="{{ form.emission_date.id_for_label }}">{{ form.emission_date.label }}</label>
+        {{ form.emission_date }}
+        {% if form.emission_date.help_text %}<small class="form-text">{{ form.emission_date.help_text }}</small>{% endif %}
+        {{ form.emission_date.errors }}
+      </div>
+
+      {% if user.is_superuser or user|has_group:"Administrator" %}
+        {# Admin/Superuser: ve los switches para editar #}
+        <div class="col-md-4 mb-3">
+          <label class="d-block">&nbsp;</label>
+          <div class="form-check form-switch mt-2">
+            {{ form.is_approved }}
+            <label class="form-check-label" for="{{ form.is_approved.id_for_label }}">
+              {{ form.is_approved.label }}
+            </label>
+          </div>
+          {{ form.is_approved.errors }}
         </div>
+        <div class="col-md-4 mb-3">
+          <label class="d-block">&nbsp;</label>
+          <div class="form-check form-switch mt-2">
+            {{ form.is_annulled }}
+            <label class="form-check-label" for="{{ form.is_annulled.id_for_label }}">
+              {{ form.is_annulled.label }}
+            </label>
+          </div>
+          {{ form.is_annulled.errors }}
+        </div>
+      {% else %}
+        {# Employee: ve el estado en modo lectura #}
+        <div class="col-md-8 mb-3">
+          <label>Estado actual del documento</label>
+          <div class="form-control-plaintext pt-2">
+            {% if object.is_annulled %}
+              <span class="badge bg-secondary px-3 py-2">
+                <i class="fas fa-times-circle me-1"></i> Anulado
+              </span>
+            {% elif object.is_approved %}
+              <span class="badge bg-success px-3 py-2">
+                <i class="fas fa-check-circle me-1"></i> Aprobado
+              </span>
+            {% else %}
+              <span class="badge bg-warning text-dark px-3 py-2">
+                <i class="fas fa-clock me-1"></i> Pendiente
+              </span>
+            {% endif %}
+            <small class="form-text d-block mt-1">
+              Solo un Administrador puede cambiar el estado.
+            </small>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Sección: Archivos -->
+  <div class="form-section">
+    <div class="form-section-title">
+      <i class="fas fa-paperclip"></i> Archivos
+    </div>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="{{ form.pdf_file.id_for_label }}">{{ form.pdf_file.label }}</label>
+        {{ form.pdf_file }}
+        {% if form.pdf_file.help_text %}<small class="form-text">{{ form.pdf_file.help_text }}</small>{% endif %}
+        {{ form.pdf_file.errors }}
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="{{ form.image.id_for_label }}">{{ form.image.label }}</label>
+        {{ form.image }}
+        {% if form.image.help_text %}<small class="form-text">{{ form.image.help_text }}</small>{% endif %}
+        {{ form.image.errors }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección: Información Adicional -->
+  <div class="form-section">
+    <div class="form-section-title">
+      <i class="fas fa-plus-circle"></i> Información Adicional
+    </div>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="{{ form.other_entity_description.id_for_label }}">{{ form.other_entity_description.label }}</label>
+        {{ form.other_entity_description }}
+        {% if form.other_entity_description.help_text %}<small class="form-text">{{ form.other_entity_description.help_text }}</small>{% endif %}
+        {{ form.other_entity_description.errors }}
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block extra_form %}
+  {% if object %}
+    {% if object.pdf_file or object.image %}
+    <div class="form-section">
+      <div class="form-section-title">
+        <i class="fas fa-history"></i> Archivos Actuales
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        {% if object.pdf_file %}
+          <a href="{{ object.pdf_file.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-file-pdf me-1"></i> Ver PDF actual
+          </a>
         {% endif %}
+        {% if object.image %}
+          <a href="{{ object.image.url }}" target="_blank" class="btn btn-outline-success btn-sm">
+            <i class="fas fa-image me-1"></i> Ver imagen actual
+          </a>
+        {% endif %}
+      </div>
+    </div>
     {% endif %}
+  {% endif %}
 {% endblock %}
