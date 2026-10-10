@@ -204,9 +204,23 @@ class DocumentForm(DateFieldMixin, forms.ModelForm):
             'other_entity_description': 'Requerido si selecciona "Otros" como ente emisor.',
         }
 
+
     def __init__(self, *args, **kwargs):
+        """Inicializa el form.
+
+        Si el usuario no es superuser ni Administrator, elimina los
+        campos `is_approved` e `is_annulled` del form. Así, un Employee
+        que edita no puede resetear accidentalmente el estado del documento.
+        """
+        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         self.fields['other_entity_description'].required = False
+
+        # Quitar campos de aprobación si no tiene permiso
+        if user and not (user.is_superuser or user.groups.filter(name='Administrator').exists()):
+            self.fields.pop('is_approved', None)
+            self.fields.pop('is_annulled', None)
+    
 
     def validate_unique(self):
         """
