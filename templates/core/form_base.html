@@ -5,7 +5,7 @@
 
 {% block content %}
 <!-- Breadcrumb -->
-<nav aria-label="breadcrumb">
+<nav aria-label="breadcrumb" class="mb-4">
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="{% url 'core:home' %}"><i class="fas fa-home"></i> Inicio</a></li>
     <li class="breadcrumb-item"><a href="{% block back_url %}{% url 'core:home' %}{% endblock %}">{% block breadcrumb_list %}Listado{% endblock %}</a></li>
@@ -13,24 +13,35 @@
   </ol>
 </nav>
 
-<!-- Encabezado -->
-<div class="d-flex align-items-center mb-4">
-  <div class="me-3" style="font-size:2rem;color:#0d6efd;">
-    <i class="{% block form_icon %}fas fa-edit{% endblock %}"></i>
+<!-- Encabezado con botón Volver -->
+<div class="d-flex justify-content-between align-items-start mb-4">
+  <div class="d-flex align-items-center">
+    <div class="me-3" style="font-size:2rem; color: var(--color-light-blue);">
+      <i class="{% block form_icon %}fas fa-edit{% endblock %}"></i>
+    </div>
+    <div>
+      <h1 class="h3 mb-0" style="color: var(--color-dark-blue);">
+        {% if object %}Editar{% else %}Nuevo{% endif %} {% block form_heading %}Registro{% endblock %}
+      </h1>
+      <p class="text-muted mb-0 small">
+        {% if object %}Modifica los datos del registro{% else %}Completa los campos para crear un nuevo registro{% endif %}
+      </p>
+    </div>
   </div>
-  <div>
-    <h1 class="h3 mb-0">{% if object %}Editar{% else %}Nuevo{% endif %} {% block form_heading %}Registro{% endblock %}</h1>
-    <p class="text-muted mb-0">{% if object %}Modifica los datos del registro{% else %}Completa los campos para crear un nuevo registro{% endif %}</p>
-  </div>
+  <a href="{% block volver_url %}{% url 'core:home' %}{% endblock %}" class="btn-institutional btn-sm">
+    <i class="fas fa-arrow-left"></i> Volver
+  </a>
 </div>
 
 <!-- Formulario -->
-<div class="card shadow-sm">
+<div class="card form-card shadow-sm">
+  <div class="form-card-accent"></div>
   <div class="card-header">
-    <i class="fas fa-pencil-alt me-2"></i> {% if object %}Editar{% else %}Crear{% endif %} {% block form_heading2 %}Registro{% endblock %}
+    <i class="fas fa-pencil-alt me-2" style="color: var(--color-light-blue);"></i>
+    {% if object %}Editar{% else %}Crear{% endif %} {% block form_heading2 %}Registro{% endblock %}
   </div>
   <div class="card-body">
-    <!-- Los field errors (ej: "Este campo es obligatorio") los renderiza automáticamente {{ form.as_p }} de forma inline, debajo de cada campo, con la clase .errorlist. -->
+  <!-- Los field errors (ej: "Este campo es obligatorio") los renderiza automáticamente {{ form.as_p }} de forma inline, debajo de cada campo, con la clase .errorlist. -->
     {% if form.non_field_errors %}
     <div class="alert alert-danger">
       <i class="fas fa-exclamation-circle me-2"></i>
@@ -51,12 +62,12 @@
       {% block extra_form %}{% endblock %}
     </form>
   </div>
-  <div class="card-footer text-end">
-    <a href="{% block cancel_url %}{% url 'core:home' %}{% endblock %}" class="btn btn-secondary">
-      <i class="fas fa-arrow-left me-1"></i> Cancelar
+  <div class="card-footer bg-white border-top text-end">
+    <a href="{% block cancel_url %}{% url 'core:home' %}{% endblock %}" class="btn btn-secondary btn-sm">
+      <i class="fas fa-times me-1"></i> Cancelar
     </a>
-    <button type="submit" form="form-principal" class="btn btn-primary">
-      <i class="fas fa-save me-1"></i> {% if object %}Guardar cambios{% else %}Crear registro{% endif %}
+    <button type="submit" form="form-principal" class="btn-hero ms-2">
+      <i class="fas fa-save"></i> {% if object %}Guardar cambios{% else %}Crear registro{% endif %}
     </button>
   </div>
 </div>
