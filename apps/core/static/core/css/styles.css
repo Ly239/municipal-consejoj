@@ -1521,3 +1521,98 @@ los botones del sistema) */
     margin: 0;
     font-size: 0.9rem;
 }
+
+
+
+/* ============================================ */
+/* FORMULARIOS DOCUMENTOS (estilo Tanago)            */
+/* ============================================ */
+
+/* Card con barra de acento superior */
+.form-card {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 59, 79, 0.06);
+}
+.form-card-accent {
+    height: 4px;
+    background: linear-gradient(90deg, var(--color-dark-blue), var(--color-light-blue));
+}
+.form-card .card-header {
+    background-color: #FFFFFF;
+    border-bottom: 1px solid rgba(0, 59, 79, 0.06);
+    padding: 1rem 1.5rem;
+    color: var(--color-dark-blue);
+    font-weight: 600;
+}
+.form-card .card-body {
+    padding: 2rem 1.5rem;
+}
+
+/* Secciones del formulario */
+.form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(0, 59, 79, 0.08);
+}
+.form-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+.form-section-title {
+    color: var(--color-dark-blue);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.form-section-title i {
+    color: var(--color-light-blue);
+    font-size: 0.9rem;
+}
+
+/* Labels dentro de las secciones */
+.form-section label {
+    color: var(--color-dark-blue);
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-bottom: 0.35rem;
+    display: block;
+}
+
+/* Inputs con fondo sutil para contraste */
+.form-section .form-control,
+.form-section .form-select {
+    background-color: #FAFCFD;
+    border: 1.5px solid #DDE5E8;
+    border-radius: 8px;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.form-section .form-control:focus,
+.form-section .form-select:focus {
+    border-color: var(--color-light-blue);
+    box-shadow: 0 0 0 3px rgba(10, 177, 212, 0.15);
+    background-color: #FFFFFF;
+    outline: none;
+}
+
+/* Toggle switch con color corporativo */
+.form-check-input:checked {
+    background-color: var(--color-light-blue);
+    border-color: var(--color-light-blue);
+}
+
+/* Help text sutil */
+.form-text {
+    color: #6c757d;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}

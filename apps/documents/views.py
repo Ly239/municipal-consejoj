@@ -452,7 +452,14 @@ class DocumentCreateView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMix
     def handle_no_permission(self):
         messages.error(self.request, "No tienes permiso para crear documentos.")
         return redirect('documents:document_list')
+    
+    def get_form_kwargs(self):
+        """Pasa el usuario al form para controlar campos de aprobación."""
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
+    
     def form_valid(self, form):
         try:
             form.instance.submitted_by = self.request.user
@@ -463,6 +470,7 @@ class DocumentCreateView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMix
             logger.error(f"Error al crear documento: {e}")
             messages.error(self.request, "Ocurrió un error al crear el documento.")
             return self.form_invalid(form)
+
 
 
 class DocumentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixin, UpdateView):
