@@ -1,74 +1,134 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}{% if object %}Editar{% else %}Crear{% endif %} {% block form_title %}Registro{% endblock %}{% endblock %}
+{% block title %}
+    {% if object %}Editar{% else %}Crear{% endif %}
+    {% block form_title %}Registro{% endblock %}
+{% endblock %}
+
 
 {% block content %}
-<!-- Breadcrumb -->
-<nav aria-label="breadcrumb" class="mb-4">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{% url 'core:home' %}"><i class="fas fa-home"></i> Inicio</a></li>
-    <li class="breadcrumb-item"><a href="{% block back_url %}{% url 'core:home' %}{% endblock %}">{% block breadcrumb_list %}Listado{% endblock %}</a></li>
-    <li class="breadcrumb-item active">{% if object %}Editar{% else %}Crear{% endif %} {% block form_entity %}Registro{% endblock %}</li>
-  </ol>
-</nav>
+<!-- ============================================================ -->
+<!-- WRAPPER: fondo beige que hace resaltar el card blanco        -->
+<!-- ============================================================ -->
+<div class="form-wrapper">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <a href="{% url 'core:home' %}">
+                    <i class="fas fa-home"></i> Inicio
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% block back_url %}{% url 'core:home' %}{% endblock %}">
+                    {% block breadcrumb_list %}Listado{% endblock %}
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                {% if object %}Editar{% else %}Crear{% endif %}
+                {% block form_entity %}Registro{% endblock %}
+            </li>
+        </ol>
+    </nav>
 
-<!-- Encabezado con botón Volver -->
-<div class="d-flex justify-content-between align-items-start mb-4">
-  <div class="d-flex align-items-center">
-    <div class="me-3" style="font-size:2rem; color: var(--color-light-blue);">
-      <i class="{% block form_icon %}fas fa-edit{% endblock %}"></i>
-    </div>
-    <div>
-      <h1 class="h3 mb-0" style="color: var(--color-dark-blue);">
-        {% if object %}Editar{% else %}Nuevo{% endif %} {% block form_heading %}Registro{% endblock %}
-      </h1>
-      <p class="text-muted mb-0 small">
-        {% if object %}Modifica los datos del registro{% else %}Completa los campos para crear un nuevo registro{% endif %}
-      </p>
-    </div>
-  </div>
-  <a href="{% block volver_url %}{% url 'core:home' %}{% endblock %}" class="btn-institutional btn-sm">
-    <i class="fas fa-arrow-left"></i> Volver
-  </a>
-</div>
+    
+    <!-- Encabezado con botón Volver -->
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div class="d-flex align-items-center">
+            <div class="me-3" style="font-size: 2rem; color: var(--color-light-blue);">
+                <i class="{% block form_icon %}fas fa-edit{% endblock %}"></i>
+            </div>
+            <div>
+                <h1 class="h3 mb-0" style="color: var(--color-dark-blue);">
+                    {% if object %}Editar{% else %}Nuevo{% endif %}
+                    {% block form_heading %}Registro{% endblock %}
+                </h1>
+                <p class="text-muted mb-0 small">
+                    {% if object %}
+                        Modifica los datos del registro
+                    {% else %}
+                        Completa los campos para crear un nuevo registro
+                    {% endif %}
+                </p>
+            </div>
+        </div>
 
-<!-- Formulario -->
-<div class="card form-card shadow-sm">
-  <div class="form-card-accent"></div>
-  <div class="card-header">
-    <i class="fas fa-pencil-alt me-2" style="color: var(--color-light-blue);"></i>
-    {% if object %}Editar{% else %}Crear{% endif %} {% block form_heading2 %}Registro{% endblock %}
-  </div>
-  <div class="card-body">
-  <!-- Los field errors (ej: "Este campo es obligatorio") los renderiza automáticamente {{ form.as_p }} de forma inline, debajo de cada campo, con la clase .errorlist. -->
-    {% if form.non_field_errors %}
-    <div class="alert alert-danger">
-      <i class="fas fa-exclamation-circle me-2"></i>
-      <strong>Corrige los errores:</strong>
-      <ul class="mb-0 mt-1">
-        {% for error in form.non_field_errors %}
-          <li>{{ error }}</li>
-        {% endfor %}
-      </ul>
+        <!-- Botón Volver (reutiliza la clase corporate + modificador sm) -->
+        <a href="{% block volver_url %}{% url 'core:home' %}{% endblock %}"
+           class="btn btn-corporate btn-sm">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
     </div>
-    {% endif %}
+    
+        <!-- Card del Formulario -->
+    <div class="card form-card shadow-sm">
+        
+        <!-- Barra de acento superior (decorativa) -->
+        <div class="form-card-accent"></div>
 
-    <form method="post" enctype="multipart/form-data" novalidate id="form-principal">
-      {% csrf_token %}
-      {% block form_fields %}
-        {{ form.as_p }}
-      {% endblock %}
-      {% block extra_form %}{% endblock %}
-    </form>
-  </div>
-  <div class="card-footer bg-white border-top text-end">
-    <a href="{% block cancel_url %}{% url 'core:home' %}{% endblock %}" class="btn btn-secondary btn-sm">
-      <i class="fas fa-times me-1"></i> Cancelar
-    </a>
-    <button type="submit" form="form-principal" class="btn-hero ms-2">
-      <i class="fas fa-save"></i> {% if object %}Guardar cambios{% else %}Crear registro{% endif %}
-    </button>
-  </div>
+         <!--  Header del card  -->
+        <div class="card-header">
+            <i class="fas fa-pencil-alt me-2" style="color: var(--color-light-blue);"></i>
+            {% if object %}Editar{% else %}Crear{% endif %}
+            {% block form_heading2 %}Registro{% endblock %}
+        </div>
+        
+        <!--  Body del card  -->
+        <div class="card-body">
+
+             <!-- Errores generales del form (no asociados a un campo)  -->
+            {% if form.non_field_errors %}
+             <!-- Los field errors (ej: "Este campo es obligatorio") los renderiza automáticamente {{ form.as_p }} de forma inline, debajo de cada campo, con la clase .errorlist. -->
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <strong>Corrige los errores:</strong>
+                <ul class="mb-0 mt-1">
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- Formulario -->
+            <form method="post"
+                  enctype="multipart/form-data"
+                  novalidate
+                  id="form-principal">
+                {% csrf_token %}
+                
+                <!-- Los hijos definen los campos agrupados por secciones -->
+                {% block form_fields %}
+                    {{ form.as_p }}
+                {% endblock %}
+
+                 <!-- Bloque opcional para contenido extra (ej: archivos actuales) -->
+                {% block extra_form %}{% endblock %}
+            </form>
+
+        </div>
+
+        <!-- Footer del card con acciones -->
+        <div class="card-footer bg-white border-top text-end">
+
+            <!-- Botón Cancelar (neutro) -->
+            <a href="{% block cancel_url %}{% url 'core:home' %}{% endblock %}"
+               class="btn btn-secondary btn-sm">
+                <i class="fas fa-times me-1"></i> Cancelar
+            </a>
+
+            <!-- Botón Guardar (reutiliza la clase corporate-filled) -->
+            <button type="submit"
+                    form="form-principal"
+                    class="btn btn-corporate-filled ms-2">
+                <i class="fas fa-save"></i>
+                {% if object %}Guardar cambios{% else %}Crear registro{% endif %}
+            </button>
+
+        </div>
+
+    </div>
+
 </div>
 {% endblock %}

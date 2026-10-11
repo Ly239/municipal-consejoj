@@ -1617,3 +1617,20 @@ los botones del sistema) */
     margin-top: 0.25rem;
 }
 
+
+/* ============================================ */
+/* WRAPPER DE FORMULARIOS (fondo suave)         */
+/* ============================================ */
+.form-wrapper {
+    background-color: var(--color-soft-bg);
+    padding: 2rem 1.5rem;
+    border-radius: 12px;
+    min-height: calc(100vh - 200px);
+}
+
+/* Responsive: menos padding en mobile */
+@media (max-width: 767.98px) {
+    .form-wrapper {
+        padding: 1.25rem 0.75rem;
+    }
+}
