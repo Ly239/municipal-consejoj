@@ -197,6 +197,15 @@ class Document(BaseModel):
             )
         ]
 
+
+        # Permisos custom (no existen auto en Django).
+        # Django ya crea add/change/delete/view automáticamente.
+        # Estos se asignan al grupo Administrator en seed_roles.py.
+        permissions = [
+            ('can_approve_document', 'Can approve document'),
+            ('can_reject_document', 'Can reject document'),
+        ]
+
     def __str__(self):
         estado = "✓" if self.is_approved else ("✗" if self.is_annulled else "⏳")
         return f"{self.document_type.name} N° {self.number:03d}-{self.gazette.year} [{estado}]"
