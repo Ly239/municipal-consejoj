@@ -1281,6 +1281,32 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 los botones del sistema) */
 /* ============================================ */
 
+/* ============================================ */
+/*              — Guía de uso           */
+/* ============================================ */
+/*
+ * ⚠️ IMPORTANTE: siempre incluir la clase base `btn` de Bootstrap 5.
+ *
+ * Estas clases extienden Bootstrap usando CSS variables (`--bs-btn-*`).
+ * Sin la clase `.btn`, Bootstrap no aplica las variables y el botón
+ * queda sin estilos.
+ *
+ * ✅ Correcto:
+ *    <a class="btn btn-corporate btn-sm">Volver</a>
+ *    <button class="btn btn-corporate-filled">Guardar</button>
+ *
+ * ❌ Incorrecto (falta `btn` base):
+ *    <a class="btn-corporate btn-sm">Volver</a>
+ *    <button class="btn-corporate-filled">Guardar</button>
+ *
+ * Modificadores disponibles:
+ *    .btn-sm       → compacto (usado en headers de form, filtros)
+ *    .btn-pill     → border-radius 50px (forma pastilla)
+ *    .btn-block    → ancho completo (usado en forms mobile)
+ */
+
+
+
 /* --- Variante OUTLINE (fondo transparente) --- */
 .btn-corporate {
     /* Variables de Bootstrap 5 */
