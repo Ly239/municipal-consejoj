@@ -21,6 +21,13 @@ from django.views.generic import (
     ListView, CreateView, UpdateView, DeleteView, DetailView
 )
 
+# EXPORT A EXCEL
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment
+from django.http import HttpResponse
+from datetime import date
+
+# apps 
 from common.mixins import LoggingMixin
 from .models import Gazette, Document, DocumentType
 from .forms import GazetteForm, DocumentForm
@@ -533,3 +540,196 @@ class DocumentDetailView(LoginRequiredMixin, LoggingMixin, DetailView):
         return super().get_queryset().select_related(
             'gazette', 'document_type', 'issuing_entity', 'submitted_by'
         )
+
+
+
+# ==================================================
+# EXPORT A EXCEL
+# ==================================================
+
+class DocumentExportExcelView(LoginRequiredMixin, PermissionRequiredMixin, SearchListMixin, ListView):
+    """
+    Exporta el listado de documentos a Excel (.xlsx).
+
+    Reutiliza SearchListMixin → hereda búsqueda + filtros activos.
+    Si no hay filtros → exporta todos.
+    Si hay filtros → exporta lo filtrado.
+    """
+    model = Document
+    permission_required = 'documents.view_document'
+    search_fields = [
+        'title', 'description',
+        'number', 'gazette__number', 'gazette__year',
+        'document_type__name', 'issuing_entity__name',
+    ]
+    numeric_fields = ['number', 'gazette__number', 'gazette__year']
+    filter_fields = ['document_type__name', 'issuing_entity__name', 'is_approved']
+
+    def get_queryset(self):
+        """Reutiliza el queryset del DocumentListView."""
+        queryset = super().get_queryset().select_related(
+            'gazette', 'document_type', 'issuing_entity', 'submitted_by'
+        )
+
+        # Filtros del template (year, month, doc_type, status, date_from, date_to)
+        year = self.request.GET.get('year')
+        month = self.request.GET.get('month')
+        if year:
+            queryset = queryset.filter(emission_date__year=year)
+        if month:
+            queryset = queryset.filter(emission_date__month=month)
+
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+        if date_from:
+            queryset = queryset.filter(emission_date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(emission_date__lte=date_to)
+
+        doc_type = self.request.GET.get('doc_type')
+        if doc_type:
+            queryset = queryset.filter(document_type__id=doc_type)
+
+        status = self.request.GET.get('status')
+        if status == 'approved':
+            queryset = queryset.filter(is_approved=True, is_annulled=False)
+        elif status == 'pending':
+            queryset = queryset.filter(is_approved=False, is_annulled=False)
+        elif status == 'annulled':
+            queryset = queryset.filter(is_annulled=True)
+
+        return queryset.order_by('-emission_date__year', 'number')
+
+    def get(self, request, *args, **kwargs):
+        """Construye el Excel y lo devuelve como descarga."""
+        queryset = self.get_queryset()
+
+        # Crear workbook
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Documentos"
+
+        # Estilos
+        header_fill = PatternFill(start_color="003B4F", end_color="003B4F", fill_type="solid")
+        header_font = Font(color="FFFFFF", bold=True)
+        header_align = Alignment(horizontal="center", vertical="center")
+
+        # Encabezados
+        headers = [
+            'N°', 'Tipo', 'Título', 'Gaceta', 'Ente Emisor',
+            'Fecha Emisión', 'Estado', 'Subido por', 'Archivo adjunto'
+        ]
+        ws.append(headers)
+
+        # Aplicar estilos a headers
+        for cell in ws[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = header_align
+
+        # Filas
+        for doc in queryset:
+            # Columna de archivo adjunto
+            archivos = []
+            if doc.pdf_file and doc.pdf_file.name:
+                archivos.append('PDF')
+            if doc.image and doc.image.name:
+                archivos.append('Imagen')
+            archivo_label = ' + '.join(archivos) if archivos else 'Sin archivo'
+
+            # Estado legible
+            if doc.is_annulled:
+                estado = 'Anulado'
+            elif doc.is_approved:
+                estado = 'Aprobado'
+            else:
+                estado = 'Pendiente'
+
+            # Año de la gaceta
+            year = doc.gazette.year if doc.gazette else '—'
+
+            ws.append([
+                f"{doc.number:03d}",
+                doc.document_type.name if doc.document_type else '—',
+                doc.title,
+                f"N° {doc.gazette.formatted_number} - {year}" if doc.gazette else '—',
+                doc.issuing_entity.name if doc.issuing_entity else '—',
+                doc.emission_date.strftime('%d/%m/%Y') if doc.emission_date else '—',
+                estado,
+                doc.submitted_by.username if doc.submitted_by else '—',
+                archivo_label,
+            ])
+
+        # Ancho de columnas (aprox)
+        widths = [6, 18, 45, 18, 25, 14, 12, 20, 18]
+        for i, w in enumerate(widths, start=1):
+            ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = w
+
+        # Preparar response
+        filename = f"documentos_{date.today().strftime('%Y-%m-%d')}.xlsx"
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        wb.save(response)
+        return response
+        
+        
+
+class GazetteExportExcelView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    """Exporta el listado de gacetas a Excel (.xlsx)."""
+    model = Gazette
+    permission_required = 'documents.view_gazette'
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        # Filtro por tipo (ordinaria/extraordinaria) — B63
+        tipo = self.request.GET.get('tipo', '')
+        if tipo == 'ordinaria':
+            qs = qs.filter(is_extraordinary=False)
+        elif tipo == 'extraordinaria':
+            qs = qs.filter(is_extraordinary=True)
+
+        return qs.order_by('year', 'number')
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Gacetas"
+
+        header_fill = PatternFill(start_color="003B4F", end_color="003B4F", fill_type="solid")
+        header_font = Font(color="FFFFFF", bold=True)
+        header_align = Alignment(horizontal="center", vertical="center")
+
+        headers = ['N°', 'Tipo', 'Año', 'Fecha Emisión', 'Descripción', 'N° Documentos']
+        ws.append(headers)
+        for cell in ws[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = header_align
+
+        for gazette in queryset:
+            tipo = 'Extraordinaria' if gazette.is_extraordinary else 'Ordinaria'
+            ws.append([
+                gazette.formatted_number,
+                tipo,
+                gazette.year,
+                gazette.emission_date.strftime('%d/%m/%Y') if gazette.emission_date else '—',
+                gazette.description or '—',
+                gazette.documents.count(),
+            ])
+
+        widths = [8, 16, 8, 14, 50, 14]
+        for i, w in enumerate(widths, start=1):
+            ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = w
+
+        filename = f"gacetas_{date.today().strftime('%Y-%m-%d')}.xlsx"
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        wb.save(response)
+        return response

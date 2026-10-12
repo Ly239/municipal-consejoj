@@ -25,6 +25,11 @@
     Extraordinarias
   </a>
 </div>
+
+<a href="{% url 'documents:gazette_export_excel' %}?{{ request.GET.urlencode }}"
+   class="btn btn-corporate btn-sm me-2">
+    <i class="fas fa-file-excel"></i> Exportar Excel
+</a>
 {% endblock %}
 
 {% block create_button %}
