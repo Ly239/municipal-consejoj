@@ -668,7 +668,7 @@ class DocumentExportExcelView(LoginRequiredMixin, PermissionRequiredMixin, Searc
                 f"N° {doc.gazette.formatted_number} - {year}" if doc.gazette else '—',
                 doc.issuing_entity.name if doc.issuing_entity else '—',
                 doc.emission_date.strftime('%d/%m/%Y') if doc.emission_date else '—',
-                doc.publication_date.strftime('%d/%m/%Y %H:%M') if doc.publication_date else '—',
+                doc.publication_date.strftime('%d/%m/%Y %I:%M %p') if doc.publication_date else '—',
                 estado,
                 doc.submitted_by.username if doc.submitted_by else '—',
                 archivo_label,
@@ -759,7 +759,7 @@ class GazetteExportExcelView(LoginRequiredMixin, PermissionRequiredMixin, Search
                 tipo,
                 gazette.year,
                 gazette.emission_date.strftime('%d/%m/%Y') if gazette.emission_date else '—',
-                gazette.publication_date.strftime('%d/%m/%Y %H:%M') if gazette.publication_date else '—',
+                gazette.publication_date.strftime('%d/%m/%Y %I:%M %p') if gazette.publication_date else '—',
                 gazette.description or '—',
                 gazette.documents.count(),
             ])
