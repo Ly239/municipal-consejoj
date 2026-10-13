@@ -551,9 +551,8 @@ class DocumentExportExcelView(LoginRequiredMixin, PermissionRequiredMixin, Searc
     """
     Exporta el listado de documentos a Excel (.xlsx).
 
-    Reutiliza SearchListMixin → hereda búsqueda + filtros activos.
-    Si no hay filtros → exporta todos.
-    Si hay filtros → exporta lo filtrado.
+    Reutiliza SearchListMixin para heredar búsqueda (q) + filtros activos.
+    Incluye la fecha de publicación en el sistema (publication_date).
     """
     model = Document
     permission_required = 'documents.view_document'
@@ -565,13 +564,21 @@ class DocumentExportExcelView(LoginRequiredMixin, PermissionRequiredMixin, Searc
     numeric_fields = ['number', 'gazette__number', 'gazette__year']
     filter_fields = ['document_type__name', 'issuing_entity__name', 'is_approved']
 
+    def handle_no_permission(self):
+        """redirect con mensaje amigable en vez de 403."""
+        messages.error(self.request, "No tienes permiso para exportar documentos.")
+        return redirect('documents:document_list')
+
     def get_queryset(self):
-        """Reutiliza el queryset del DocumentListView."""
+        """
+        Reutiliza el queryset del DocumentListView con filtros del template
+        (year, month, doc_type, status, date_from, date_to).
+        """
         queryset = super().get_queryset().select_related(
             'gazette', 'document_type', 'issuing_entity', 'submitted_by'
         )
 
-        # Filtros del template (year, month, doc_type, status, date_from, date_to)
+        # Filtro por año / mes
         year = self.request.GET.get('year')
         month = self.request.GET.get('month')
         if year:
@@ -579,6 +586,7 @@ class DocumentExportExcelView(LoginRequiredMixin, PermissionRequiredMixin, Searc
         if month:
             queryset = queryset.filter(emission_date__month=month)
 
+        # Filtro por rango de fechas
         date_from = self.request.GET.get('date_from')
         date_to = self.request.GET.get('date_to')
         if date_from:
@@ -586,10 +594,12 @@ class DocumentExportExcelView(LoginRequiredMixin, PermissionRequiredMixin, Searc
         if date_to:
             queryset = queryset.filter(emission_date__lte=date_to)
 
+        # Filtro por tipo de documento
         doc_type = self.request.GET.get('doc_type')
         if doc_type:
             queryset = queryset.filter(document_type__id=doc_type)
 
+        # Filtro por estado
         status = self.request.GET.get('status')
         if status == 'approved':
             queryset = queryset.filter(is_approved=True, is_annulled=False)
@@ -614,10 +624,11 @@ class DocumentExportExcelView(LoginRequiredMixin, PermissionRequiredMixin, Searc
         header_font = Font(color="FFFFFF", bold=True)
         header_align = Alignment(horizontal="center", vertical="center")
 
-        # Encabezados
+        # Encabezados (con columna "Publicado en sistema")
         headers = [
             'N°', 'Tipo', 'Título', 'Gaceta', 'Ente Emisor',
-            'Fecha Emisión', 'Estado', 'Subido por', 'Archivo adjunto'
+            'Fecha Emisión', 'Publicado en sistema', 'Estado',
+            'Subido por', 'Archivo adjunto'
         ]
         ws.append(headers)
 
@@ -655,13 +666,14 @@ class DocumentExportExcelView(LoginRequiredMixin, PermissionRequiredMixin, Searc
                 f"N° {doc.gazette.formatted_number} - {year}" if doc.gazette else '—',
                 doc.issuing_entity.name if doc.issuing_entity else '—',
                 doc.emission_date.strftime('%d/%m/%Y') if doc.emission_date else '—',
+                doc.publication_date.strftime('%d/%m/%Y %H:%M') if doc.publication_date else '—',
                 estado,
                 doc.submitted_by.username if doc.submitted_by else '—',
                 archivo_label,
             ])
 
-        # Ancho de columnas (aprox)
-        widths = [6, 18, 45, 18, 25, 14, 12, 20, 18]
+        # Ancho de columnas
+        widths = [6, 18, 45, 18, 25, 14, 20, 12, 20, 18]
         for i, w in enumerate(widths, start=1):
             ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = w
 
@@ -673,18 +685,35 @@ class DocumentExportExcelView(LoginRequiredMixin, PermissionRequiredMixin, Searc
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         wb.save(response)
         return response
-        
-        
 
-class GazetteExportExcelView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
-    """Exporta el listado de gacetas a Excel (.xlsx)."""
+        
+        
+class GazetteExportExcelView(LoginRequiredMixin, PermissionRequiredMixin, SearchListMixin, ListView):
+    """
+    Exporta el listado de gacetas a Excel (.xlsx).
+
+    Reutiliza SearchListMixin para heredar búsqueda (q) + filtros activos.
+    Incluye la fecha de publicación en el sistema (publication_date).
+    """
     model = Gazette
     permission_required = 'documents.view_gazette'
+    search_fields = ['number', 'year', 'description']
+    numeric_fields = ['number', 'year']
+    filter_fields = ['year']
+
+    def handle_no_permission(self):
+        """redirect con mensaje amigable en vez de 403."""
+        messages.error(self.request, "No tienes permiso para exportar gacetas.")
+        return redirect('documents:gazette_list')
 
     def get_queryset(self):
+        """
+        Hereda search + active_filters de SearchListMixin.
+        Añade filtro por tipo (B63).
+        """
         qs = super().get_queryset()
 
-        # Filtro por tipo (ordinaria/extraordinaria) — B63
+        # Filtro por tipo (B63)
         tipo = self.request.GET.get('tipo', '')
         if tipo == 'ordinaria':
             qs = qs.filter(is_extraordinary=False)
@@ -694,23 +723,33 @@ class GazetteExportExcelView(LoginRequiredMixin, PermissionRequiredMixin, ListVi
         return qs.order_by('year', 'number')
 
     def get(self, request, *args, **kwargs):
+        """Construye el Excel y lo devuelve como descarga."""
         queryset = self.get_queryset()
 
+        # Crear workbook
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Gacetas"
 
+        # Estilos
         header_fill = PatternFill(start_color="003B4F", end_color="003B4F", fill_type="solid")
         header_font = Font(color="FFFFFF", bold=True)
         header_align = Alignment(horizontal="center", vertical="center")
 
-        headers = ['N°', 'Tipo', 'Año', 'Fecha Emisión', 'Descripción', 'N° Documentos']
+        # Encabezados (con columna "Publicado en sistema")
+        headers = [
+            'N°', 'Tipo', 'Año', 'Fecha Emisión',
+            'Publicado en sistema', 'Descripción', 'N° Documentos'
+        ]
         ws.append(headers)
+
+        # Aplicar estilos a headers
         for cell in ws[1]:
             cell.fill = header_fill
             cell.font = header_font
             cell.alignment = header_align
 
+        # Filas
         for gazette in queryset:
             tipo = 'Extraordinaria' if gazette.is_extraordinary else 'Ordinaria'
             ws.append([
@@ -718,18 +757,21 @@ class GazetteExportExcelView(LoginRequiredMixin, PermissionRequiredMixin, ListVi
                 tipo,
                 gazette.year,
                 gazette.emission_date.strftime('%d/%m/%Y') if gazette.emission_date else '—',
+                gazette.publication_date.strftime('%d/%m/%Y %H:%M') if gazette.publication_date else '—',
                 gazette.description or '—',
                 gazette.documents.count(),
             ])
 
-        widths = [8, 16, 8, 14, 50, 14]
+        # Ancho de columnas
+        widths = [8, 16, 8, 14, 20, 50, 14]
         for i, w in enumerate(widths, start=1):
             ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = w
 
+        # Preparar response
         filename = f"gacetas_{date.today().strftime('%Y-%m-%d')}.xlsx"
         response = HttpResponse(
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         wb.save(response)
-        return response
+        return response    
