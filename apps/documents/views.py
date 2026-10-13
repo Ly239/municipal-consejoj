@@ -6,14 +6,22 @@ Contiene:
 - Vistas CRUD de Gazette (Gacetas).
 - Vistas CRUD de Document (Documentos).
 """
+# 1. Standard library (Python puro)
 import logging
 import operator
+from datetime import date
 from functools import reduce
 from urllib.parse import urlencode
 
+# 2. Third-party (paquetes instalados)
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment
+
+# 3. Django (es third-party, pero se separa por convención)
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import Q
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils.functional import cached_property
@@ -21,13 +29,7 @@ from django.views.generic import (
     ListView, CreateView, UpdateView, DeleteView, DetailView
 )
 
-# EXPORT A EXCEL
-import openpyxl
-from openpyxl.styles import Font, PatternFill, Alignment
-from django.http import HttpResponse
-from datetime import date
-
-# apps 
+# 4. Local (apps del proyecto)
 from common.mixins import LoggingMixin
 from .models import Gazette, Document, DocumentType
 from .forms import GazetteForm, DocumentForm
