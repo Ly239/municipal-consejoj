@@ -1,5 +1,5 @@
 """
-Copyright [2026] [Proyecto universitario]
+Copyright [2026] [Proyecto universitario - Concejo Municipal de Junín]
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,172 +13,335 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-from django.db import models
+"""
+Modelos de la app core del Concejo Municipal de Junín.
+
+Contiene:
+- BaseContent: tabla única de contenido dinámico del Home.
+- Proxies de contenido: News, Chronicle, Councilor, AboutUs.
+- Proxies de actividades: Activity (paraguas), Announcement, Consultation, Event, Downloadable.
+- Auxiliares: Category, Commission, Legislature, Legislator.
+
+Arquitectura:
+- Todo el contenido editorial vive en BaseContent (una sola tabla real).
+- Los proxies NO crean tablas; solo filtran por content_type y subtype.
+- Los auxiliares (Category, Commission, Legislature, Legislator) son relaciones
+  entre entidades, no contenido; por eso viven en tablas separadas.
+
+Soft delete:
+- Core NO usa soft delete. Elimina permanente (hard delete).
+- Por eso hereda solo de common.TimestampedMixin (no de common.BaseModel).
+- Como consecuencia, NO aparece en la papelera universal (no es subclase
+  de SoftDeleteMixin, por lo que common.apps.ready() lo ignora).
+- El delete() está sobrescrito para limpiar archivos físicos antes de borrar.
+- Principio espejo: common.SoftDeleteMixin.hard_delete() hace lo mismo en su capa.
+"""
+import logging
+
+from django.db import models, IntegrityError
 from django.utils import timezone
 from django.utils.text import slugify
 from django.conf import settings
 
-# Asumiendo que BaseModel está definido en tu proyecto
+from common.models import TimestampedMixin
 
-
-
-# ==============================================================================
-# 0. CLASE BASE ABSTRACTA
-# ==============================================================================
-
-class BaseModel(models.Model):
-    """Clase base abstracta que aporta campos de auditoría de tiempo."""
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Última Actualización")
-
-    class Meta:
-        abstract = True
+logger = logging.getLogger(__name__)
 
 
 # ==============================================================================
-# 1. TABLA BASE FÍSICA ÚNICA (SINGLE TABLE DESIGN)
+# 1. GESTORES PERSONALIZADOS (Custom Managers)
 # ==============================================================================
-  # Ajusta la importación según donde esté tu BaseModel
+
+class ContentManager(models.Manager):
+    """
+    Manager que filtra por content_type.
+    Se usa en los proxies de contenido (News, Chronicle, Councilor, AboutUs).
+    No filtra por deleted_at porque core no usa soft delete.
+    """
+    use_in_migrations = False
+
+    def __init__(self, *args, content_type=None, **kwargs):
+        self.target_type = content_type
+        super().__init__(*args, **kwargs)
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.target_type:
+            qs = qs.filter(content_type=self.target_type)
+        return qs
 
 
-class HomeContent(BaseModel):
-    """Tabla física centralizada para la gestión de contenidos dinámicos del portal."""
+class ActivityManager(models.Manager):
+    """
+    Manager para los 4 subtipos de Activity.
+    Filtra por content_type=ACTIVITY + subtype específico.
+    """
+    use_in_migrations = False
 
-    class ContentTypes(models.TextChoices):
+    def __init__(self, *args, subtype=None, **kwargs):
+        self.target_subtype = subtype
+        super().__init__(*args, **kwargs)
+
+    def get_queryset(self):
+        qs = super().get_queryset().filter(
+            content_type=BaseContent.ContentType.ACTIVITY,
+        )
+        if self.target_subtype:
+            qs = qs.filter(subtype=self.target_subtype)
+        return qs
+
+
+# ==============================================================================
+# 2. TABLA ÚNICA DE CONTENIDO (BaseContent)
+# ==============================================================================
+
+class BaseContent(TimestampedMixin, models.Model):
+    """
+    Tabla única que almacena TODO el contenido editorial del Home.
+
+    Discriminadores:
+    - content_type: define el tipo (News, Chronicle, Councilor, AboutUs, Activity).
+    - subtype: solo aplica a Activity (Announcement, Consultation, Event, Downloadable).
+
+    Hereda de TimestampedMixin (created_at, updated_at) — NO de common.BaseModel,
+    porque core no usa soft delete.
+    """
+
+    class ContentType(models.TextChoices):
         NEWS = 'NEWS', 'Noticia'
         CHRONICLE = 'CHRONICLE', 'Crónica Digital'
-        CAROUSEL = 'CAROUSEL', 'Item de Carrusel'
         ABOUT_US = 'ABOUT_US', 'Información Institucional'
         COUNCILOR = 'COUNCILOR', 'Concejal / Directivo'
-        LEGISLATURE = 'LEGISLATURE', 'Legislatura / Período'
-        BOARD = 'BOARD', 'Junta Directiva'
+        ACTIVITY = 'ACTIVITY', 'Actividad / Difusión'
+
+    class ActivitySubtype(models.TextChoices):
+        ANNOUNCEMENT = 'ANNOUNCEMENT', 'Llamado a Concurso'
+        CONSULTATION = 'CONSULTATION', 'Consulta Pública'
+        EVENT = 'EVENT', 'Evento / Difusión'
+        DOWNLOADABLE = 'DOWNLOADABLE', 'Descargable'
 
     class Status(models.TextChoices):
         DRAFT = 'DRAFT', 'Borrador'
         PUBLISHED = 'PUBLISHED', 'Publicado'
         ARCHIVED = 'ARCHIVED', 'Archivado'
 
-    # Discriminador principal
+    # --- Discriminadores ---
     content_type = models.CharField(
-        max_length=20, 
-        choices=ContentTypes.choices, 
-        default=ContentTypes.NEWS,
+        max_length=20,
+        choices=ContentType.choices,
+        default=ContentType.NEWS,
         verbose_name="Tipo de Contenido"
     )
+    subtype = models.CharField(
+        max_length=20,
+        choices=ActivitySubtype.choices,
+        blank=True,
+        verbose_name="Subtipo (solo Actividades)"
+    )
 
-    # Campos generales
+    # --- Identificación ---
     title = models.CharField(max_length=255, verbose_name="Título / Nombre Completo")
-    slug = models.SlugField(max_length=255, blank=True)
-    author = models.CharField(max_length=150, default="Concejo Municipal", verbose_name="Autor / Cargo o Partido")
-    summary = models.TextField(blank=True, verbose_name="Resumen / Bajada / Biografía Corta")
-    content = models.TextField(blank=True, verbose_name="Contenido Extenso / Trayectoria")
-    description = models.TextField(blank=True, verbose_name="Descripción Corta (Compatibilidad)")
+    slug = models.SlugField(
+        max_length=255,
+        unique=True,
+        blank=True,
+        verbose_name="Slug (URL)"
+    )
+    author = models.CharField(
+        max_length=150,
+        default="Concejo Municipal",
+        verbose_name="Autor / Cargo"
+    )
 
-    # Archivos multimedia, documentos y enlaces
-    image = models.ImageField(upload_to='home/%Y/%m/', blank=True, null=True, verbose_name="Imagen / Foto Oficial")
-    attached_file = models.FileField(upload_to='home/docs/%Y/%m/', blank=True, null=True, verbose_name="Archivo Adjunto General")
-    
-    # Campos de soporte para Gacetas / Documentos PDF
-    pdf_file = models.FileField(
-        upload_to='news_pdfs/%Y/%m/',
+    # --- Contenido ---
+    summary = models.TextField(blank=True, verbose_name="Resumen / Biografía Corta")
+    content = models.TextField(blank=True, verbose_name="Contenido Extenso")
+
+    # --- Multimedia ---
+    image = models.ImageField(
+        upload_to='contents/images/%Y/%m/',
         blank=True,
         null=True,
-        verbose_name="Documento PDF Adjunto",
-        help_text="Cargue aquí la Gaceta Oficial, Ordenanza o documento en PDF respaldatorio."
+        verbose_name="Imagen / Foto"
+    )
+    attached_file = models.FileField(
+        upload_to='contents/docs/%Y/%m/',
+        blank=True,
+        null=True,
+        verbose_name="Archivo Adjunto (PDF)"
     )
     show_pdf_inline = models.BooleanField(
         default=False,
         verbose_name="Mostrar visor de PDF incrustado",
-        help_text="Si está marcado, el PDF se mostrará incrustado directamente en la vista."
+        help_text="Si está marcado, el PDF adjunto se mostrará embebido en la vista de detalle."
     )
-    social_media_url = models.URLField(blank=True, null=True, verbose_name="Enlace de Red Social / Web")
+    social_media_url = models.URLField(
+        blank=True,
+        null=True,
+        verbose_name="Enlace de Red Social / Web"
+    )
 
-    # Control de publicación, orden y visibilidad
-    publication_date = models.DateTimeField(default=timezone.now, verbose_name="Fecha de Publicación")
-    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PUBLISHED, verbose_name="Estado")
+    # --- Estado y visibilidad ---
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.PUBLISHED,
+        verbose_name="Estado"
+    )
     is_active = models.BooleanField(default=True, verbose_name="¿Activo?")
-    order = models.PositiveIntegerField(default=0, verbose_name="Orden de Aparición")
+    is_featured = models.BooleanField(
+        default=False,
+        verbose_name="Destacar en 'Lo Último'"
+    )
+    order = models.PositiveIntegerField(default=0, verbose_name="Orden")
 
-    # Relaciones
+    # --- Campos específicos de Activity (inline, solo aplican a los 4 subtipos) ---
+    code = models.CharField(max_length=100, blank=True, verbose_name="Código (Licitaciones)")
+    law_reference = models.TextField(blank=True, verbose_name="Base Legal")
+    contact_email = models.EmailField(blank=True, verbose_name="Correo de Contacto")
+    start_date = models.DateField(null=True, blank=True, verbose_name="Fecha de Inicio")
+    end_date = models.DateField(null=True, blank=True, verbose_name="Fecha de Culminación")
+    year = models.CharField(max_length=4, blank=True, verbose_name="Año (Descargables)")
+
+    # --- Relaciones ---
+    # PROTECT: no se puede borrar una categoría o un usuario con contenido asociado.
     category = models.ForeignKey(
-        'Category', 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True, 
+        'Category',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
         related_name='contents',
         verbose_name="Categoría"
     )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         null=True,
         blank=True,
-        related_name='created_home_contents',
+        related_name='created_contents',
         verbose_name="Registrado por"
     )
 
     class Meta:
-        ordering = ['content_type', 'order', '-publication_date']
+        # ordering usa created_at (campo real) — publication_date es property.
+        ordering = ['order', '-created_at']
         verbose_name = "Contenido del Home"
         verbose_name_plural = "Contenidos del Home"
+        indexes = [
+            models.Index(fields=['content_type', 'is_active']),
+            models.Index(fields=['subtype', 'is_active']),
+        ]
 
     def save(self, *args, **kwargs):
+        """
+        Genera slug único a partir del título si no existe.
+
+        Estrategia de unicidad:
+        - Loop en Python para cubrir el 99% de los casos (colisiones normales).
+        - unique=True a nivel BD como red de seguridad (concurrencia real).
+        - Si por carrera concurrente se produce IntegrityError, se reintenta
+          UNA vez con el slug regenerado.
+        """
         if not self.slug and self.title:
-            base_slug = slugify(self.title)
-            slug = base_slug
-            counter = 1
-            while HomeContent.objects.filter(slug=slug).exclude(pk=self.pk).exists():
-                slug = f"{base_slug}-{counter}"
-                counter += 1
-            self.slug = slug
-        if not self.description and self.summary:
-            self.description = self.summary
-        super().save(*args, **kwargs)
+            self.slug = self._build_unique_slug()
+        try:
+            super().save(*args, **kwargs)
+        except IntegrityError:
+            if self.slug and self.title:
+                # Colisión por concurrencia: regenerar y reintentar una vez.
+                self.slug = self._build_unique_slug()
+                super().save(*args, **kwargs)
+            else:
+                raise
+
+    def _build_unique_slug(self):
+        """Construye un slug único con contador sufijo (-1, -2, ...)."""
+        base_slug = slugify(self.title)
+        slug = base_slug
+        counter = 1
+        while BaseContent.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+        return slug
+
+    def clean(self):
+        """Validaciones de consistencia entre content_type y subtype."""
+        from django.core.exceptions import ValidationError
+
+        # Solo ACTIVITY puede tener subtype
+        if self.content_type != self.ContentType.ACTIVITY and self.subtype:
+            raise ValidationError({
+                'subtype': 'Solo las Actividades pueden tener subtipo.'
+            })
+
+        # Rango de fechas en actividades con inicio/fin
+        if self.start_date and self.end_date and self.start_date > self.end_date:
+            raise ValidationError({
+                'end_date': 'La fecha de culminación no puede ser anterior a la de inicio.'
+            })
+
+    def delete(self, *args, **kwargs):
+        """
+        Borrado permanente.
+
+        Limpia archivos físicos (image, attached_file) antes de borrar la fila.
+        Django por defecto NO elimina archivos del storage al borrar el objeto;
+        este override evita dejar archivos huérfanos ocupando disco.
+        """
+        for field in self._meta.get_fields():
+            if isinstance(field, (models.FileField, models.ImageField)):
+                file = getattr(self, field.name, None)
+                if file and file.name:
+                    file.delete(save=False)
+        super().delete(*args, **kwargs)
 
     def __str__(self):
-        return f"[{self.get_content_type_display()}] {self.title}"
+        return f"[{self.get_content_type_display()}] {self.title[:50]}"
+
+    # --- Propiedades de compatibilidad con templates existentes ---
+    @property
+    def description(self):
+        """Alias de summary. Reemplaza al campo description duplicado."""
+        return self.summary
 
     @property
-    def full_name(self):
+    def publication_date(self):
+        """Alias semántico de created_at. No es campo, no duplica en BD."""
+        return self.created_at
+
+    @property
+    def date(self):
+        """Alias de publication_date (compatibilidad con templates)."""
+        return self.created_at
+
+    @property
+    def name(self):
+        """Alias de title (compatibilidad con templates)."""
         return self.title
 
     @property
     def position(self):
+        """Alias de author (compatibilidad con templates)."""
         return self.author
 
     @property
-    def date(self):
-        return self.publication_date
-
-    @property
     def bio(self):
+        """Alias de summary (compatibilidad con templates)."""
         return self.summary
 
-
-
-# Alias de compatibilidad por si en algún módulo se importa BaseContent
-BaseContent = HomeContent
-
-
-# ==============================================================================
-# 2. GESTORES PERSONALIZADOS (CUSTOM MANAGERS)
-# ==============================================================================
-
-class ContentManager(models.Manager):
-    def __init__(self, content_type, *args, **kwargs):
-        self.target_type = content_type
-        super().__init__(*args, **kwargs)
-
-    def get_queryset(self):
-        return super().get_queryset().filter(content_type=self.target_type, is_active=True)
+    @property
+    def full_name(self):
+        """Alias de title (compatibilidad con código previo de Fersan)."""
+        return self.title
 
 
 # ==============================================================================
-# 3. PROXY MODELS (MODELOS FANTASMA)
+# 3. PROXIES DE CONTENIDO (News, Chronicle, Councilor, AboutUs)
 # ==============================================================================
 
-class News(HomeContent):
-    objects = ContentManager(HomeContent.ContentTypes.NEWS)
+class News(BaseContent):
+    """Proxy para Noticias."""
+    objects = ContentManager(content_type=BaseContent.ContentType.NEWS)
 
     class Meta:
         proxy = True
@@ -186,12 +349,13 @@ class News(HomeContent):
         verbose_name_plural = "Noticias"
 
     def save(self, *args, **kwargs):
-        self.content_type = HomeContent.ContentTypes.NEWS
+        self.content_type = BaseContent.ContentType.NEWS
         super().save(*args, **kwargs)
 
 
-class Chronicle(HomeContent):
-    objects = ContentManager(HomeContent.ContentTypes.CHRONICLE)
+class Chronicle(BaseContent):
+    """Proxy para Crónicas Digitales."""
+    objects = ContentManager(content_type=BaseContent.ContentType.CHRONICLE)
 
     class Meta:
         proxy = True
@@ -199,12 +363,13 @@ class Chronicle(HomeContent):
         verbose_name_plural = "Crónicas Digitales"
 
     def save(self, *args, **kwargs):
-        self.content_type = HomeContent.ContentTypes.CHRONICLE
+        self.content_type = BaseContent.ContentType.CHRONICLE
         super().save(*args, **kwargs)
 
 
-class Councilor(HomeContent):
-    objects = ContentManager(HomeContent.ContentTypes.COUNCILOR)
+class Councilor(BaseContent):
+    """Proxy para Concejales y Directiva."""
+    objects = ContentManager(content_type=BaseContent.ContentType.COUNCILOR)
 
     class Meta:
         proxy = True
@@ -212,25 +377,17 @@ class Councilor(HomeContent):
         verbose_name_plural = "Concejales y Directiva"
 
     def save(self, *args, **kwargs):
-        self.content_type = HomeContent.ContentTypes.COUNCILOR
+        self.content_type = BaseContent.ContentType.COUNCILOR
         super().save(*args, **kwargs)
 
 
-class Carousel(HomeContent):
-    objects = ContentManager(HomeContent.ContentTypes.CAROUSEL)
-
-    class Meta:
-        proxy = True
-        verbose_name = "Item de Carrusel"
-        verbose_name_plural = "Items del Carrusel"
-
-    def save(self, *args, **kwargs):
-        self.content_type = HomeContent.ContentTypes.CAROUSEL
-        super().save(*args, **kwargs)
-
-
-class AboutUs(HomeContent):
-    objects = ContentManager(HomeContent.ContentTypes.ABOUT_US)
+class AboutUs(BaseContent):
+    """
+    Proxy para Información Institucional.
+    Cada sección (Quiénes somos, Misión, Visión) es un registro
+    identificado por su slug: 'quienes-somos', 'mision', 'vision'.
+    """
+    objects = ContentManager(content_type=BaseContent.ContentType.ABOUT_US)
 
     class Meta:
         proxy = True
@@ -238,84 +395,227 @@ class AboutUs(HomeContent):
         verbose_name_plural = "Información Institucional"
 
     def save(self, *args, **kwargs):
-        self.content_type = HomeContent.ContentTypes.ABOUT_US
+        self.content_type = BaseContent.ContentType.ABOUT_US
         super().save(*args, **kwargs)
 
 
-class Legislature(HomeContent):
-    """Proxy Model para la gestión de Legislaturas / Períodos Legislativos."""
-    class Meta:
-        proxy = True
-        verbose_name = 'Legislatura'
-        verbose_name_plural = 'Legislaturas'
-
-
-class BoardMember(HomeContent):
-    """Proxy Model para la gestión de Integrantes de la Junta Directiva."""
-    class Meta:
-        proxy = True
-        verbose_name = 'Junta Directiva'
-        verbose_name_plural = 'Junta Directiva'
-
 # ==============================================================================
-# 4. ESTRUCTURAS AUXILIARES Y LEGISLATIVAS
+# 4. ACTIVITY (paraguas) + 4 SUBTIPOS
 # ==============================================================================
 
-class Category(models.Model):
-    name = models.CharField(max_length=100, unique=True, verbose_name="Nombre de la Categoría")
-    slug = models.SlugField(max_length=120, unique=True, blank=True)
+class Activity(BaseContent):
+    """
+    Proxy 'paraguas' para TODAS las actividades (cualquier subtipo).
+
+    Uso: consultas cronológicas mixtas (ej. carrusel del Home que mezcla
+    Consultation + Announcement). Una sola query en vez de unir 4.
+
+    IMPORTANTE: Activity es SOLO-LECTURA. No se instancia directamente.
+    Para crear actividades, usar los 4 subtipos concretos.
+    """
+    objects = ContentManager(content_type=BaseContent.ContentType.ACTIVITY)
+
+    class Meta:
+        proxy = True
+        verbose_name = "Actividad"
+        verbose_name_plural = "Actividades"
+
+    def save(self, *args, **kwargs):
+        raise NotImplementedError(
+            "Activity is a read-only umbrella proxy. "
+            "To create activities, use Announcement, Consultation, Event or Downloadable."
+        )
+
+    @property
+    def badge_label(self):
+        """Etiqueta de respaldo si no hay subtipo definido."""
+        return self.get_subtype_display() or "Actividad"
+
+
+class Announcement(BaseContent):
+    """
+    Proxy para Llamados a Concurso / Licitaciones.
+    Campos específicos: code, law_reference, contact_email, start_date, end_date, attached_file.
+    """
+    objects = ActivityManager(subtype=BaseContent.ActivitySubtype.ANNOUNCEMENT)
+
+    class Meta:
+        proxy = True
+        verbose_name = "Llamado a Concurso"
+        verbose_name_plural = "Llamados a Concurso"
+
+    def save(self, *args, **kwargs):
+        self.content_type = BaseContent.ContentType.ACTIVITY
+        self.subtype = BaseContent.ActivitySubtype.ANNOUNCEMENT
+        super().save(*args, **kwargs)
+
+    @property
+    def badge_label(self):
+        return "Licitación"
+
+
+class Consultation(BaseContent):
+    """
+    Proxy para Consultas Públicas.
+    Campos específicos: law_reference, contact_email, start_date, end_date, attached_file.
+    """
+    objects = ActivityManager(subtype=BaseContent.ActivitySubtype.CONSULTATION)
+
+    class Meta:
+        proxy = True
+        verbose_name = "Consulta Pública"
+        verbose_name_plural = "Consultas Públicas"
+
+    def save(self, *args, **kwargs):
+        self.content_type = BaseContent.ContentType.ACTIVITY
+        self.subtype = BaseContent.ActivitySubtype.CONSULTATION
+        super().save(*args, **kwargs)
+
+    @property
+    def badge_label(self):
+        return "Consulta Pública"
+
+    @property
+    def is_open(self):
+        """Indica si la consulta está dentro del rango de fechas de vigencia."""
+        if not self.start_date or not self.end_date:
+            return False
+        today = timezone.now().date()
+        return self.start_date <= today <= self.end_date
+
+
+class Event(BaseContent):
+    """
+    Proxy para Eventos y Difusión Institucional.
+    Campos específicos: image, social_media_url (Instagram, Facebook, etc.).
+    """
+    objects = ActivityManager(subtype=BaseContent.ActivitySubtype.EVENT)
+
+    class Meta:
+        proxy = True
+        verbose_name = "Evento / Difusión"
+        verbose_name_plural = "Eventos y Difusión"
+
+    def save(self, *args, **kwargs):
+        self.content_type = BaseContent.ContentType.ACTIVITY
+        self.subtype = BaseContent.ActivitySubtype.EVENT
+        super().save(*args, **kwargs)
+
+    @property
+    def badge_label(self):
+        return "Difusión Institucional"
+
+
+class Downloadable(BaseContent):
+    """
+    Proxy para Descargables (PDFs de proyectos, informes, propuestas).
+
+    IMPORTANTE: NO confundir con documents.Document.
+    - Downloadable: contenido de difusión del Home (informes, propuestas).
+    - Document: documentos oficiales con flujo de aprobación y papelera propia.
+    """
+    objects = ActivityManager(subtype=BaseContent.ActivitySubtype.DOWNLOADABLE)
+
+    class Meta:
+        proxy = True
+        verbose_name = "Descargable"
+        verbose_name_plural = "Descargables"
+
+    def save(self, *args, **kwargs):
+        self.content_type = BaseContent.ContentType.ACTIVITY
+        self.subtype = BaseContent.ActivitySubtype.DOWNLOADABLE
+        super().save(*args, **kwargs)
+
+    @property
+    def badge_label(self):
+        return "Descargable"
+
+
+# ==============================================================================
+# 5. MODELOS AUXILIARES
+# ==============================================================================
+
+class Category(TimestampedMixin, models.Model):
+    """
+    Categorías para clasificar noticias y crónicas.
+    No es contenido editorial: es una etiqueta reutilizable.
+    """
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+        verbose_name="Nombre de la Categoría"
+    )
+    slug = models.SlugField(
+        max_length=120,
+        unique=True,
+        blank=True,
+        verbose_name="Slug (URL)"
+    )
     description = models.TextField(blank=True, verbose_name="Descripción")
 
     class Meta:
         verbose_name = "Categoría"
         verbose_name_plural = "Categorías"
+        ordering = ['name']
 
     def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)
+        if not self.slug and self.name:
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+            while Category.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
         super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
 
 
-class Commission(models.Model):
-    """Modelo para las 15 Comisiones Permanentes de Trabajo del Concejo Municipal."""
+class Commission(TimestampedMixin, models.Model):
+    """
+    Comisiones permanentes del Concejo (15 en total).
+
+    Cada comisión tiene 3 integrantes fijos: presidente, vicepresidente, vocal.
+    Las reglas cross-comisión (un concejal no puede presidir 2 comisiones,
+    pero puede ser vocal en varias) se validan en CommissionForm.
+    """
     number = models.PositiveIntegerField(unique=True, verbose_name="Número de Comisión")
     name = models.CharField(max_length=250, verbose_name="Nombre de la Comisión")
-    description = models.TextField(blank=True, verbose_name="Área de Trabajo / Funciones")
+    description = models.TextField(verbose_name="Área de Trabajo y Funciones")
     image = models.ImageField(
-        upload_to='commissions/%Y/%m/', 
-        blank=True, 
-        null=True, 
+        upload_to='commissions/%Y/%m/',
+        blank=True,
+        null=True,
         verbose_name="Imagen / Foto de la Comisión"
     )
 
-    # Vinculación directa con los concejales registrados en HomeContent
+    # 3 FKs fijas → PROTECT: no se puede borrar un concejal con comisiones asignadas.
     president = models.ForeignKey(
-        HomeContent,
-        on_delete=models.SET_NULL,
+        Councilor,
+        on_delete=models.PROTECT,
         null=True,
         blank=True,
-        limit_choices_to={'content_type': HomeContent.ContentTypes.COUNCILOR},
+        limit_choices_to={'content_type': BaseContent.ContentType.COUNCILOR},
         related_name='commissions_as_president',
         verbose_name="Presidente de la Comisión"
     )
     vice_president = models.ForeignKey(
-        HomeContent,
-        on_delete=models.SET_NULL,
+        Councilor,
+        on_delete=models.PROTECT,
         null=True,
         blank=True,
-        limit_choices_to={'content_type': HomeContent.ContentTypes.COUNCILOR},
+        limit_choices_to={'content_type': BaseContent.ContentType.COUNCILOR},
         related_name='commissions_as_vicepresident',
         verbose_name="Vicepresidente de la Comisión"
     )
     vocal = models.ForeignKey(
-        HomeContent,
-        on_delete=models.SET_NULL,
+        Councilor,
+        on_delete=models.PROTECT,
         null=True,
         blank=True,
-        limit_choices_to={'content_type': HomeContent.ContentTypes.COUNCILOR},
+        limit_choices_to={'content_type': BaseContent.ContentType.COUNCILOR},
         related_name='commissions_as_vocal',
         verbose_name="Vocal de la Comisión"
     )
@@ -330,31 +630,85 @@ class Commission(models.Model):
 
     @property
     def emoji(self):
-        """Mapeo dinámico de emojis para las 15 comisiones permanentes."""
+        """
+        Emoji decorativo por número de comisión.
+
+        Cosmético — NO es campo de BD. Si en el futuro se migra a
+        FontAwesome, se elimina esta property y se ajusta el template
+        commissions.html. Cero migración necesaria.
+        """
         emojis = {
-            1: '⚖️',   # Derechos Humanos, Justicia y Familia
-            2: '⚽',   # Deporte y Juventud
-            3: '🎓',   # Educación y Cultura
-            4: '🏛️',   # Historia, Patrimonio y Turismo
-            5: '📐',   # Ejidos
-            6: '💰',   # Presupuesto
-            7: '🔍',   # Contraloría
-            8: '🤝',   # Participación Ciudadana, Política y Frontera
-            9: '📜',   # Legislación
-            10: '🏗️',  # Obras Públicas y Ordenamiento del Territorio
-            11: '🚰',  # Servicios Públicos
-            12: '🚌',  # Transporte
-            13: '🏥',  # Salud, Ambiente y Actividades Agrícolas
-            14: '📡',  # Comunicación Social y Tecnología
-            15: '🎉',  # Eventos Públicos
+            1: '⚖️', 2: '⚽', 3: '🎓', 4: '🏛️', 5: '📐',
+            6: '💰', 7: '🔍', 8: '🤝', 9: '📜', 10: '🏗️',
+            11: '🚰', 12: '🚌', 13: '🏥', 14: '📡', 15: '🎉',
         }
         return emojis.get(self.number, '📋')
 
+class CommissionMember(models.Model):
+    """Modelo intermedio para asignar concejales a las comisiones permanentes. """
+    commission = models.ForeignKey(
+        'Commission',
+        on_delete=models.CASCADE,
+        related_name='members',
+        verbose_name="Comisión"
+    )
+    councilor = models.ForeignKey(
+        'Councilor',
+        on_delete=models.CASCADE,
+        related_name='commission_memberships',
+        verbose_name="Concejal"
+    )
+    role = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name="Cargo en la Comisión (Ej. Presidente, Vicepresidente)"
+    )
+    class Meta:
+        verbose_name = "Miembro de Comisión"
+        verbose_name_plural = "Miembros de Comisiones"
+        unique_together = ('commission', 'councilor')
+
+    def __str__(self):
+        return f"{self.councilor} - {self.commission} ({self.role or 'Miembro'})"
 
 
 
+    
+
+class Legislature(TimestampedMixin, models.Model):
+    """
+    Períodos legislativos del Concejo.
+    Entidad institucional, no contenido editorial → tabla separada.
+    """
+    roman_id = models.CharField(max_length=10, verbose_name="Número Romano (Ej: VIII)")
+    years = models.CharField(max_length=50, verbose_name="Período de Años")
+    mayor = models.CharField(max_length=150, verbose_name="Alcalde(sa)")
+    order = models.PositiveIntegerField(default=0, verbose_name="Orden")
+
+    class Meta:
+        verbose_name = "Legislatura"
+        verbose_name_plural = "Legislaturas"
+        ordering = ['order']
+
+    def __str__(self):
+        return f"Legislatura {self.roman_id} ({self.years})"
 
 
+class Legislator(TimestampedMixin, models.Model):
+    """Miembros de una legislatura."""
+    legislature = models.ForeignKey(
+        Legislature,
+        on_delete=models.PROTECT,
+        related_name='members',
+        verbose_name="Legislatura"
+    )
+    name = models.CharField(max_length=150, verbose_name="Nombre")
+    party = models.CharField(max_length=50, verbose_name="Partido Político")
 
-# Dentro de class Commission en apps/core/models.py
+    class Meta:
+        verbose_name = "Legislador"
+        verbose_name_plural = "Legisladores"
 
+    def __str__(self):
+        return f"{self.name} ({self.party}) - {self.legislature.roman_id}"

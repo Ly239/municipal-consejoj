@@ -14,7 +14,7 @@ class TimestampedMixin(models.Model):
     class Meta:
         abstract = True
 
-    
+
 # ------------------------------------------------------------------------
 # 2. MIXIN DE BORRADO SUAVE (soft delete)
 # ------------------------------------------------------------------------
@@ -84,3 +84,10 @@ class BaseModel(TimestampedMixin, SoftDeleteMixin):
     objects = ActiveManager()
     # Manager que incluye todos (incluso borrados)
     all_objects = models.Manager()
+
+
+# ------------------------------------------------------------------------
+# 4. ALIAS DE COMPATIBILIDAD
+# ------------------------------------------------------------------------
+TimeStampedModel = TimestampedMixin
+SoftDeleteModel = SoftDeleteMixin

@@ -1,0 +1,80 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{{ object.title|default:object.name }} - Concejo Municipal de Junín{% endblock %}
+
+{% block content %}
+{% include 'core/includes/_navbar_public.html' %}
+
+<div class="container my-5">
+    <div class="row">
+        <!-- Columna Principal -->
+        <div class="col-lg-8">
+            <article class="blog-post">
+                <h1 class="fw-bold mb-3" style="color: var(--color-dark-blue, #0f2a4a); font-family: var(--font-title, inherit);">
+                    {{ object.title|default:object.name }}
+                </h1>
+
+                <!-- Metadatos -->
+                <p class="text-muted mb-4 small">
+                    {% if object.author %}
+                        <i class="bi bi-person-fill text-primary"></i> Por <strong>{{ object.author }}</strong>
+                    {% endif %}
+                    {% if object.created_at %}
+                        <span class="ms-2"><i class="bi bi-calendar-event text-primary"></i> {{ object.created_at|date:"d \d\e F, Y" }}</span>
+                    {% endif %}
+                    {% if object.category %}
+                        <span class="badge bg-secondary-subtle text-dark border ms-2">{{ object.category }}</span>
+                    {% endif %}
+                </p>
+
+                <!-- Imagen Destacada -->
+                {% if object.image %}
+                    <div class="mb-4">
+                        <img src="{{ object.image.url }}" class="img-fluid rounded shadow-sm w-100" alt="{{ object.title|default:object.name }}" style="max-height: 420px; object-fit: cover;" loading="lazy">
+                    </div>
+                {% endif %}
+
+                <!-- Resumen -->
+                {% if object.summary %}
+                    <div class="lead fw-semibold text-secondary mb-4 p-3 bg-light border-start border-4 border-primary rounded">
+                        {{ object.summary }}
+                    </div>
+                {% endif %}
+
+                <!-- Contenido -->
+                <div class="detail-content text-dark fs-6" style="line-height: 1.85; white-space: pre-line;">
+                    {{ object.content|default:object.description }}
+                </div>
+            </article>
+
+            <!-- Botón Volver -->
+            <div class="mt-5 pt-3 border-top">
+                <a href="{{ back_url|default:'javascript:history.back()' }}" class="btn btn-outline-secondary rounded-pill px-4">
+                    <i class="bi bi-arrow-left me-1"></i> {{ back_label|default:"Volver al listado" }}
+                </a>
+            </div>
+        </div>
+
+        <!-- Barra Lateral -->
+        <div class="col-lg-4 mt-4 mt-lg-0">
+            <div class="card card-concejo shadow-sm border-0 p-3 bg-light rounded-3">
+                <h5 class="fw-bold mb-3 pb-2 border-bottom" style="color: var(--color-dark-blue, #0f2a4a);">
+                    <i class="bi bi-journal-text me-1"></i> {{ sidebar_title|default:"Otras Publicaciones" }}
+                </h5>
+
+                <div class="list-group list-group-flush bg-transparent">
+                    {% for recent in recent_items %}
+                        <a href="{% if detail_url_name %}{% url detail_url_name recent.slug|default:recent.pk %}{% else %}#{% endif %}" class="list-group-item list-group-item-action bg-transparent py-3 px-0 border-bottom">
+                            <h6 class="mb-1 fw-bold text-dark">{{ recent.title|default:recent.name }}</h6>
+                            <small class="text-muted"><i class="bi bi-clock me-1"></i> {{ recent.created_at|date:"d M, Y" }}</small>
+                        </a>
+                    {% empty %}
+                        <p class="text-muted small mb-0 py-2">No hay otros registros disponibles en este momento.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
