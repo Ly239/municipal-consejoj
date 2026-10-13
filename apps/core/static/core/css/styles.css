@@ -1392,6 +1392,15 @@ los botones del sistema) */
 }
 
 
+/*Para los pill en gazzete_list*/
+/* Estado activo para btn-corporate */
+.btn-corporate.active,
+.btn-corporate:active {
+    background-color: var(--color-light-blue) !important;
+    border-color: var(--color-light-blue) !important;
+    color: #ffffff !important;
+}
+
 
 
 /* AUTH PAGES (Login / Register)                */
@@ -1660,3 +1669,4 @@ los botones del sistema) */
         padding: 1.25rem 0.75rem;
     }
 }
+
