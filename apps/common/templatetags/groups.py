@@ -1,5 +1,5 @@
 """
-Filtros de plantilla para verificar grupos de usuarios.
+Filtros y tags de plantilla para verificar grupos de usuarios.
 Permite controlar qué contenido se muestra según el rol del usuario.
 """
 from django import template
@@ -16,9 +16,7 @@ class GroupManager:
 
     @classmethod
     def user_has_group(cls, user, group_name):
-        """
-        Verifica si el usuario pertenece a un grupo específico.
-        """
+        """Verifica si el usuario pertenece a un grupo específico."""
         if not user or not user.is_authenticated:
             return False
         return user.groups.filter(name=group_name).exists()
@@ -39,9 +37,7 @@ class GroupManager:
 
     @classmethod
     def get_user_groups(cls, user):
-        """
-        Retorna la lista de nombres de grupos del usuario.
-        """
+        """Retorna la lista de nombres de grupos del usuario."""
         if not user or not user.is_authenticated:
             return []
         return list(user.groups.values_list('name', flat=True))
@@ -50,12 +46,6 @@ class GroupManager:
 # ------------------------------------------------------------------------
 # FILTROS PARA PLANTILLAS
 # ------------------------------------------------------------------------
-@register.filter(name='has_group')
-def has_group(user, group_name):
-    """Filtro: ¿El usuario pertenece al grupo 'group_name'?"""
-    return GroupManager.user_has_group(user, group_name)
-
-
 @register.filter(name='has_any_group')
 def has_any_group(user, group_names):
     """Filtro: ¿El usuario pertenece a alguno de los grupos listados?"""
@@ -66,3 +56,17 @@ def has_any_group(user, group_names):
 def get_groups(user):
     """Filtro: Retorna los nombres de los grupos del usuario."""
     return GroupManager.get_user_groups(user)
+
+
+# ------------------------------------------------------------------------
+# SIMPLE TAGS (Evaluación segura sin errores en {% if %})
+# ------------------------------------------------------------------------
+@register.simple_tag(name='has_group')
+def has_group(user, group_name):
+    """
+    Simple Tag: Permite evaluar si el usuario pertenece a un grupo sin romper el parser de Django.
+    Uso en plantillas:
+        {% has_group user "Administrator" as is_admin %}
+        {% if is_admin %} ... {% endif %}
+    """
+    return GroupManager.user_has_group(user, group_name)

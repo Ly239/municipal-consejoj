@@ -1,0 +1,100 @@
+from django.core.management.base import BaseCommand
+from django.utils.text import slugify
+from apps.core.models import Category, AboutUs, Councilor, Commission
+
+class Command(BaseCommand):
+    help = 'Inyecta todo el contenido institucional real, concejales y comisiones del Concejo Municipal de Junín'
+
+    def handle(self, *args, **options):
+        self.stdout.write(self.style.SUCCESS('🌱 Iniciando la inyección de datos institucionales reales...'))
+
+        # 1. Categorías base
+        cat_institucional, _ = Category.objects.get_or_create(name='Institucional')
+        cat_historia, _ = Category.objects.get_or_create(name='Historia y Cultura')
+
+        # 2. Información Institucional (AboutUs)
+        about_data = [
+            {
+                'title': 'Visión Institucional',
+                'slug': slugify('Vision Institucional'),
+                'summary': 'Cuerpo Edilicio democrático de vanguardia en el estado Táchira.',
+                'content': 'Consolidarse como un Cuerpo Edilicio democrático de vanguardia, referente de transparencia, honestidad y eficacia legislativa en el estado Táchira. Aspiramos a ser una institución que garantice el protagonismo ciudadano y el control riguroso de la gestión gubernamental, fortaleciendo el ordenamiento jurídico local para la prosperidad de todos los habitantes de Junín[cite: 1].',
+                'category': cat_institucional,
+                'is_active': True,
+            },
+            {
+                'title': 'Reseña Histórica',
+                'slug': slugify('Resena Historica'),
+                'summary': 'Evolución histórica y traslado a la emblemática Antigua Casa de los Alarcón.',
+                'content': 'Históricamente, la administración del Municipio Junín operó bajo un modelo de unidad orgánica donde las funciones ejecutivas y legislativas se concentraban en una sola estructura administrativa. Durante gran parte del siglo XX, el Concejo Municipal funcionaba como una extensión directa de la Alcaldía, compartiendo sede y mando. Este modelo comenzó a transformarse con la Constitución de 1999 y se consolidó definitivamente con la Ley Orgánica del Poder Público Municipal del año 2005[cite: 10].\n\nDicho hito jurídico consagró la Separación de Poderes a nivel local, transformando al Concejo en un Cuerpo Edilicio Autónomo e independiente. Bajo la gestión del concejal Danny Carrillo, se materializó el traslado institucional desde el edificio de la Alcaldía hacia su sede actual: la emblemática Antigua Casa de los Alarcón[cite: 10].',
+                'category': cat_historia,
+                'is_active': True,
+            },
+            {
+                'title': 'Nuestros Valores',
+                'slug': slugify('Nuestros Valores'),
+                'summary': 'Transparencia, Responsabilidad, Institucionalidad, Participación, Ética Pública y Compromiso Social.',
+                'content': '- Transparencia: Garantizar el acceso público a la información y el manejo pulcro de los recursos, permitiendo que cada ciudadano sea testigo de la gestión legislativa[cite: 4].\n- Responsabilidad: Asumir con integridad el compromiso de legislar y fiscalizar, respondiendo con eficacia a las necesidades del Municipio Junín[cite: 4].\n- Institucionalidad: Actuar con estricto apego al ordenamiento jurídico y al respeto de las competencias de cada poder[cite: 4].\n- Participación: Promover mecanismos para que el ciudadano sea protagonista activo en la toma de decisiones[cite: 4].\n- Ética Pública: Mantener una conducta intachable y honesta en el ejercicio de la función pública[cite: 4].\n- Compromiso Social: Orientar la labor legislativa hacia la construcción del bienestar común de los habitantes de la Ciudad de los Puentes[cite: 4].',
+                'category': cat_institucional,
+                'is_active': True,
+            }
+        ]
+
+        for item in about_data:
+            AboutUs.objects.update_or_create(slug=item['slug'], defaults=item)
+            self.stdout.write(self.style.SUCCESS(f'  ✔ [AboutUs] Cargado: {item["title"]}'))
+
+        # 3. Concejales y Directiva del Organigrama
+        councilors_data = [
+            {'name': 'Danny Carrillo', 'charge': 'Presidente', 'bio': 'Presidente del Concejo Municipal de Junín[cite: 11].'},
+            {'name': 'Favio Omaña', 'charge': 'Vicepresidente', 'bio': 'Vicepresidente del Concejo Municipal de Junín[cite: 11].'},
+            {'name': 'Isleny Caicedo', 'charge': 'Secretaria', 'bio': 'Secretaria del Concejo Municipal de Junín[cite: 11].'},
+            {'name': 'Juana Parada', 'charge': 'Concejal', 'bio': 'Concejal principal del municipio[cite: 11].'},
+            {'name': 'Arfilio Jaimes', 'charge': 'Concejal', 'bio': 'Concejal principal del municipio[cite: 11].'},
+            {'name': 'Ninfa Correa', 'charge': 'Concejal', 'bio': 'Concejal principal del municipio[cite: 11].'},
+            {'name': 'Sonia Mendoza', 'charge': 'Concejal', 'bio': 'Concejal principal del municipio[cite: 11].'},
+            {'name': 'Danny Sepulveda', 'charge': 'Concejal', 'bio': 'Concejal principal del municipio[cite: 11].'},
+        ]
+
+        for c in councilors_data:
+            Councilor.objects.update_or_create(
+                slug=slugify(c['name']),
+                defaults={
+                    'name': c['name'],
+                    'charge': c['charge'],
+                    'bio': c['bio'],
+                    'is_active': True
+                }
+            )
+            self.stdout.write(self.style.SUCCESS(f'  ✔ [Councilor] Registrado: {c["name"]} ({c["charge"]})'))
+
+        # 4. Comisiones Legislativas Permanentes 2026
+        comisiones_data = [
+            "Derechos Humanos, Justicia y Familia",
+            "Deporte y Juventud",
+            "Educación y Cultura",
+            "Historia, Patrimonio y Turismo",
+            "Ejidos",
+            "Presupuesto",
+            "Contraloría",
+            "Participación Ciudadana, Política y Frontera",
+            "Legislación",
+            "Obras Públicas y Ordenamiento del Territorio",
+            "Servicios Públicos",
+            "Transporte",
+            "Salud, Ambiente y Actividades Agrícolas y Pecuarias",
+            "Comunicación Social y Tecnología",
+            "Eventos Públicos"
+        ]
+
+        for idx, nombre_comision in enumerate(comisiones_data, start=1):
+            Commission.objects.update_or_create(
+                name=nombre_comision,
+                defaults={
+                    'description': f'Comisión Legislativa Permanente N° {idx} del Concejo Municipal de Junín[cite: 12, 13].',
+                    'is_active': True
+                }
+            )
+            self.stdout.write(self.style.SUCCESS(f'  ✔ [Commission] Creada: {nombre_comision}'))
+
+        self.stdout.write(self.style.SUCCESS('🎉 ¡Todos los datos institucionales reales se han cargado e inyectado con éxito!'))

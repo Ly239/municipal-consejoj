@@ -1,10 +1,11 @@
 {% extends 'core/base.html' %}
 {% load static %}
+{% load groups %}
 
 {% block title %}{{ page_title|default:"Gestión de Registros" }} - Concejo Municipal de Junín{% endblock %}
 
 {% block content %}
-{% include 'core/includes/_navbar_private.html' %}
+{% include 'core/includes/_navbar.html' %}
 
 <div class="container my-5">
     <!-- Encabezado y Botón Crear -->
@@ -79,7 +80,7 @@
                                 {% endif %}
                             </td>
                             <td class="small text-muted">
-                                {{ item.created_at|date:"d/m/Y"|default:"—" }}
+                                {{ item.created_at|date:"d/m/Y"|default:item.publication_date|date:"d/m/Y"|default:"—" }}
                             </td>
                             <td class="text-end pe-4">
                                 <div class="btn-group btn-group-sm" role="group">

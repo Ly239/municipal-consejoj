@@ -1,0 +1,86 @@
+{% load static %}
+{% load groups %}
+{% load trash_tags %}
+
+<!-- TOP BAR (Eslogan + Redes sociales) -->
+<div class="top-bar" style="background-color: #e0f7fa; padding: 5px 0; font-size: 0.85rem; color: #003B4F; border-bottom: 1px solid rgba(0,59,79,0.1);">
+    <div class="container d-flex justify-content-between align-items-center">
+        <span>
+            <i class="fas fa-mug-hot me-2" style="color: #003B4F;"></i> 
+            <strong>RUBIO ES ENCANTO Y CAFÉ</strong>
+        </span>
+        <div>
+            <a href="#" style="color: #003B4F; margin-left: 12px; text-decoration: none;" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="#" style="color: #003B4F; margin-left: 12px; text-decoration: none;" aria-label="X"><i class="fab fa-x-twitter"></i></a>
+            <a href="#" style="color: #003B4F; margin-left: 12px; text-decoration: none;" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+        </div>
+    </div>
+</div>
+
+<!-- NAVBAR PRINCIPAL UNIFICADO -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm">
+    <div class="container">
+
+        <!-- LOGO INSTITUCIONAL -->
+        <a class="navbar-brand" href="{% url 'core:home' %}">
+            <img src="{% static 'core/img/logo_concejo.jpg' %}" alt="Concejo Municipal de Junín" style="height: 45px;">
+        </a>
+
+        <!-- Botón hamburguesa móvil -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarUnified" 
+                aria-controls="navbarUnified" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- NAVEGACIÓN CIUDADANA (CENTRAL) -->
+        <div class="collapse navbar-collapse justify-content-center" id="navbarUnified">
+            <ul class="navbar-nav gap-lg-3 flex-wrap">
+                <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{% url 'core:home' %}">Inicio</a></li>
+                <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{% url 'core:news_public_list_frontend' %}">Noticias</a></li>
+                <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{% url 'core:councilor_list' %}">Concejales</a></li>
+                <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{% url 'documents:document_list' %}">Documentos</a></li>
+                <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{% url 'core:chronicle_public_list' %}">Crónicas</a></li>
+                <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{% url 'core:about_us' %}">Sobre Nosotros</a></li>
+            </ul>
+        </div>
+
+        <!-- ZONA DE ACCESOS Y CONTROL (DERECHA) -->
+        <div class="d-flex gap-2 align-items-center ms-lg-3">
+            {% if user.is_authenticated %}
+                <!-- Evaluamos los roles de manera segura con el simple_tag -->
+                {% has_group user "Administrator" as is_admin %}
+                {% has_group user "ContentManager" as is_content_manager %}
+                {% has_group user "Employee" as is_employee %}
+
+                <!-- Papelera (Solo roles operativos autorizados) -->
+                {% if user.is_superuser or is_admin or is_employee %}
+                    <a href="{% url 'common:trash_list' %}" class="btn btn-outline-danger btn-sm rounded-pill px-3" title="Papelera de reciclaje">
+                        <i class="fas fa-trash-alt me-1"></i>
+                        {% with count=trash_count %}
+                            {% if count > 0 %}<span class="badge bg-danger rounded-pill">{{ count }}</span>{% endif %}
+                        {% endwith %}
+                    </a>
+                {% endif %}
+
+                <!-- Acceso al Panel de Gestión (Operadores y Administradores) -->
+                {% if user.is_superuser or is_admin or is_content_manager or is_employee %}
+                    <a href="{% url 'core:dashboard' %}" class="btn btn-sm rounded-pill px-3 text-dark fw-bold" style="background-color: #0AB1D4;">
+                        <i class="fas fa-tachometer-alt me-1"></i> Gestión
+                    </a>
+                {% endif %}
+
+                <!-- Usuario y Cierre de Sesión -->
+                <a href="{% url 'profile' %}" class="btn btn-outline-dark btn-sm rounded-pill px-3 text-truncate" style="max-width: 130px;" title="{{ user.username }}">
+                    <i class="fas fa-user me-1"></i> {{ user.username }}
+                </a>
+                <a href="{% url 'logout' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3" title="Cerrar Sesión">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-semibold" style="border-color: #003B4F; color: #003B4F;">
+                    Iniciar Sesión
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
