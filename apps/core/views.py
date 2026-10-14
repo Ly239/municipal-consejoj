@@ -14,13 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+# Standard library
 import logging
 from types import SimpleNamespace
 
+# Django
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q, ProtectedError
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from django.views.generic import (
@@ -30,28 +32,26 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import Http404
 
-# Modelos externos
+# Apps externas
 from documents.models import Document, Gazette
 
-# Modelos locales (Arquitectura BaseContent)
+# Core local
 from .models import (
     BaseContent, News, Chronicle, Councilor, AboutUs,
     Activity, Announcement, Consultation, Event, Downloadable,
     Category, Commission, Legislature, Legislator
 )
 from .forms import (
-    NewsForm, 
-    CategoryForm, 
-    ChronicleForm, 
-    CommissionForm, 
-    AboutUsForm, 
+    NewsForm,
+    CategoryForm,
+    ChronicleForm,
+    CommissionForm,
+    AboutUsForm,
     ActivityForm,
     AnnouncementForm,
     ConsultationForm,
     EventForm,
     DownloadableForm,
-    CategoryForm, 
-    CommissionForm,
     LegislatureForm,
 )
 
