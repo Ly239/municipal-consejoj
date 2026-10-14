@@ -520,15 +520,15 @@ class CategoryDeleteView(LoginRequiredMixin, DeleteView):
 # ============================================================
 # 6. MÓDULO DE COMISIONES PERMANENTES
 # ============================================================
-
 class CommissionsView(ListView):
-    """Vista pública de comisiones optimizada para prefetch."""
+    """Vista pública de comisiones optimizada para select_related."""
     model = Commission
     template_name = 'core/commissions.html'
     context_object_name = 'commissions'
 
     def get_queryset(self):
-        return Commission.objects.prefetch_related('members__councilor').order_by('number')
+        # Reemplazamos prefetch members por select_related de las 3 FKs fijas
+        return Commission.objects.select_related('president', 'vice_president', 'vocal').order_by('number')
 
 
 class CommissionAdminListView(LoginRequiredMixin, ListView):
@@ -538,7 +538,7 @@ class CommissionAdminListView(LoginRequiredMixin, ListView):
     context_object_name = 'commissions'
 
     def get_queryset(self):
-        return Commission.objects.prefetch_related('members__councilor').order_by('number')
+        return Commission.objects.select_related('president', 'vice_president', 'vocal').order_by('number')
 
 
 class CommissionCreateView(LoginRequiredMixin, CreateView):

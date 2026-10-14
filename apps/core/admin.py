@@ -30,9 +30,7 @@ from .models import (
     Commission,
     Legislature,
     Legislator,
-    
 )
-
 
 # ==============================================================================
 # 1. INLINES (Edición en línea para relaciones)
@@ -41,7 +39,6 @@ from .models import (
 class LegislatorInline(admin.TabularInline):
     model = Legislator
     extra = 1
-
 
 # ==============================================================================
 # 2. CONTENIDO PRINCIPAL Y PROXIES
@@ -147,6 +144,14 @@ class DownloadableAdmin(admin.ModelAdmin):
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug')
     prepopulated_fields = {'slug': ('name',)}
+
+
+@admin.register(Commission)
+class CommissionAdmin(admin.ModelAdmin):
+    list_display = ('number', 'name', 'emoji')
+    search_fields = ('name', 'description')
+    # Inline CommissionMember removido de forma intensional no se usa en UX y ya no existe en moldels.py
+    # If you need to manage members, reintroduce a controlled inline or dedicated UI.
 
 
 @admin.register(Legislature)
