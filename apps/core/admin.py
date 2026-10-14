@@ -30,18 +30,13 @@ from .models import (
     Commission,
     Legislature,
     Legislator,
-    CommissionMember,
+    
 )
 
 
 # ==============================================================================
 # 1. INLINES (Edición en línea para relaciones)
 # ==============================================================================
-
-class CommissionMemberInline(admin.TabularInline):
-    model = CommissionMember
-    extra = 1
-
 
 class LegislatorInline(admin.TabularInline):
     model = Legislator
@@ -152,13 +147,6 @@ class DownloadableAdmin(admin.ModelAdmin):
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug')
     prepopulated_fields = {'slug': ('name',)}
-
-
-@admin.register(Commission)
-class CommissionAdmin(admin.ModelAdmin):
-    list_display = ('number', 'name', 'emoji')
-    search_fields = ('name', 'description')
-    inlines = [CommissionMemberInline]
 
 
 @admin.register(Legislature)

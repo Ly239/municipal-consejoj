@@ -37,7 +37,7 @@ from documents.models import Document, Gazette
 from .models import (
     BaseContent, News, Chronicle, Councilor, AboutUs,
     Activity, Announcement, Consultation, Event, Downloadable,
-    Category, Commission, CommissionMember, Legislature, Legislator
+    Category, Commission, Legislature, Legislator
 )
 from .forms import (
     NewsForm, 
@@ -49,9 +49,7 @@ from .forms import (
     AnnouncementForm,
     ConsultationForm,
     EventForm,
-    DownloadableForm,
-    CategoryForm, 
-    CommissionForm,
+    DownloadableForm, 
     LegislatureForm,
 )
 
@@ -642,8 +640,6 @@ class CategoryDeleteView(LoginRequiredMixin, DeleteView):
 
 class CommissionsView(ListView):
     """Vista pública de comisiones optimizada para prefetch."""
-
-class CommissionsView(ListView):
 
     model = Commission
     template_name = 'core/commissions.html'
