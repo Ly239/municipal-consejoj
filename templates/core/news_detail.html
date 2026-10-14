@@ -1,0 +1,170 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{{ news_item.title }} - Concejo Municipal de Junín{% endblock %}
+
+{% block content %}
+
+
+<div class="container mt-4 mb-5">
+    <!-- Breadcrumb de navegación -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'core:home' %}" class="text-decoration-none" style="color: var(--color-dark-blue);">Inicio</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'core:news_public_list_frontend' %}" class="text-decoration-none" style="color: var(--color-dark-blue);">Noticias</a>
+            </li>
+            <li class="breadcrumb-item active text-muted">{{ news_item.title|truncatechars:30 }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- ============================================================ -->
+        <!-- COLUMNA PRINCIPAL (Artículo)                                  -->
+        <!-- ============================================================ -->
+        <div class="col-lg-8">
+            <article>
+                <!-- Encabezado del artículo -->
+                <header class="news-article-header">
+                    {% if news_item.category %}
+                        <span class="badge bg-primary px-3 py-2 mb-2">{{ news_item.category.name }}</span>
+                    {% endif %}
+                    <h1 class="news-title">{{ news_item.title }}</h1>
+                    <div class="news-meta">
+                        <span><i class="far fa-calendar-alt"></i> {{ news_item.created_at|date:"d M, Y" }}</span>
+                        {% if news_item.category %}
+                            <span><i class="fas fa-tag"></i> {{ news_item.category.name }}</span>
+                        {% endif %}
+                        <span><i class="fas fa-user"></i> Concejo Municipal</span>
+                    </div>
+                </header>
+
+                <!-- Multimedia destacada: PDF en visor o Imagen -->
+                {% if news_item.pdf_file and news_item.show_pdf_inline %}
+                    <!-- Visor interactivo del PDF -->
+                    <div class="ratio ratio-16x9 shadow-sm rounded overflow-hidden mb-3">
+                        <iframe src="{{ news_item.pdf_file.url }}" title="{{ news_item.title }}"></iframe>
+                    </div>
+                    <div class="text-end mb-4">
+                        <a href="{{ news_item.pdf_file.url }}" class="btn btn-sm btn-outline-primary rounded-pill px-3" download>
+                            <i class="fas fa-download me-1"></i> Descargar documento oficial (PDF)
+                        </a>
+                    </div>
+                {% elif news_item.image %}
+                    <!-- Imagen destacada -->
+                    <img src="{{ news_item.image.url }}" class="news-featured-img" alt="{{ news_item.title }}">
+                {% endif %}
+
+                <!-- Resumen / Bajada -->
+                {% if news_item.summary %}
+                <div class="lead fw-bold text-secondary mb-4 p-3 bg-light border-start border-4 border-primary rounded">
+                    {{ news_item.summary }}
+                </div>
+                {% endif %}
+
+                <!-- Cuerpo completo del artículo -->
+                <div class="news-body">
+                    {{ news_item.content|linebreaks }}
+                </div>
+
+                <!-- Tarjeta de descarga PDF (cuando NO se muestra inline) -->
+                {% if news_item.pdf_file and not news_item.show_pdf_inline %}
+                <div class="alert alert-light border d-flex justify-content-between align-items-center shadow-sm p-3 mt-4">
+                    <div>
+                        <i class="fas fa-file-pdf text-danger fa-2x me-3 align-middle"></i>
+                        <span class="fw-bold text-dark">Documento de respaldo disponible para esta publicación.</span>
+                    </div>
+                    <a href="{{ news_item.pdf_file.url }}" class="btn btn-danger rounded-pill px-4 shadow-sm" download>
+                        <i class="fas fa-download me-2"></i> Ver / Descargar PDF
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- Sección de Redes Sociales -->
+                {% if news_item.social_media_url %}
+                <div class="card bg-light border-0 shadow-sm p-4 my-4">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                        <div>
+                            <h5 class="fw-bold mb-1" style="color: var(--color-dark-blue);">
+                                <i class="fas fa-share-alt me-2"></i> Publicación en Redes Sociales
+                            </h5>
+                            <p class="text-muted small mb-0">Consulta o interactúa con esta publicación directamente en nuestra plataforma oficial.</p>
+                        </div>
+                        <a href="{{ news_item.social_media_url }}" target="_blank" rel="noopener" class="btn btn-outline-dark rounded-pill px-4 fw-bold">
+                            <i class="fas fa-external-link-alt me-2"></i> Ver en Red Social
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Botón Volver -->
+                <div class="mt-4">
+                    <a href="{% url 'core:news_public_list_frontend' %}" class="btn btn-institutional">
+                        <i class="fas fa-arrow-left me-1"></i> Volver a Noticias
+                    </a>
+                </div>
+            </article>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- BARRA LATERAL                                                 -->
+        <!-- ============================================================ -->
+        <div class="col-lg-4">
+            <!-- Noticias relacionadas por categoría -->
+            <div class="sidebar-card">
+                <div class="sidebar-header">
+                    {% if news_item.category %}
+                        Más en {{ news_item.category.name }}
+                    {% else %}
+                        Otras Noticias
+                    {% endif %}
+                </div>
+                <ul class="sidebar-list">
+                    {% for rel in related_news %}
+                    <li>
+                        <a href="{% url 'core:news_detail_frontend' rel.pk %}">
+                            <span class="news-item-title">{{ rel.title|truncatechars:50 }}</span>
+                            <span class="news-item-date"><i class="far fa-clock me-1"></i>{{ rel.created_at|date:"d M, Y" }}</span>
+                        </a>
+                    </li>
+                    {% empty %}
+                    <li class="p-3 text-muted">No hay más noticias en este segmento.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Include de Categorías y Redes Sociales -->
+            {% include 'core/includes/_sidebar_widgets.html' %}
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- OTRAS NOTICIAS (bloque inferior, 3 columnas)                 -->
+    <!-- ============================================================ -->
+    {% if related_news %}
+    <div class="related-news-section mt-5">
+        <h2 class="related-title">Otras Noticias</h2>
+        <div class="row g-4">
+            {% for rel in related_news|slice:":3" %}
+            <div class="col-md-4">
+                <div class="related-card">
+                    <a href="{% url 'core:news_detail_frontend' rel.pk %}" class="text-decoration-none">
+                        {% if rel.image %}
+                        <img src="{{ rel.image.url }}" alt="{{ rel.title }}" class="img-fluid rounded mb-2" style="height: 160px; width: 100%; object-fit: cover;">
+                        {% endif %}
+                        <h5>{{ rel.title|truncatechars:50 }}</h5>
+                        <p class="text-muted small mb-0">{{ rel.created_at|date:"d M, Y" }}</p>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- FOOTER -->
+{% include 'core/includes/_footer.html' %}
+{% endblock %}

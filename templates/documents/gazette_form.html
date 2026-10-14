@@ -1,5 +1,4 @@
 {% extends 'core/form_base.html' %}
-
 {% load static %}
 
 {% block form_title %}Gaceta{% endblock %}
@@ -10,4 +9,59 @@
 {% block form_heading2 %}Gaceta{% endblock %}
 
 {% block back_url %}{% url 'documents:gazette_list' %}{% endblock %}
+{% block volver_url %}{% url 'documents:gazette_list' %}{% endblock %}
 {% block cancel_url %}{% url 'documents:gazette_list' %}{% endblock %}
+
+{% block form_fields %}
+  <!-- Sección: Identificación -->
+  <div class="form-section">
+    <div class="form-section-title">
+      <i class="fas fa-tag"></i> Identificación
+    </div>
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label for="{{ form.number.id_for_label }}">{{ form.number.label }}</label>
+        {{ form.number }}
+        {% if form.number.help_text %}<small class="form-text">{{ form.number.help_text }}</small>{% endif %}
+        {{ form.number.errors }}
+      </div>
+      <div class="col-md-4 mb-3">
+        <label for="{{ form.year.id_for_label }}">{{ form.year.label }}</label>
+        {{ form.year }}
+        {% if form.year.help_text %}<small class="form-text">{{ form.year.help_text }}</small>{% endif %}
+        {{ form.year.errors }}
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="d-block">&nbsp;</label>
+        <div class="form-check form-switch mt-2">
+          {{ form.is_extraordinary }}
+          <label class="form-check-label" for="{{ form.is_extraordinary.id_for_label }}">
+            {{ form.is_extraordinary.label }}
+          </label>
+        </div>
+        {{ form.is_extraordinary.errors }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección: Publicación -->
+  <div class="form-section">
+    <div class="form-section-title">
+      <i class="fas fa-calendar-alt"></i> Publicación
+    </div>
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label for="{{ form.emission_date.id_for_label }}">{{ form.emission_date.label }}</label>
+        {{ form.emission_date }}
+        {% if form.emission_date.help_text %}<small class="form-text">{{ form.emission_date.help_text }}</small>{% endif %}
+        {{ form.emission_date.errors }}
+      </div>
+      <div class="col-md-8 mb-3">
+        <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+        {{ form.description }}
+        {% if form.description.help_text %}<small class="form-text">{{ form.description.help_text }}</small>{% endif %}
+        {{ form.description.errors }}
+      </div>
+    </div>
+  </div>
+{% endblock %}

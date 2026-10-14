@@ -58,6 +58,12 @@ from .forms import (
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
+"""
+1-ESTE VIEW DEBE SER ADAPTADO A LA NUEVA ESTRUCTURA DE MODELS AUN NO ESTA INCORPORADA (model-core)
+SE DEBE ACTUALIZAR PRIMERO LOS MODELOS
+
+"""
+
 
 # ============================================================
 # DATOS ESTÁTICOS DE RESPALDO (FALLBACKS)
@@ -184,11 +190,14 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 # ============================================================
 
 class HomeView(TemplateView):
+
     """Portada web con resiliencia y datos estáticos de respaldo."""
+
     template_name = 'core/home.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
 
         try:
             context['documentos_destacados'] = Document.objects.select_related(
@@ -200,6 +209,9 @@ class HomeView(TemplateView):
             context['documentos_destacados'] = []
             context['ultimas_gacetas'] = []
 
+
+        # 1. Noticias para el carrusel principal
+
         try:
             carousel = News.objects.filter(
                 is_active=True, 
@@ -210,6 +222,8 @@ class HomeView(TemplateView):
             logger.error(f"Error cargando noticias de carrusel: {e}")
             context['carousel_news'] = NEWS_DATA
 
+
+        # 2. Crónicas municipales recientes
         try:
             context['carousel_activities'] = Activity.objects.filter(
                 is_active=True, 
@@ -229,6 +243,8 @@ class HomeView(TemplateView):
             logger.error(f"Error cargando crónicas en HomeView: {e}")
             context['chronicles'] = []
 
+
+        # 3. Listado secundario de noticias
         try:
             context['consultations'] = Consultation.objects.filter(
                 is_active=True, 
@@ -248,6 +264,8 @@ class HomeView(TemplateView):
             logger.error(f"Error cargando noticias secundarias: {e}")
             context['news_list'] = NEWS_DATA
 
+
+        # 4. Listado de Concejales para la portada
         try:
             context['councilors'] = Councilor.objects.filter(
                 is_active=True, 
@@ -258,6 +276,7 @@ class HomeView(TemplateView):
             context['councilors'] = []
 
         return context
+
 
 
 class AboutUsView(TemplateView):
@@ -292,6 +311,47 @@ class AboutUsView(TemplateView):
         return context
 
 
+
+# ============================================================
+# 2. PANEL DE CONTROL (DASHBOARD ADMINISTRATIVO)
+# ============================================================
+
+class DashboardView(LoginRequiredMixin, TemplateView):
+    """Panel de control con métricas generales del sistema."""
+    template_name = 'core/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # KPI Cards
+        context['total_documents'] = Document.objects.count()
+        context['total_gazettes'] = Gazette.objects.count()
+        context['total_users'] = User.objects.count()
+
+        # Papelera — try/except defensivo: si falla un contador, se
+        # muestra 0 en vez de tumbar todo el dashboard.
+        try:
+            from common.views import TRASH_MODELS
+            trash_count = 0
+            for model in TRASH_MODELS:
+                trash_count += model.all_objects.filter(deleted_at__isnull=False).count()
+            context['total_trash'] = trash_count
+        except Exception:
+            context['total_trash'] = 0
+
+        # Documentos recientes
+        context['recent_documents'] = Document.objects.select_related(
+            'document_type', 'gazette'
+        ).order_by('-created_at')[:5]
+
+        # Datos para el gráfico (3 categorías)
+        context['approved_count'] = Document.objects.filter(is_approved=True, is_annulled=False).count()
+        context['pending_count'] = Document.objects.filter(is_approved=False, is_annulled=False).count()
+        context['annulled_count'] = Document.objects.filter(is_annulled=True).count()
+
+        return context
+
+
 # ============================================================
 # 3. MÓDULO DE NOTICIAS (FRONTEND Y GESTIÓN)
 # ============================================================
@@ -307,8 +367,8 @@ def news_public_list_frontend(request):
 
     if query:
         news_list = news_list.filter(
-            Q(title__icontains=query) | 
-            Q(summary__icontains=query) | 
+            Q(title__icontains=query) |
+            Q(summary__icontains=query) |
             Q(content__icontains=query)
         )
 
@@ -415,7 +475,65 @@ class NewsDeleteView(LoginRequiredMixin, DeleteView):
 
 
 # ============================================================
-# 4. MÓDULO DE CRÓNICAS MUNICIPALES
+# 4. MÓDULO DE CRÓNICAS MUNICIPALES (FRONTEND Y GESTIÓN)
+# ============================================================
+
+def chronicle_public_list(request):
+    """Listado público de crónicas históricas activas."""
+    chronicles = Chronicle.objects.filter(is_active=True).order_by('-created_at')
+    return render(request, 'core/chronicles_public_list.html', {'chronicles': chronicles})
+
+
+def chronicle_detail(request, slug):
+    """Lectura detallada de una crónica específica."""
+    chronicle = get_object_or_404(Chronicle, slug=slug, is_active=True)
+    recent_chronicles = Chronicle.objects.filter(is_active=True).exclude(pk=chronicle.pk).order_by('-created_at')[:3]
+    return render(request, 'core/chronicles_detail.html', {
+        'chronicle': chronicle,
+        'recent_chronicles': recent_chronicles
+    })
+
+
+@login_required
+def manage_chronicles(request):
+    """Panel administrativo para listar crónicas."""
+    chronicles = Chronicle.objects.all().order_by('-created_at')
+    return render(request, 'core/manage_chronicles.html', {'chronicles': chronicles})
+
+
+@login_required
+def save_chronicle(request, pk=None):
+    """Vista unificada para Crear o Editar una crónica."""
+    chronicle = get_object_or_404(Chronicle, pk=pk) if pk else None
+
+    if request.method == 'POST':
+        form = ChronicleForm(request.POST, request.FILES, instance=chronicle)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "¡Crónica guardada exitosamente!")
+            return redirect('core:manage_chronicles')
+    else:
+        form = ChronicleForm(instance=chronicle)
+
+    return render(request, 'core/save_chronicles.html', {
+        'form': form,
+        'editing': bool(pk)
+    })
+
+
+@login_required
+def delete_chronicle(request, pk):
+    """Acción para eliminar una crónica."""
+    chronicle = get_object_or_404(Chronicle, pk=pk)
+    if request.method == 'POST':
+        chronicle.delete()
+        messages.success(request, "Crónica eliminada correctamente.")
+        return redirect('core:manage_chronicles')
+    return render(request, 'core/delete_chronicle.html', {'chronicle': chronicle})
+
+
+# ============================================================
+# 5. MÓDULO DE CATEGORÍAS (GESTIÓN INTERNA)
 # ============================================================
 
 class ChronicleListView(ListView):
@@ -524,11 +642,15 @@ class CategoryDeleteView(LoginRequiredMixin, DeleteView):
 
 class CommissionsView(ListView):
     """Vista pública de comisiones optimizada para prefetch."""
+
+class CommissionsView(ListView):
+
     model = Commission
     template_name = 'core/commissions.html'
     context_object_name = 'commissions'
 
     def get_queryset(self):
+
         return Commission.objects.prefetch_related('members__councilor').order_by('number')
 
 
@@ -563,6 +685,7 @@ class CommissionDeleteView(LoginRequiredMixin, DeleteView):
     model = Commission
     template_name = 'core/commission_confirm_delete.html'
     success_url = reverse_lazy('core:commission_admin_list')
+
 
     def form_valid(self, form):
         try:
@@ -673,22 +796,34 @@ class LegislatureCreateView(LoginRequiredMixin, CreateView):
     """Crear legislatura."""
     model = Legislature
     template_name = 'core/legislature_form.html'
+
     fields = ['roman_id', 'years', 'mayor', 'order']
     success_url = reverse_lazy('core:legislature_list')
+
+    
+    def form_valid(self, form):
+        form.instance.content_type = HomeContent.ContentTypes.LEGISLATURE
+        if self.request.user.is_authenticated:
+            form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
 
 
 class LegislatureUpdateView(LoginRequiredMixin, UpdateView):
     """Editar legislatura."""
     model = Legislature
     template_name = 'core/legislature_form.html'
+
     fields = ['roman_id', 'years', 'mayor', 'order']
     success_url = reverse_lazy('core:legislature_list')
+
 
 
 class LegislatureDeleteView(LoginRequiredMixin, DeleteView):
     """Eliminar legislatura capturando restricciones de clave foránea."""
     model = Legislature
     template_name = 'core/legislature_confirm_delete.html'
+
     success_url = reverse_lazy('core:legislature_list')
 
     def form_valid(self, form):

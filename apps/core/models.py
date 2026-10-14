@@ -1,19 +1,4 @@
 """
-Copyright [2026] [Proyecto universitario - Concejo Municipal de Junín]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
-"""
 Modelos de la app core del Concejo Municipal de Junín.
 
 Contiene:
@@ -230,6 +215,12 @@ class BaseContent(TimestampedMixin, models.Model):
         indexes = [
             models.Index(fields=['content_type', 'is_active']),
             models.Index(fields=['subtype', 'is_active']),
+        ]
+        # (parcial): permisos custom de core.
+        # Django ya crea add/change/delete/view automáticamente.
+        # can_edit_home se asigna al grupo contentmanager y Administrator en seed_roles.py.
+        permissions = [
+            ('can_edit_home', 'Can edit home content'),
         ]
 
     def save(self, *args, **kwargs):
@@ -644,37 +635,6 @@ class Commission(TimestampedMixin, models.Model):
         }
         return emojis.get(self.number, '📋')
 
-class CommissionMember(models.Model):
-    """Modelo intermedio para asignar concejales a las comisiones permanentes. """
-    commission = models.ForeignKey(
-        'Commission',
-        on_delete=models.CASCADE,
-        related_name='members',
-        verbose_name="Comisión"
-    )
-    councilor = models.ForeignKey(
-        'Councilor',
-        on_delete=models.CASCADE,
-        related_name='commission_memberships',
-        verbose_name="Concejal"
-    )
-    role = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True,
-        verbose_name="Cargo en la Comisión (Ej. Presidente, Vicepresidente)"
-    )
-    class Meta:
-        verbose_name = "Miembro de Comisión"
-        verbose_name_plural = "Miembros de Comisiones"
-        unique_together = ('commission', 'councilor')
-
-    def __str__(self):
-        return f"{self.councilor} - {self.commission} ({self.role or 'Miembro'})"
-
-
-
-    
 
 class Legislature(TimestampedMixin, models.Model):
     """
