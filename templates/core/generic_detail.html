@@ -1,15 +1,45 @@
 {% extends 'core/base.html' %}
 {% load static %}
+{% load groups %}
 
 {% block title %}{{ object.title|default:object.name }} - Concejo Municipal de Junín{% endblock %}
 
 {% block content %}
-{% include 'core/includes/_navbar_public.html' %}
+{% include 'core/includes/_navbar.html' %}
 
 <div class="container my-5">
     <div class="row">
         <!-- Columna Principal -->
         <div class="col-lg-8">
+            
+            <!-- Barra superior con botón volver y acciones administrativas flotantes -->
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                <a href="{{ back_url|default:'javascript:history.back()' }}" class="btn btn-outline-secondary btn-sm rounded-pill px-4">
+                    <i class="bi bi-arrow-left me-1"></i> {{ back_label|default:"Volver al listado" }}
+                </a>
+
+                {% if user.is_authenticated %}
+                    {% has_group user "Administrator" as is_admin %}
+                    {% has_group user "ContentManager" as is_content_manager %}
+                    {% has_group user "Employee" as is_employee %}
+
+                    {% if user.is_superuser or is_admin or is_content_manager or is_employee %}
+                        <div class="btn-group shadow-sm bg-white rounded-pill p-1 border">
+                            {% if update_url_name %}
+                                <a href="{% url update_url_name object.pk %}" class="btn btn-sm btn-outline-warning rounded-pill px-3">
+                                    <i class="fas fa-edit me-1"></i> Editar
+                                </a>
+                            {% endif %}
+                            {% if delete_url_name %}
+                                <a href="{% url delete_url_name object.pk %}" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                    <i class="fas fa-trash-alt me-1"></i> Eliminar
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+
             <article class="blog-post">
                 <h1 class="fw-bold mb-3" style="color: var(--color-dark-blue, #0f2a4a); font-family: var(--font-title, inherit);">
                     {{ object.title|default:object.name }}
@@ -18,10 +48,12 @@
                 <!-- Metadatos -->
                 <p class="text-muted mb-4 small">
                     {% if object.author %}
-                        <i class="bi bi-person-fill text-primary"></i> Por <strong>{{ object.author }}</strong>
+                        <span class="me-3"><i class="bi bi-person-fill text-primary"></i> Por <strong>{{ object.author }}</strong></span>
                     {% endif %}
                     {% if object.created_at %}
-                        <span class="ms-2"><i class="bi bi-calendar-event text-primary"></i> {{ object.created_at|date:"d \d\e F, Y" }}</span>
+                        <span class="me-3"><i class="bi bi-calendar-event text-primary"></i> {{ object.created_at|date:"d \d\e F, Y" }}</span>
+                    {% elif object.publication_date %}
+                        <span class="me-3"><i class="bi bi-calendar-event text-primary"></i> {{ object.publication_date|date:"d \d\e F, Y" }}</span>
                     {% endif %}
                     {% if object.category %}
                         <span class="badge bg-secondary-subtle text-dark border ms-2">{{ object.category }}</span>
@@ -44,16 +76,9 @@
 
                 <!-- Contenido -->
                 <div class="detail-content text-dark fs-6" style="line-height: 1.85; white-space: pre-line;">
-                    {{ object.content|default:object.description }}
+                    {{ object.content|default:object.description|safe }}
                 </div>
             </article>
-
-            <!-- Botón Volver -->
-            <div class="mt-5 pt-3 border-top">
-                <a href="{{ back_url|default:'javascript:history.back()' }}" class="btn btn-outline-secondary rounded-pill px-4">
-                    <i class="bi bi-arrow-left me-1"></i> {{ back_label|default:"Volver al listado" }}
-                </a>
-            </div>
         </div>
 
         <!-- Barra Lateral -->
@@ -67,7 +92,7 @@
                     {% for recent in recent_items %}
                         <a href="{% if detail_url_name %}{% url detail_url_name recent.slug|default:recent.pk %}{% else %}#{% endif %}" class="list-group-item list-group-item-action bg-transparent py-3 px-0 border-bottom">
                             <h6 class="mb-1 fw-bold text-dark">{{ recent.title|default:recent.name }}</h6>
-                            <small class="text-muted"><i class="bi bi-clock me-1"></i> {{ recent.created_at|date:"d M, Y" }}</small>
+                            <small class="text-muted"><i class="bi bi-clock me-1"></i> {{ recent.created_at|date:"d M, Y"|default:recent.publication_date|date:"d M, Y" }}</small>
                         </a>
                     {% empty %}
                         <p class="text-muted small mb-0 py-2">No hay otros registros disponibles en este momento.</p>
