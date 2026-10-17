@@ -99,6 +99,11 @@
                     {% endfor %}
                 </div>
             </div>
+        
+              <!-- FIX: Solo mostrar widgets extra si estamos en una noticia -->
+            {% if is_news_detail %}
+                {% include 'core/includes/_sidebar_widgets.html' %}
+            {% endif %}
         </div>
     </div>
 </div>

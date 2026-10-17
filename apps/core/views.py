@@ -352,10 +352,10 @@ def news_detail_frontend(request, pk):
                 pk=fallback['id'],
                 id=fallback['id'],
                 title=fallback['title'],
-                name=fallback['title'],                  # Fix T3
-                slug=None,                               # Fix T3
+                name=fallback['title'],                  
+                slug=None,                               
                 summary=fallback['description'],
-                description=fallback['description'],     # Fix T3
+                description=fallback['description'], 
                 content=fallback['description'],
                 image=SimpleNamespace(url=fallback['image']) if fallback.get('image') else None,
                 category=SimpleNamespace(name=fallback['category']) if fallback.get('category') else None,
