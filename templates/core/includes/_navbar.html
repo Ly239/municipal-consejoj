@@ -17,9 +17,16 @@
     </div>
 </div>
 
-<!-- NAVBAR PRINCIPAL UNIFICADO -->
+<!-- NAVBAR PUBLICO  -->
 <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm">
     <div class="container">
+
+        <!-- BOTÓN VOLVER (Con respaldo si no hay historial) -->
+        {% if request.resolver_match.url_name != 'core:home' and request.resolver_match.url_name != 'core:dashboard' %}
+            <a href="#" onclick="if (history.length > 1) { history.back(); } else { window.location.href = '{% url 'documents:document_list' %}'; }" class="btn btn-outline-secondary btn-sm me-3" title="Volver" style="border-radius: 50px; border: 1px solid #003B4F; color: #003B4F;">
+            <i class="fas fa-arrow-left"></i>
+            </a>
+        {% endif %}
 
         <!-- LOGO INSTITUCIONAL -->
         <a class="navbar-brand" href="{% url 'core:home' %}">
@@ -49,8 +56,12 @@
             {% if user.is_authenticated %}
                 <!-- Evaluamos los roles de manera segura con el simple_tag -->
                 {% has_group user "Administrator" as is_admin %}
+                
                 {% has_group user "ContentManager" as is_content_manager %}
+                
                 {% has_group user "Employee" as is_employee %}
+
+                {% has_group user "Viewer" as is_viewer %}
 
                 <!-- Papelera (Solo roles operativos autorizados) -->
                 {% if user.is_superuser or is_admin or is_employee %}
@@ -63,7 +74,7 @@
                 {% endif %}
 
                 <!-- Acceso al Panel de Gestión (Operadores y Administradores) -->
-                {% if user.is_superuser or is_admin or is_content_manager or is_employee %}
+                {% if user.is_superuser or is_admin or is_content_manager or is_employee or is_viewer %}
                     <a href="{% url 'core:dashboard' %}" class="btn btn-corporate-filled btn-sm" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                         <i class="fas fa-tachometer-alt me-1"></i> Gestión
                     </a>
