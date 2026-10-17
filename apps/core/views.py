@@ -329,7 +329,7 @@ def news_public_list_frontend(request):
         'date_query': date_query,
         'selected_category': category_slug,
     }
-    return render(request, 'core/news_public_list.html', context)
+    return render(request, 'core/generic_cards_grid.html', context)
 
 
 def news_detail_frontend(request, pk):
