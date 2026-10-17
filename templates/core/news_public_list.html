@@ -1,0 +1,104 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Noticias - Concejo Municipal de Junín{% endblock %}
+
+{% block content %}
+{% include 'core/includes/_navbar_public.html' %}
+
+<div class="container my-5">
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h2 class="fw-bold" style="color: var(--color-dark-blue); font-family: var(--font-title);">
+                <i class="fas fa-newspaper me-2"></i> Portal de Noticias Institucionales
+            </h2>
+            <p class="text-muted">Consulta las últimas actividades, anuncios y comunicados del Concejo Municipal.</p>
+        </div>
+    </div>
+
+    <!-- Buscador Avanzado por Título y Fecha -->
+    <div class="card shadow-sm border-0 p-4 mb-5 bg-light">
+        <form method="GET" action="{% url 'core:news_public_list_frontend' %}" class="row g-3 align-items-center">
+            <div class="col-lg-5">
+                <label class="form-label fw-bold small text-secondary">Buscar por título o contenido</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                    <input type="text" name="q" class="form-control" placeholder="Ej. Sesión ordinaria, Ley..." value="{{ query }}">
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <label class="form-label fw-bold small text-secondary">Filtrar por fecha</label>
+                <input type="date" name="date" class="form-control" value="{{ date_query }}">
+            </div>
+            <div class="col-lg-3 d-flex align-items-end gap-2 pt-2">
+                <button type="submit" class="btn text-white fw-bold w-100 shadow-sm" style="background-color: var(--color-dark-blue);">
+                    Buscar
+                </button>
+                <a href="{% url 'core:news_public_list_frontend' %}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                    <i class="fas fa-undo"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="row">
+        <!-- Listado Principal de Noticias -->
+        <div class="col-lg-8">
+            <div class="row g-4">
+                {% for item in news_list %}
+                    <div class="col-md-6">
+                        <div class="card h-100 shadow-sm border-0">
+                            {% if item.image %}
+                                <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.title }}" style="height: 200px; object-fit: cover;">
+                            {% endif %}
+                            <div class="card-body d-flex flex-column">
+                                <div class="mb-2">
+                                    {% if item.category %}
+                                        <span class="badge bg-primary text-white" style="font-size: 0.75rem;">{{ item.category.name }}</span>
+                                    {% endif %}
+                                    <small class="text-muted ms-2"><i class="far fa-calendar-alt me-1"></i>{{ item.created_at|date:"d M, Y" }}</small>
+                                </div>
+                                <h5 class="card-title fw-bold text-dark" style="font-size: 1.1rem;">
+                                    <a href="{% url 'core:news_detail_frontend' item.pk %}" class="text-decoration-none text-dark">
+                                        {{ item.title }}
+                                    </a>
+                                </h5>
+                                <p class="card-text text-secondary small flex-grow-1">{{ item.summary|truncatechars:100 }}</p>
+                                <a href="{% url 'core:news_detail_frontend' item.pk %}" class="btn btn-outline-primary btn-sm rounded-pill mt-3 align-self-start">
+                                    Leer noticia completa <i class="fas fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <div class="alert alert-info text-center py-4">
+                            No se encontraron noticias que coincidan con los criterios de búsqueda.
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Sidebar: Áreas / Categorías y Segmentos -->
+        <div class="col-lg-4 mt-4 mt-lg-0">
+            <div class="card shadow-sm border-0 p-4 bg-light">
+                <h5 class="fw-bold mb-3" style="color: var(--color-dark-blue);">
+                    <i class="fas fa-tags me-2"></i> Áreas de Noticias
+                </h5>
+                <hr class="mt-0 mb-3">
+                <div class="list-group list-group-flush bg-transparent">
+                    <a href="{% url 'core:news_public_list_frontend' %}" class="list-group-item list-group-item-action bg-transparent {% if not selected_category %}fw-bold text-primary{% endif %}">
+                        <i class="fas fa-angle-right me-2"></i> Todas las noticias
+                    </a>
+                    {% for cat in categories %}
+                        <a href="{% url 'core:news_public_list_frontend' %}?category={{ cat.slug }}" class="list-group-item list-group-item-action bg-transparent {% if selected_category == cat.slug %}fw-bold text-primary{% endif %}">
+                            <i class="fas fa-angle-right me-2"></i> {{ cat.name }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
