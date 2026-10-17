@@ -58,6 +58,31 @@ def get_groups(user):
     return GroupManager.get_user_groups(user)
 
 
+# FIX — 16-10-2026 ------------------------------------------------
+# Filtro alias de `has_group` para compatibilidad con plantillas legacy
+# que usan la sintaxis de filtro: {{ user|has_group:"Administrator" }}
+#
+# Contexto:
+#   - El `simple_tag` homónimo (más abajo) cubre la sintaxis:
+#         {% has_group user "Administrator" as is_admin %}
+#   - Ambos registros conviven para no romper plantillas existentes.
+#
+# Plantillas que dependen del filtro (bug latente detectado con grep):
+#   - templates/core/dashboard.html (2 usos)
+#   - templates/core/includes/_navbar_private.html (1 uso)
+#   - templates/documents/document_form.html (1 uso, latente)
+#
+# Post-entrega: unificar a una sola sintaxis (simple_tag preferido).
+# ------------------------------------------------------------------------
+@register.filter(name='has_group')
+def has_group_filter(user, group_name):
+    """
+    Alias de filtro para `has_group`.
+    Uso: {{ user|has_group:"Administrator" }}
+    """
+    return GroupManager.user_has_group(user, group_name)
+
+
 # ------------------------------------------------------------------------
 # SIMPLE TAGS (Evaluación segura sin errores en {% if %})
 # ------------------------------------------------------------------------
