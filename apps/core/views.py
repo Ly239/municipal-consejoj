@@ -341,7 +341,9 @@ def news_detail_frontend(request, pk):
                 is_active=True, category=news_item.category
             ).exclude(pk=pk).order_by('-created_at')[:3]
         else:
-            related_news = News.objects.filter(is_active=True).exclude(pk=pk).order_by('-created_at')[:3]
+            related_news = News.objects.filter(
+                is_active=True
+            ).exclude(pk=pk).order_by('-created_at')[:3]
 
     except News.DoesNotExist:
         fallback = next((item for item in NEWS_DATA if item['id'] == pk), None)
@@ -350,11 +352,16 @@ def news_detail_frontend(request, pk):
                 pk=fallback['id'],
                 id=fallback['id'],
                 title=fallback['title'],
+                name=fallback['title'],                  # Fix T3
+                slug=None,                               # Fix T3
                 summary=fallback['description'],
+                description=fallback['description'],     # Fix T3
                 content=fallback['description'],
                 image=SimpleNamespace(url=fallback['image']) if fallback.get('image') else None,
                 category=SimpleNamespace(name=fallback['category']) if fallback.get('category') else None,
                 created_at=fallback['date'],
+                publication_date=fallback['date'],       # Fix T3
+                author='Concejo Municipal',              # Fix T3
                 attached_file=None,
                 show_pdf_inline=False,
                 social_media_url=None,
@@ -368,6 +375,7 @@ def news_detail_frontend(request, pk):
         'news_item': news_item,
         'related_news': related_news,
         'detail_url_name': 'core:news_detail_frontend',
+        'is_news_detail': True,  # Bandera para el template
     }
     return render(request, 'core/generic_detail.html', context)
 
