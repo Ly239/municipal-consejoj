@@ -360,8 +360,8 @@ def news_detail_frontend(request, pk):
                 image=SimpleNamespace(url=fallback['image']) if fallback.get('image') else None,
                 category=SimpleNamespace(name=fallback['category']) if fallback.get('category') else None,
                 created_at=fallback['date'],
-                publication_date=fallback['date'],       # Fix T3
-                author='Concejo Municipal',              # Fix T3
+                publication_date=fallback['date'],     
+                author='Concejo Municipal',             
                 attached_file=None,
                 show_pdf_inline=False,
                 social_media_url=None,
