@@ -1,0 +1,48 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Iniciar sesión - Concejo Municipal de Junín{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+
+        <!-- Logo institucional -->
+        <img src="{% static 'core/img/logo_concejo.jpg' %}"
+             alt="Concejo Municipal de Junín"
+             class="auth-logo">
+
+        <!-- Título + subtítulo -->
+        <h2 class="auth-title">Iniciar sesión</h2>
+        <p class="auth-subtitle">Concejo Municipal de Junín</p>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <!-- MANTENER ESTO -->
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger py-2 mb-3">
+                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label for="{{ form.username.id_for_label }}">Usuario</label>
+                {{ form.username }}
+                {{ form.username.errors }}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.password.id_for_label }}">Contraseña</label>
+                {{ form.password }}
+                {{ form.password.errors }}
+            </div>
+
+            <button type="submit" class="btn btn-corporate-filled auth-submit">
+                <i class="fas fa-sign-in-alt"></i> Ingresar
+            </button>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

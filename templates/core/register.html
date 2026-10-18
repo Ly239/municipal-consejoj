@@ -1,0 +1,44 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Registrar miembro - Concejo Municipal de Junín{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+
+        <!-- Logo institucional -->
+        <img src="{% static 'core/img/logo_concejo.jpg' %}"
+             alt="Concejo Municipal de Junín"
+             class="auth-logo">
+
+        <!-- Título + subtítulo personalizados -->
+        <h2 class="auth-title">Bienvenido de nuevo, {{ user.username }}</h2>
+        <p class="auth-subtitle">¿Registrar nuevo integrante al sistema?</p>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <!-- Errores generales del formulario (no asociados a un campo)-->
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger py-2 mb-3">
+                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+
+            {% for field in form %}
+            <div class="mb-3">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {{ field.errors }}
+            </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-corporate-filled auth-submit">
+                <i class="fas fa-user-plus"></i> Registrar integrante
+            </button>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

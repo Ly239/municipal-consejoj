@@ -1,0 +1,135 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load groups %}
+
+{% block title %}{{ page_title|default:"Gestión de Registros" }} - Concejo Municipal de Junín{% endblock %}
+
+{% block content %}
+{% include 'core/includes/_navbar.html' %}
+
+<div class="container my-5">
+    <!-- Encabezado y Botón Crear -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: var(--color-dark-blue, #0f2a4a);">
+                <i class="bi {{ header_icon|default:'bi-journal-text' }} me-2"></i>{{ page_title|default:"Gestión de Registros" }}
+            </h2>
+            <p class="text-muted mb-0 small">{{ page_subtitle|default:"Administra los elementos registrados en el sistema" }}</p>
+        </div>
+
+        {% if create_url %}
+            <a href="{% url create_url %}" class="btn btn-primary rounded-pill px-4 shadow-sm align-self-start align-self-md-auto">
+                <i class="bi bi-plus-lg me-1"></i> {{ create_label|default:"Nuevo Registro" }}
+            </a>
+        {% endif %}
+    </div>
+
+    <!-- Tarjeta Principal con Tabla -->
+    <div class="card card-concejo shadow-sm border-0 rounded-3 overflow-hidden">
+        
+        <!-- Barra de Búsqueda -->
+        {% if search_url %}
+        <div class="card-header bg-light p-3 border-bottom">
+            <form method="get" action="{{ search_url }}" class="row g-2 align-items-center">
+                <div class="col-md-6 col-lg-4">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="search" name="q" class="form-control border-start-0" placeholder="Buscar registros..." value="{{ request.GET.q|default:'' }}">
+                        <button type="submit" class="btn btn-primary">Buscar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-secondary text-uppercase small border-bottom">
+                    <tr>
+                        <th scope="col" class="ps-4" style="width: 5%;">#</th>
+                        <th scope="col" style="width: 45%;">Título / Nombre</th>
+                        <th scope="col" style="width: 25%;">Categoría / Info</th>
+                        <th scope="col" style="width: 15%;">Fecha</th>
+                        <th scope="col" class="text-end pe-4" style="width: 10%;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in object_list %}
+                        <tr>
+                            <td class="ps-4 fw-bold text-muted small">{{ forloop.counter }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if item.image %}
+                                        <img src="{{ item.image.url }}" class="rounded me-3" style="width: 42px; height: 42px; object-fit: cover;" alt="">
+                                    {% endif %}
+                                    <div>
+                                        <span class="fw-semibold text-dark d-block">{{ item.title|default:item.name }}</span>
+                                        {% if item.author %}
+                                            <small class="text-muted">Por {{ item.author }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if item.category %}
+                                    <span class="badge bg-secondary-subtle text-dark border">{{ item.category }}</span>
+                                {% elif item.charge %}
+                                    <span class="badge bg-info-subtle text-dark">{{ item.charge }}</span>
+                                {% else %}
+                                    <span class="text-muted small">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-muted">
+                                {{ item.created_at|date:"d/m/Y"|default:item.publication_date|date:"d/m/Y"|default:"—" }}
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    {% if detail_url_name %}
+                                        <a href="{% url detail_url_name item.slug|default:item.pk %}" class="btn btn-outline-secondary" title="Ver" target="_blank">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    {% endif %}
+                                    {% if update_url_name %}
+                                        <a href="{% url update_url_name item.pk %}" class="btn btn-outline-primary" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    {% endif %}
+                                    {% if delete_url_name %}
+                                        <a href="{% url delete_url_name item.pk %}" class="btn btn-outline-danger" title="Eliminar">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-folder-x fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                                No hay registros registrados todavía.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        {% if is_paginated %}
+            <div class="card-footer bg-light p-3 border-top">
+                <nav aria-label="Navegación de tabla">
+                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
+                        {% endif %}
+                        <li class="page-item disabled"><span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

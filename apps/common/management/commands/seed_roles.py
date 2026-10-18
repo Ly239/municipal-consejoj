@@ -1,0 +1,113 @@
+"""
+Comando para crear los grupos del sistema y asignar permisos según cada rol.
+Roles: Administrator, Employee, ContentManager, Viewer.
+"""
+from django.core.management.base import BaseCommand
+from django.contrib.auth.models import Group, Permission
+from common.constants import (
+    GROUP_ADMINISTRATOR,
+    GROUP_EMPLOYEE,
+    GROUP_CONTENT_MANAGER,
+    GROUP_VIEWER,
+)
+
+
+class Command(BaseCommand):
+    help = 'Crea los grupos del sistema y asigna permisos'
+
+    def handle(self, *args, **options):
+        self.stdout.write('🚀 Creando grupos del sistema...')
+        self.create_groups()
+        self.assign_permissions()
+        self.stdout.write(self.style.SUCCESS('✅ Grupos creados y permisos asignados'))
+
+    def create_groups(self):
+        """Crea los grupos principales del sistema."""
+        groups = [
+            {'name': GROUP_ADMINISTRATOR, 'desc': 'Administrador - Jefe de Secretaría'},
+            {'name': GROUP_EMPLOYEE, 'desc': 'Empleado - Personal de Secretaría'},
+            {'name': GROUP_CONTENT_MANAGER, 'desc': 'Gestor de Contenido - Home'},
+            {'name': GROUP_VIEWER, 'desc': 'Visualizador - Usuario registrado'},
+        ]
+
+        for group_data in groups:
+            group, created = Group.objects.get_or_create(name=group_data['name'])
+            if created:
+                self.stdout.write(self.style.SUCCESS(f'✅ Grupo "{group_data["name"]}" creado.'))
+            else:
+                self.stdout.write(self.style.WARNING(f'⚠ Grupo "{group_data["name"]}" ya existe.'))
+
+    def assign_permissions(self):
+        """Asigna permisos a cada grupo según su rol."""
+
+        # ------------------------------------------------------------
+        # 1. GRUPO EMPLOYEE (Personal de secretaría)
+        # ------------------------------------------------------------
+        employee_group = Group.objects.get(name=GROUP_EMPLOYEE)
+        employee_perms = Permission.objects.filter(
+            codename__in=[
+                'add_document',
+                'change_document',
+                'view_document',
+                'view_gazette',
+                'soft_delete_document',
+            ]
+        )
+        employee_group.permissions.set(employee_perms)
+        self.stdout.write(self.style.SUCCESS(
+            f'✅ {GROUP_EMPLOYEE} tiene {employee_group.permissions.count()} permisos.'
+        ))
+
+        # ------------------------------------------------------------
+        # 2. GRUPO ADMINISTRATOR (Jefe de secretaría)
+        # ------------------------------------------------------------
+        admin_group = Group.objects.get(name=GROUP_ADMINISTRATOR)
+        admin_perms = Permission.objects.filter(
+            codename__in=[
+                # Documentos
+                'add_document', 'change_document', 'view_document', 'delete_document',
+                'soft_delete_document', 'restore_document',
+                # Gacetas
+                'add_gazette', 'change_gazette', 'view_gazette', 'delete_gazette',
+                'soft_delete_gazette', 'restore_gazette',
+                # Catálogos
+                'view_documenttype', 'view_issuingentity',
+                # Custom (documentos y usuarios)
+                'can_approve_document', 'can_reject_document', 'can_manage_users',
+                # Custom (core / Home)
+                'can_edit_home',
+            ]
+        )
+        admin_group.permissions.set(admin_perms)
+        self.stdout.write(self.style.SUCCESS(
+            f'✅ {GROUP_ADMINISTRATOR} tiene {admin_group.permissions.count()} permisos.'
+        ))
+
+        # ------------------------------------------------------------
+        # 3. GRUPO VIEWER (Solo lectura)
+        # ------------------------------------------------------------
+        viewer_group = Group.objects.get(name=GROUP_VIEWER)
+        viewer_perms = Permission.objects.filter(
+            codename__in=[
+                'view_document',
+                'view_gazette',
+            ]
+        )
+        viewer_group.permissions.set(viewer_perms)
+        self.stdout.write(self.style.SUCCESS(
+            f'✅ {GROUP_VIEWER} tiene {viewer_group.permissions.count()} permisos.'
+        ))
+
+        # ------------------------------------------------------------
+        # 4. GRUPO CONTENT_MANAGER (Gestor de contenido del Home)
+        # ------------------------------------------------------------
+        content_group = Group.objects.get(name=GROUP_CONTENT_MANAGER)
+        content_perms = Permission.objects.filter(
+            codename__in=[
+                'can_edit_home',
+            ]
+        )
+        content_group.permissions.set(content_perms)
+        self.stdout.write(self.style.SUCCESS(
+            f'✅ {GROUP_CONTENT_MANAGER} tiene {content_group.permissions.count()} permisos.'
+        ))

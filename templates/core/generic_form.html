@@ -1,0 +1,97 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load groups %}
+
+{% block title %}{{ form_title|default:"Formulario de Gestión" }} - Concejo Municipal de Junín{% endblock %}
+
+{% block content %}
+{% include 'core/includes/_navbar.html' %}
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-7">
+            <div class="card card-concejo shadow border-0 rounded-3 overflow-hidden">
+                
+                <!-- Encabezado del Formulario -->
+                <div class="card-header text-white p-4" style="background-color: var(--color-dark-blue, #0f2a4a);">
+                    <div class="d-flex align-items-center">
+                        <i class="bi {{ form_icon|default:'bi-pencil-square' }} fs-2 me-3"></i>
+                        <div>
+                            <h3 class="fw-bold mb-0 fs-4">{{ form_title|default:"Gestión de Registro" }}</h3>
+                            {% if form_subtitle %}
+                                <p class="mb-0 small opacity-75">{{ form_subtitle }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cuerpo del Formulario -->
+                <div class="card-body p-4 p-md-5 bg-white">
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+
+                        <!-- Errores Generales del Formulario -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endif %}
+
+                        <!-- Iteración de Campos del Formulario -->
+                        {% for field in form %}
+                            <div class="mb-3">
+                                {% if field.field.widget.input_type == "checkbox" %}
+                                    <div class="form-check form-switch mt-2">
+                                        {{ field }}
+                                        <label for="{{ field.id_for_label }}" class="form-check-label fw-semibold text-dark ms-2">
+                                            {{ field.label }}
+                                            {% if field.field.required %}
+                                                <span class="text-danger">*</span>
+                                            {% endif %}
+                                        </label>
+                                    </div>
+                                {% else %}
+                                    <label for="{{ field.id_for_label }}" class="form-label fw-semibold text-dark">
+                                        {{ field.label }}
+                                        {% if field.field.required %}
+                                            <span class="text-danger">*</span>
+                                        {% endif %}
+                                    </label>
+
+                                    {{ field }}
+                                {% endif %}
+
+                                {% if field.help_text %}
+                                    <div class="form-text text-muted small mt-1">{{ field.help_text }}</div>
+                                {% endif %}
+
+                                {% if field.errors %}
+                                    <div class="invalid-feedback d-block fw-medium mt-1">
+                                        {% for error in field.errors %}
+                                            <i class="bi bi-exclamation-circle me-1"></i> {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+
+                        <!-- Botones de Acción -->
+                        <div class="d-flex justify-content-end align-items-center gap-2 mt-4 pt-3 border-top">
+                            <a href="{{ cancel_url|default:'javascript:history.back()' }}" class="btn btn-outline-secondary rounded-pill px-4">
+                                <i class="bi bi-x-circle me-1"></i> {{ cancel_label|default:"Cancelar" }}
+                            </a>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                                <i class="bi bi-check-circle me-1"></i> {{ submit_label|default:"Guardar Registro" }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
