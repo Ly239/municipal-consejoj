@@ -223,6 +223,7 @@ class BaseContent(TimestampedMixin, models.Model):
             ('can_edit_home', 'Can edit home content'),
         ]
 
+
     def save(self, *args, **kwargs):
         """
         Genera slug único a partir del título si no existe.
@@ -235,6 +236,20 @@ class BaseContent(TimestampedMixin, models.Model):
         """
         if not self.slug and self.title:
             self.slug = self._build_unique_slug()
+        
+
+        # Limpieza de archivos al actualizar
+        if self.pk:
+            try:
+                old_obj = BaseContent.objects.get(pk=self.pk)
+                if old_obj.image and self.image != old_obj.image:
+                    old_obj.image.delete(save=False)
+                if old_obj.attached_file and self.attached_file != old_obj.attached_file:
+                    old_obj.attached_file.delete(save=False)
+            except BaseContent.DoesNotExist:
+                pass
+        
+        
         try:
             super().save(*args, **kwargs)
         except IntegrityError:
@@ -322,8 +337,9 @@ class BaseContent(TimestampedMixin, models.Model):
 
     @property
     def full_name(self):
-        """Alias de title (compatibilidad con código previo de Fersan)."""
+        """Alias de title"""
         return self.title
+
 
 
 # ==============================================================================
