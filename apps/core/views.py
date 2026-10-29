@@ -912,7 +912,7 @@ class AnnouncementCreateView(LoginRequiredMixin, CreateView):
     }
 
     def form_valid(self, form):
-        form.instance.content_type = BaseContent.ContentType.ANNOUNCEMENT
+        
         if self.request.user.is_authenticated:
             form.instance.created_by = self.request.user
         messages.success(self.request, "Anuncio o licitación creada correctamente.")
@@ -1019,7 +1019,7 @@ class ConsultationCreateView(LoginRequiredMixin, CreateView):
     }
 
     def form_valid(self, form):
-        form.instance.content_type = BaseContent.ContentType.CONSULTATION
+        
         if self.request.user.is_authenticated:
             form.instance.created_by = self.request.user
         messages.success(self.request, "Consulta pública registrada correctamente.")
@@ -1122,7 +1122,7 @@ class EventCreateView(LoginRequiredMixin, CreateView):
     }
 
     def form_valid(self, form):
-        form.instance.content_type = BaseContent.ContentType.EVENT
+        
         if self.request.user.is_authenticated:
             form.instance.created_by = self.request.user
         messages.success(self.request, "Evento registrado con éxito.")
@@ -1207,7 +1207,7 @@ class DownloadableCreateView(LoginRequiredMixin, CreateView):
     }
 
     def form_valid(self, form):
-        form.instance.content_type = BaseContent.ContentType.DOWNLOADABLE
+        
         if self.request.user.is_authenticated:
             form.instance.created_by = self.request.user
         messages.success(self.request, "Documento descargable publicado.")
