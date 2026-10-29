@@ -49,6 +49,13 @@ class TrashListView(LoginRequiredMixin, ListView):
         Construye la lista de elementos eliminados de todos los modelos registrados.
         Si hay un query param 'q', filtra por texto libre en la key de dominio.
         """
+        
+ 
+        # Si ya se calculó, devolvemos el resultado en caché
+        if hasattr(self, '_cached_queryset'):
+            return self._cached_queryset
+
+        
         trash_items = []
         query = self.request.GET.get('q', '').strip().lower()
 
@@ -90,7 +97,12 @@ class TrashListView(LoginRequiredMixin, ListView):
                     })
             except Exception as e:
                 logger.error(f"Error al obtener elementos de {model.__name__}: {e}")
+        
+
+         # Guardamos en caché antes de retornar
+        self._cached_queryset = trash_items
         return trash_items
+
 
     def get_context_data(self, **kwargs):
         """Añade total y search_query al contexto."""
