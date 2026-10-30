@@ -27,6 +27,7 @@ from django.db import models, IntegrityError
 from django.utils import timezone
 from django.utils.text import slugify
 from django.conf import settings
+from django.core.validators import FileExtensionValidator
 
 from common.models import TimestampedMixin
 
@@ -147,12 +148,14 @@ class BaseContent(TimestampedMixin, models.Model):
         upload_to='contents/images/%Y/%m/',
         blank=True,
         null=True,
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'webp'])], # 🆕 B143
         verbose_name="Imagen / Foto"
     )
     attached_file = models.FileField(
         upload_to='contents/docs/%Y/%m/',
         blank=True,
         null=True,
+        validators=[FileExtensionValidator(allowed_extensions=['pdf'])], # 🆕 B143
         verbose_name="Archivo Adjunto (PDF)"
     )
     show_pdf_inline = models.BooleanField(
@@ -189,7 +192,7 @@ class BaseContent(TimestampedMixin, models.Model):
     year = models.CharField(max_length=4, blank=True, verbose_name="Año (Descargables)")
 
     # --- Relaciones ---
-    # PROTECT: no se puede borrar una categoría o un usuario con contenido asociado.
+    # PROTECT: no se puede borrar una categoría con contenido asociado.
     category = models.ForeignKey(
         'Category',
         on_delete=models.PROTECT,
