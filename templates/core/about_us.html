@@ -179,7 +179,7 @@
                             </tr>
                         </thead>
                             <tbody>
-                            {% for member in legislature.members %}
+                            {% for member in legislature.members.all %}
                             <tr>
                                 <td class="ps-3 fw-medium text-dark">{{ member.name }}</td>
                                 <td>
