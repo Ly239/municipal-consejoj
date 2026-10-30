@@ -409,11 +409,11 @@ class NewsManageView(CanEditHomeMixin, ListView):
         'page_title': 'Gestión de Noticias',
         'page_subtitle': 'Administración y publicación de notas institucionales',
         'header_icon': 'bi-newspaper',
-        'create_url': 'core:news_create_frontend',
+        'create_url': 'core:create_news_frontend',
         'create_label': 'Nueva Noticia',
         'detail_url_name': 'core:news_detail_frontend',
-        'update_url_name': 'core:news_update_frontend',
-        'delete_url_name': 'core:news_delete_frontend',
+        'update_url_name': 'core:update_news_frontend',
+        'delete_url_name': 'core:delete_news_frontend',
     }
 
     def get_queryset(self):
