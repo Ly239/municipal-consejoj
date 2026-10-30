@@ -67,12 +67,42 @@
                     </div>
                 {% endif %}
 
+
+                 <!-- Mostrar Archivo PDF si existe -->
+                {% if object.attached_file %}
+                <div class="alert alert-light border d-flex justify-content-between align-items-center shadow-sm p-3 mb-4">
+                    <div>
+                        <i class="fas fa-file-pdf text-danger fa-2x me-3 align-middle"></i>
+                        <span class="fw-bold text-dark">Documento adjunto disponible.</span>
+                    </div>
+                    <a href="{{ object.attached_file.url }}" class="btn btn-outline-danger rounded-pill px-4 shadow-sm" target="_blank" download>
+                        <i class="fas fa-download me-2"></i> Descargar PDF
+                    </a>
+                </div>
+                {% endif %}
+               
+
                 <!-- Resumen -->
                 {% if object.summary %}
                     <div class="lead fw-semibold text-secondary mb-4 p-3 bg-light border-start border-4 border-primary rounded">
                         {{ object.summary }}
                     </div>
                 {% endif %}
+
+
+                <!-- Mostrar Enlace Web si existe -->
+                {% if object.social_media_url %}
+                <div class="alert alert-light border d-flex justify-content-between align-items-center shadow-sm p-3 mb-4">
+                    <div>
+                        <i class="fas fa-link text-primary fa-2x me-3 align-middle"></i>
+                        <span class="fw-bold text-dark">Enlace externo.</span>
+                    </div>
+                    <a href="{{ object.social_media_url }}" class="btn btn-outline-primary rounded-pill px-4 shadow-sm" target="_blank">
+                        <i class="fas fa-external-link-alt me-2"></i> Visitar Enlace
+                    </a>
+                </div>
+                {% endif %}
+
 
                 <!-- Contenido -->
                 <div class="detail-content text-dark fs-6" style="line-height: 1.85; white-space: pre-line;">
