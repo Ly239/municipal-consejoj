@@ -59,6 +59,26 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
+# ============================================================
+# MIXIN DE PERMISOS PARA GESTIÓN DEL HOME (🔒 EL CERROJO)
+# ============================================================
+
+class CanEditHomeMixin(LoginRequiredMixin, PermissionRequiredMixin):
+    """
+    Mixin para proteger las vistas de gestión del Home.
+    Exige que el usuario esté logueado y tenga el permiso 'can_edit_home'.
+    """
+    permission_required = 'core.can_edit_home'
+    raise_exception = True # Muestra error 403 si no tiene permiso
+
+    def handle_no_permission(self):
+        """Si no está logueado, va al login. Si está logueado pero no tiene permiso, mensaje amigable."""
+        if not self.request.user.is_authenticated:
+            return super().handle_no_permission()
+        
+        messages.error(self.request, "No tienes permisos para gestionar el contenido del Home.")
+        return redirect('core:home')
+
 
 # ============================================================
 # DATOS ESTÁTICOS DE RESPALDO (FALLBACKS)
@@ -140,7 +160,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             context['total_gazettes'] = 0
             context['total_users'] = 0
 
-        # Cálculo seguro de elementos en papelera
         try:
             try:
                 from common.views import TRASH_MODELS
@@ -375,12 +394,12 @@ def news_detail_frontend(request, pk):
         'news_item': news_item,
         'related_news': related_news,
         'detail_url_name': 'core:news_detail_frontend',
-        'is_news_detail': True,  # Bandera para el template
+        'is_news_detail': True,
     }
     return render(request, 'core/generic_detail.html', context)
 
 
-class NewsManageView(LoginRequiredMixin, ListView):
+class NewsManageView(CanEditHomeMixin, ListView):
     """Listado de noticias para administración."""
     model = News
     template_name = 'core/generic_admin_list.html'
@@ -401,7 +420,7 @@ class NewsManageView(LoginRequiredMixin, ListView):
         return News.objects.all().order_by('-created_at')
 
 
-class NewsCreateView(LoginRequiredMixin, CreateView):
+class NewsCreateView(CanEditHomeMixin, CreateView):
     """Creación administrativa de noticia."""
     model = News
     form_class = NewsForm
@@ -416,14 +435,13 @@ class NewsCreateView(LoginRequiredMixin, CreateView):
     }
 
     def form_valid(self, form):
-        form.instance.content_type = BaseContent.ContentType.NEWS
         if self.request.user.is_authenticated:
             form.instance.created_by = self.request.user
         messages.success(self.request, 'Noticia creada exitosamente.')
         return super().form_valid(form)
 
 
-class NewsUpdateView(LoginRequiredMixin, UpdateView):
+class NewsUpdateView(CanEditHomeMixin, UpdateView):
     """Edición administrativa de noticia."""
     model = News
     form_class = NewsForm
@@ -442,7 +460,7 @@ class NewsUpdateView(LoginRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class NewsDeleteView(LoginRequiredMixin, DeleteView):
+class NewsDeleteView(CanEditHomeMixin, DeleteView):
     """Eliminación administrativa de noticia."""
     model = News
     template_name = 'core/generic_confirm_delete.html'
@@ -450,6 +468,11 @@ class NewsDeleteView(LoginRequiredMixin, DeleteView):
     extra_context = {
         'cancel_url': reverse_lazy('core:manage_news_frontend'),
     }
+
+    def delete(self, request, *args, **kwargs):
+        response = super().delete(request, *args, **kwargs)
+        messages.success(request, 'Noticia eliminada correctamente.')
+        return response
 
 
 # ============================================================
@@ -493,7 +516,7 @@ class ChronicleDetailView(DetailView):
         return context
 
 
-class ChronicleManageView(LoginRequiredMixin, ListView):
+class ChronicleManageView(CanEditHomeMixin, ListView):
     """Gestión administrativa de crónicas."""
     model = Chronicle
     template_name = 'core/generic_admin_list.html'
@@ -514,7 +537,7 @@ class ChronicleManageView(LoginRequiredMixin, ListView):
         return Chronicle.objects.all().order_by('-created_at')
 
 
-class ChronicleCreateView(LoginRequiredMixin, CreateView):
+class ChronicleCreateView(CanEditHomeMixin, CreateView):
     """Creación de crónica."""
     model = Chronicle
     form_class = ChronicleForm
@@ -529,14 +552,13 @@ class ChronicleCreateView(LoginRequiredMixin, CreateView):
     }
 
     def form_valid(self, form):
-        form.instance.content_type = BaseContent.ContentType.CHRONICLE
         if self.request.user.is_authenticated:
             form.instance.created_by = self.request.user
         messages.success(self.request, "¡Crónica guardada exitosamente!")
         return super().form_valid(form)
 
 
-class ChronicleUpdateView(LoginRequiredMixin, UpdateView):
+class ChronicleUpdateView(CanEditHomeMixin, UpdateView):
     """Edición de crónica."""
     model = Chronicle
     form_class = ChronicleForm
@@ -551,21 +573,26 @@ class ChronicleUpdateView(LoginRequiredMixin, UpdateView):
     }
 
 
-class ChronicleDeleteView(LoginRequiredMixin, DeleteView):
+class ChronicleDeleteView(CanEditHomeMixin, DeleteView):
     """Eliminación de crónica."""
     model = Chronicle
-    template_name = 'core/generic_confirm_delete.html'
+    template_name = 'core:generic_confirm_delete.html'
     success_url = reverse_lazy('core:manage_chronicles')
     extra_context = {
         'cancel_url': reverse_lazy('core:manage_chronicles'),
     }
+
+    def delete(self, request, *args, **kwargs):
+        response = super().delete(request, *args, **kwargs)
+        messages.success(request, 'Crónica eliminada correctamente.')
+        return response
 
 
 # ============================================================
 # 5. MÓDULO DE CATEGORÍAS (GESTIÓN)
 # ============================================================
 
-class CategoryManageView(LoginRequiredMixin, ListView):
+class CategoryManageView(CanEditHomeMixin, ListView):
     """Gestión de categorías."""
     model = Category
     template_name = 'core/generic_admin_list.html'
@@ -582,7 +609,7 @@ class CategoryManageView(LoginRequiredMixin, ListView):
     }
 
 
-class CategoryCreateView(LoginRequiredMixin, CreateView):
+class CategoryCreateView(CanEditHomeMixin, CreateView):
     """Creación de categoría."""
     model = Category
     form_class = CategoryForm
@@ -597,7 +624,7 @@ class CategoryCreateView(LoginRequiredMixin, CreateView):
     }
 
 
-class CategoryUpdateView(LoginRequiredMixin, UpdateView):
+class CategoryUpdateView(CanEditHomeMixin, UpdateView):
     """Edición de categoría."""
     model = Category
     form_class = CategoryForm
@@ -612,7 +639,7 @@ class CategoryUpdateView(LoginRequiredMixin, UpdateView):
     }
 
 
-class CategoryDeleteView(LoginRequiredMixin, DeleteView):
+class CategoryDeleteView(CanEditHomeMixin, DeleteView):
     """Eliminación de categoría."""
     model = Category
     template_name = 'core/generic_confirm_delete.html'
@@ -620,6 +647,11 @@ class CategoryDeleteView(LoginRequiredMixin, DeleteView):
     extra_context = {
         'cancel_url': reverse_lazy('core:manage_categories_frontend'),
     }
+
+    def delete(self, request, *args, **kwargs):
+        response = super().delete(request, *args, **kwargs)
+        messages.success(request, 'Categoría eliminada correctamente.')
+        return response
 
 
 # ============================================================
@@ -636,7 +668,7 @@ class CommissionsView(ListView):
         return Commission.objects.prefetch_related('members__councilor').order_by('number')
 
 
-class CommissionAdminListView(LoginRequiredMixin, ListView):
+class CommissionAdminListView(CanEditHomeMixin, ListView):
     """Gestión de comisiones."""
     model = Commission
     template_name = 'core/commission_admin_list.html'
@@ -646,7 +678,7 @@ class CommissionAdminListView(LoginRequiredMixin, ListView):
         return Commission.objects.prefetch_related('members__councilor').order_by('number')
 
 
-class CommissionCreateView(LoginRequiredMixin, CreateView):
+class CommissionCreateView(CanEditHomeMixin, CreateView):
     """Crear comisión."""
     model = Commission
     form_class = CommissionForm
@@ -654,7 +686,7 @@ class CommissionCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('core:commission_admin_list')
 
 
-class CommissionUpdateView(LoginRequiredMixin, UpdateView):
+class CommissionUpdateView(CanEditHomeMixin, UpdateView):
     """Editar comisión."""
     model = Commission
     form_class = CommissionForm
@@ -662,15 +694,15 @@ class CommissionUpdateView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('core:commission_admin_list')
 
 
-class CommissionDeleteView(LoginRequiredMixin, DeleteView):
+class CommissionDeleteView(CanEditHomeMixin, DeleteView):
     """Eliminación de comisión capturando restricciones de clave foránea."""
     model = Commission
     template_name = 'core/commission_confirm_delete.html'
     success_url = reverse_lazy('core:commission_admin_list')
 
-    def form_valid(self, form):
+    def delete(self, request, *args, **kwargs):
         try:
-            response = super().form_valid(form)
+            response = super().delete(request, *args, **kwargs)
             messages.success(self.request, "Comisión eliminada correctamente.")
             return response
         except ProtectedError:
@@ -732,7 +764,7 @@ class CouncilorDetailView(DetailView):
         return context
 
 
-class CouncilorCreateView(LoginRequiredMixin, CreateView):
+class CouncilorCreateView(CanEditHomeMixin, CreateView):
     """Crear concejal."""
     model = Councilor
     template_name = 'core/generic_form.html'
@@ -746,13 +778,12 @@ class CouncilorCreateView(LoginRequiredMixin, CreateView):
     }
 
     def form_valid(self, form):
-        form.instance.content_type = BaseContent.ContentType.COUNCILOR
         if self.request.user.is_authenticated:
             form.instance.created_by = self.request.user
         return super().form_valid(form)
 
 
-class CouncilorUpdateView(LoginRequiredMixin, UpdateView):
+class CouncilorUpdateView(CanEditHomeMixin, UpdateView):
     """Editar concejal."""
     model = Councilor
     template_name = 'core/generic_form.html'
@@ -766,7 +797,7 @@ class CouncilorUpdateView(LoginRequiredMixin, UpdateView):
     }
 
 
-class CouncilorDeleteView(LoginRequiredMixin, DeleteView):
+class CouncilorDeleteView(CanEditHomeMixin, DeleteView):
     """Eliminar concejal capturando restricciones de clave foránea."""
     model = Councilor
     template_name = 'core/generic_confirm_delete.html'
@@ -775,9 +806,9 @@ class CouncilorDeleteView(LoginRequiredMixin, DeleteView):
         'cancel_url': reverse_lazy('core:councilor_list'),
     }
 
-    def form_valid(self, form):
+    def delete(self, request, *args, **kwargs):
         try:
-            response = super().form_valid(form)
+            response = super().delete(request, *args, **kwargs)
             messages.success(self.request, "Concejal eliminado correctamente.")
             return response
         except ProtectedError:
@@ -802,7 +833,7 @@ class LegislatureListView(ListView):
         return Legislature.objects.prefetch_related('members').order_by('order')
 
 
-class LegislatureCreateView(LoginRequiredMixin, CreateView):
+class LegislatureCreateView(CanEditHomeMixin, CreateView):
     """Crear legislatura."""
     model = Legislature
     template_name = 'core/legislature_form.html'
@@ -810,7 +841,7 @@ class LegislatureCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('core:legislature_list')
 
 
-class LegislatureUpdateView(LoginRequiredMixin, UpdateView):
+class LegislatureUpdateView(CanEditHomeMixin, UpdateView):
     """Editar legislatura."""
     model = Legislature
     template_name = 'core/legislature_form.html'
@@ -818,15 +849,15 @@ class LegislatureUpdateView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('core:legislature_list')
 
 
-class LegislatureDeleteView(LoginRequiredMixin, DeleteView):
+class LegislatureDeleteView(CanEditHomeMixin, DeleteView):
     """Eliminar legislatura capturando restricciones de clave foránea."""
     model = Legislature
     template_name = 'core/legislature_confirm_delete.html'
     success_url = reverse_lazy('core:legislature_list')
 
-    def form_valid(self, form):
+    def delete(self, request, *args, **kwargs):
         try:
-            response = super().form_valid(form)
+            response = super().delete(request, *args, **kwargs)
             messages.success(self.request, "Legislatura eliminada correctamente.")
             return response
         except ProtectedError:
@@ -876,7 +907,7 @@ class AnnouncementDetailView(DetailView):
         return context
 
 
-class AnnouncementManageView(LoginRequiredMixin, ListView):
+class AnnouncementManageView(CanEditHomeMixin, ListView):
     """Gestión de Licitaciones."""
     model = Announcement
     template_name = 'core/generic_admin_list.html'
@@ -897,7 +928,7 @@ class AnnouncementManageView(LoginRequiredMixin, ListView):
         return Announcement.objects.all().order_by('-start_date')
 
 
-class AnnouncementCreateView(LoginRequiredMixin, CreateView):
+class AnnouncementCreateView(CanEditHomeMixin, CreateView):
     """Creación de Licitación."""
     model = Announcement
     template_name = 'core/generic_form.html'
@@ -912,14 +943,13 @@ class AnnouncementCreateView(LoginRequiredMixin, CreateView):
     }
 
     def form_valid(self, form):
-        
         if self.request.user.is_authenticated:
             form.instance.created_by = self.request.user
         messages.success(self.request, "Anuncio o licitación creada correctamente.")
         return super().form_valid(form)
 
 
-class AnnouncementUpdateView(LoginRequiredMixin, UpdateView):
+class AnnouncementUpdateView(CanEditHomeMixin, UpdateView):
     """Edición de Licitación."""
     model = Announcement
     template_name = 'core/generic_form.html'
@@ -938,7 +968,7 @@ class AnnouncementUpdateView(LoginRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class AnnouncementDeleteView(LoginRequiredMixin, DeleteView):
+class AnnouncementDeleteView(CanEditHomeMixin, DeleteView):
     """Eliminación de Licitación."""
     model = Announcement
     template_name = 'core/generic_confirm_delete.html'
@@ -946,6 +976,11 @@ class AnnouncementDeleteView(LoginRequiredMixin, DeleteView):
     extra_context = {
         'cancel_url': reverse_lazy('core:manage_announcements'),
     }
+
+    def delete(self, request, *args, **kwargs):
+        response = super().delete(request, *args, **kwargs)
+        messages.success(request, "Anuncio eliminado correctamente.")
+        return response
 
 
 # --- CONSULTAS PÚBLICAS ---
@@ -983,7 +1018,7 @@ class ConsultationDetailView(DetailView):
         return context
 
 
-class ConsultationManageView(LoginRequiredMixin, ListView):
+class ConsultationManageView(CanEditHomeMixin, ListView):
     """Gestión de Consultas Públicas."""
     model = Consultation
     template_name = 'core/generic_admin_list.html'
@@ -1004,7 +1039,7 @@ class ConsultationManageView(LoginRequiredMixin, ListView):
         return Consultation.objects.all().order_by('-start_date')
 
 
-class ConsultationCreateView(LoginRequiredMixin, CreateView):
+class ConsultationCreateView(CanEditHomeMixin, CreateView):
     """Creación de Consulta."""
     model = Consultation
     template_name = 'core/generic_form.html'
@@ -1019,14 +1054,13 @@ class ConsultationCreateView(LoginRequiredMixin, CreateView):
     }
 
     def form_valid(self, form):
-        
         if self.request.user.is_authenticated:
             form.instance.created_by = self.request.user
         messages.success(self.request, "Consulta pública registrada correctamente.")
         return super().form_valid(form)
 
 
-class ConsultationUpdateView(LoginRequiredMixin, UpdateView):
+class ConsultationUpdateView(CanEditHomeMixin, UpdateView):
     """Edición de Consulta."""
     model = Consultation
     template_name = 'core/generic_form.html'
@@ -1040,8 +1074,12 @@ class ConsultationUpdateView(LoginRequiredMixin, UpdateView):
         'cancel_url': reverse_lazy('core:manage_consultations'),
     }
 
+    def form_valid(self, form):
+        messages.success(self.request, "Consulta pública actualizada.")
+        return super().form_valid(form)
 
-class ConsultationDeleteView(LoginRequiredMixin, DeleteView):
+
+class ConsultationDeleteView(CanEditHomeMixin, DeleteView):
     """Eliminación de Consulta."""
     model = Consultation
     template_name = 'core/generic_confirm_delete.html'
@@ -1049,6 +1087,11 @@ class ConsultationDeleteView(LoginRequiredMixin, DeleteView):
     extra_context = {
         'cancel_url': reverse_lazy('core:manage_consultations'),
     }
+
+    def delete(self, request, *args, **kwargs):
+        response = super().delete(request, *args, **kwargs)
+        messages.success(request, "Consulta eliminada correctamente.")
+        return response
 
 
 # --- EVENTOS ---
@@ -1086,7 +1129,7 @@ class EventDetailView(DetailView):
         return context
 
 
-class EventManageView(LoginRequiredMixin, ListView):
+class EventManageView(CanEditHomeMixin, ListView):
     """Gestión de Eventos."""
     model = Event
     template_name = 'core/generic_admin_list.html'
@@ -1107,7 +1150,7 @@ class EventManageView(LoginRequiredMixin, ListView):
         return Event.objects.all().order_by('-start_date')
 
 
-class EventCreateView(LoginRequiredMixin, CreateView):
+class EventCreateView(CanEditHomeMixin, CreateView):
     """Creación de Evento."""
     model = Event
     template_name = 'core/generic_form.html'
@@ -1122,14 +1165,13 @@ class EventCreateView(LoginRequiredMixin, CreateView):
     }
 
     def form_valid(self, form):
-        
         if self.request.user.is_authenticated:
             form.instance.created_by = self.request.user
         messages.success(self.request, "Evento registrado con éxito.")
         return super().form_valid(form)
 
 
-class EventUpdateView(LoginRequiredMixin, UpdateView):
+class EventUpdateView(CanEditHomeMixin, UpdateView):
     """Edición de Evento."""
     model = Event
     template_name = 'core/generic_form.html'
@@ -1144,7 +1186,7 @@ class EventUpdateView(LoginRequiredMixin, UpdateView):
     }
 
 
-class EventDeleteView(LoginRequiredMixin, DeleteView):
+class EventDeleteView(CanEditHomeMixin, DeleteView):
     """Eliminación de Evento."""
     model = Event
     template_name = 'core/generic_confirm_delete.html'
@@ -1152,6 +1194,11 @@ class EventDeleteView(LoginRequiredMixin, DeleteView):
     extra_context = {
         'cancel_url': reverse_lazy('core:manage_events'),
     }
+
+    def delete(self, request, *args, **kwargs):
+        response = super().delete(request, *args, **kwargs)
+        messages.success(request, "Evento eliminado correctamente.")
+        return response
 
 
 # --- DOCUMENTOS DESCARGABLES ---
@@ -1172,7 +1219,7 @@ class DownloadableListView(ListView):
         return Downloadable.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-created_at')
 
 
-class DownloadableManageView(LoginRequiredMixin, ListView):
+class DownloadableManageView(CanEditHomeMixin, ListView):
     """Gestión de Descargables."""
     model = Downloadable
     template_name = 'core/generic_admin_list.html'
@@ -1192,7 +1239,7 @@ class DownloadableManageView(LoginRequiredMixin, ListView):
         return Downloadable.objects.all().order_by('-created_at')
 
 
-class DownloadableCreateView(LoginRequiredMixin, CreateView):
+class DownloadableCreateView(CanEditHomeMixin, CreateView):
     """Creación de Descargable."""
     model = Downloadable
     template_name = 'core/generic_form.html'
@@ -1207,14 +1254,13 @@ class DownloadableCreateView(LoginRequiredMixin, CreateView):
     }
 
     def form_valid(self, form):
-        
         if self.request.user.is_authenticated:
             form.instance.created_by = self.request.user
         messages.success(self.request, "Documento descargable publicado.")
         return super().form_valid(form)
 
 
-class DownloadableUpdateView(LoginRequiredMixin, UpdateView):
+class DownloadableUpdateView(CanEditHomeMixin, UpdateView):
     """Edición de Descargable."""
     model = Downloadable
     template_name = 'core/generic_form.html'
@@ -1228,8 +1274,12 @@ class DownloadableUpdateView(LoginRequiredMixin, UpdateView):
         'cancel_url': reverse_lazy('core:manage_downloadables'),
     }
 
+    def form_valid(self, form):
+        messages.success(self.request, "Documento descargable actualizado.")
+        return super().form_valid(form)
 
-class DownloadableDeleteView(LoginRequiredMixin, DeleteView):
+
+class DownloadableDeleteView(CanEditHomeMixin, DeleteView):
     """Eliminación de Descargable."""
     model = Downloadable
     template_name = 'core/generic_confirm_delete.html'
@@ -1238,12 +1288,17 @@ class DownloadableDeleteView(LoginRequiredMixin, DeleteView):
         'cancel_url': reverse_lazy('core:manage_downloadables'),
     }
 
+    def delete(self, request, *args, **kwargs):
+        response = super().delete(request, *args, **kwargs)
+        messages.success(request, "Documento descargable eliminado correctamente.")
+        return response
+
 
 # ============================================================
 # 10. MÓDULO DE ACTIVIDADES Y SECCIÓN INSTITUCIONAL
 # ============================================================
 
-# --- ACTIVIDADES ---
+# --- ACTIVIDADES (Solo Vistas de Lectura Pública y Gestión) ---
 
 class ActivityListView(ListView):
     """Listado público de actividades del Concejo."""
@@ -1278,7 +1333,7 @@ class ActivityDetailView(DetailView):
         return context
 
 
-class ActivityManageView(LoginRequiredMixin, ListView):
+class ActivityManageView(CanEditHomeMixin, ListView):
     """Gestión administrativa de actividades."""
     model = Activity
     template_name = 'core/generic_admin_list.html'
@@ -1298,61 +1353,12 @@ class ActivityManageView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return Activity.objects.all().order_by('-created_at')
 
-
-class ActivityCreateView(LoginRequiredMixin, CreateView):
-    """Crear Actividad."""
-    model = Activity
-    template_name = 'core/generic_form.html'
-    fields = ['title', 'summary', 'content', 'image', 'is_featured', 'is_active', 'status']
-    success_url = reverse_lazy('core:manage_activities')
-    extra_context = {
-        'form_title': 'Registrar Nueva Actividad',
-        'form_subtitle': 'Completa la información de la actividad institucional realizada',
-        'form_icon': 'bi-journal-plus',
-        'submit_label': 'Guardar Actividad',
-        'cancel_url': reverse_lazy('core:manage_activities'),
-    }
-
-    def form_valid(self, form):
-        form.instance.content_type = BaseContent.ContentType.ACTIVITY
-        if self.request.user.is_authenticated:
-            form.instance.created_by = self.request.user
-        messages.success(self.request, "Actividad creada exitosamente.")
-        return super().form_valid(form)
-
-
-class ActivityUpdateView(LoginRequiredMixin, UpdateView):
-    """Editar Actividad."""
-    model = Activity
-    template_name = 'core/generic_form.html'
-    fields = ['title', 'summary', 'content', 'image', 'is_featured', 'is_active', 'status']
-    success_url = reverse_lazy('core:manage_activities')
-    extra_context = {
-        'form_title': 'Editar Actividad',
-        'form_subtitle': 'Modifica la información o fotografías de la actividad',
-        'form_icon': 'bi-pencil-square',
-        'submit_label': 'Guardar Cambios',
-        'cancel_url': reverse_lazy('core:manage_activities'),
-    }
-
-    def form_valid(self, form):
-        messages.success(self.request, "Actividad actualizada correctamente.")
-        return super().form_valid(form)
-
-
-class ActivityDeleteView(LoginRequiredMixin, DeleteView):
-    """Eliminar Actividad."""
-    model = Activity
-    template_name = 'core/generic_confirm_delete.html'
-    success_url = reverse_lazy('core:manage_activities')
-    extra_context = {
-        'cancel_url': reverse_lazy('core:manage_activities'),
-    }
+# ❌ Las vistas ActivityCreateView, ActivityUpdateView y ActivityDeleteView fueron eliminadas por ser un proxy de solo lectura.
 
 
 # --- EDICIÓN ADMINISTRATIVA SOBRE NOSOTROS ---
 
-class AboutUsManageView(LoginRequiredMixin, ListView):
+class AboutUsManageView(CanEditHomeMixin, ListView):
     """Gestión de textos de Quiénes Somos, Misión y Visión."""
     model = AboutUs
     template_name = 'core/generic_admin_list.html'
@@ -1366,7 +1372,7 @@ class AboutUsManageView(LoginRequiredMixin, ListView):
     }
 
 
-class AboutUsUpdateView(LoginRequiredMixin, UpdateView):
+class AboutUsUpdateView(CanEditHomeMixin, UpdateView):
     """Edición de sección institucional."""
     model = AboutUs
     template_name = 'core/generic_form.html'
@@ -1383,4 +1389,3 @@ class AboutUsUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         messages.success(self.request, "Información institucional actualizada.")
         return super().form_valid(form)
-
