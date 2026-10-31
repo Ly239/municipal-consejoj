@@ -665,8 +665,9 @@ class CommissionsView(ListView):
     context_object_name = 'commissions'
 
     def get_queryset(self):
-        return Commission.objects.prefetch_related('members__councilor').order_by('number')
-
+        # Usamos select_related porque son ForeignKeys directas
+        return Commission.objects.select_related('president', 'vice_president', 'vocal').order_by('number')
+        
 
 class CommissionAdminListView(CanEditHomeMixin, ListView):
     """Gestión de comisiones."""
@@ -675,8 +676,8 @@ class CommissionAdminListView(CanEditHomeMixin, ListView):
     context_object_name = 'commissions'
 
     def get_queryset(self):
-        return Commission.objects.prefetch_related('members__councilor').order_by('number')
-
+        return Commission.objects.select_related('president', 'vice_president', 'vocal').order_by('number')
+ 
 
 class CommissionCreateView(CanEditHomeMixin, CreateView):
     """Crear comisión."""
