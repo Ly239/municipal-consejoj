@@ -85,7 +85,7 @@
                             <td class="text-end pe-4">
                                 <div class="btn-group btn-group-sm" role="group">
                                     {% if detail_url_name %}
-                                        <a href="{% url detail_url_name item.slug|default:item.pk %}" class="btn btn-outline-secondary" title="Ver" target="_blank">
+                                        <a href="{% url detail_url_name item.pk %}" class="btn btn-outline-secondary" title="Ver" target="_blank">
                                             <i class="bi bi-eye"></i>
                                         </a>
                                     {% endif %}

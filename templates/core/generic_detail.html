@@ -120,7 +120,7 @@
 
                 <div class="list-group list-group-flush bg-transparent">
                     {% for recent in recent_items %}
-                        <a href="{% if detail_url_name %}{% url detail_url_name recent.slug|default:recent.pk %}{% else %}#{% endif %}" class="list-group-item list-group-item-action bg-transparent py-3 px-0 border-bottom">
+                        <a href="{% if detail_url_name %}{% url detail_url_name recent.pk %}{% else %}#{% endif %}" class="list-group-item list-group-item-action bg-transparent py-3 px-0 border-bottom">
                             <h6 class="mb-1 fw-bold text-dark">{{ recent.title|default:recent.name }}</h6>
                             <small class="text-muted"><i class="bi bi-clock me-1"></i> {{ recent.created_at|date:"d M, Y"|default:recent.publication_date|date:"d M, Y" }}</small>
                         </a>
