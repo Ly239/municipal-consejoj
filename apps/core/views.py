@@ -602,10 +602,10 @@ class CategoryManageView(CanEditHomeMixin, ListView):
         'page_title': 'Gestión de Categorías',
         'page_subtitle': 'Clasificaciones editoriales para noticias y contenidos',
         'header_icon': 'bi-tags',
-        'create_url': 'core:category_create',
+        'create_url': 'core:create_category_frontend',
         'create_label': 'Nueva Categoría',
-        'update_url_name': 'core:category_update',
-        'delete_url_name': 'core:category_delete',
+        'update_url_name': 'core:update_category_frontend',
+        'delete_url_name': 'core:delete_category_frontend',
     }
 
 
