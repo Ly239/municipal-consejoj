@@ -47,16 +47,9 @@ urlpatterns = [
     path('gestion/cronicas/editar/<int:pk>/', views.ChronicleUpdateView.as_view(), name='edit_chronicle'),
     path('gestion/cronicas/eliminar/<int:pk>/', views.ChronicleDeleteView.as_view(), name='delete_chronicle'),
 
+   
     # ============================================================
-    # 4. MÓDULO DE CATEGORÍAS
-    # ============================================================
-    path('gestion/categorias/', views.CategoryManageView.as_view(), name='manage_categories_frontend'),
-    path('gestion/categorias/crear/', views.CategoryCreateView.as_view(), name='create_category_frontend'),
-    path('gestion/categorias/editar/<int:pk>/', views.CategoryUpdateView.as_view(), name='update_category_frontend'),
-    path('gestion/categorias/eliminar/<int:pk>/', views.CategoryDeleteView.as_view(), name='delete_category_frontend'),
-
-    # ============================================================
-    # 5. MÓDULO DE COMISIONES PERMANENTES
+    # 4. MÓDULO DE COMISIONES PERMANENTES
     # ============================================================
     path('comisiones/', views.CommissionsView.as_view(), name='commissions'),
     path('gestion/comisiones/', views.CommissionAdminListView.as_view(), name='commission_admin_list'),
@@ -65,7 +58,7 @@ urlpatterns = [
     path('gestion/comisiones/eliminar/<int:pk>/', views.CommissionDeleteView.as_view(), name='commission_delete'),
 
     # ============================================================
-    # 6. MÓDULO DE CONCEJALES Y DIRECTIVA
+    # 5. MÓDULO DE CONCEJALES Y DIRECTIVA
     # ============================================================
     path('concejales/', views.CouncilorListView.as_view(), name='councilor_list'),
     path('concejales/<slug:slug>/', views.CouncilorDetailView.as_view(), name='councilor_detail'),
@@ -74,7 +67,7 @@ urlpatterns = [
     path('gestion/concejales/eliminar/<int:pk>/', views.CouncilorDeleteView.as_view(), name='councilor_delete'),
 
     # ============================================================
-    # 7. MÓDULO DE LEGISLATURAS HISTÓRICAS
+    # 6. MÓDULO DE LEGISLATURAS HISTÓRICAS
     # ============================================================
     path('legislaturas/', views.LegislatureListView.as_view(), name='legislature_list'),
     path('gestion/legislaturas/crear/', views.LegislatureCreateView.as_view(), name='legislature_create'),
@@ -82,7 +75,7 @@ urlpatterns = [
     path('gestion/legislaturas/eliminar/<int:pk>/', views.LegislatureDeleteView.as_view(), name='legislature_delete'),
 
     # ============================================================
-    # 8. MÓDULO DE ACTIVIDADES (Públicas y Gestión)
+    # 7. MÓDULO DE ACTIVIDADES (Públicas y Gestión)
     # ============================================================
     path('actividades/', views.ActivityListView.as_view(), name='activity_list'),
     path('actividades/<int:pk>/', views.ActivityDetailView.as_view(), name='activity_detail'),
@@ -90,7 +83,7 @@ urlpatterns = [
     # ❌ Se eliminaron las rutas de crear, editar y eliminar de Activity.
 
     # ============================================================
-    # 9. MÓDULO DE LICITACIONES Y ANUNCIOS
+    # 8. MÓDULO DE LICITACIONES Y ANUNCIOS
     # ============================================================
     path('licitaciones/', views.AnnouncementListView.as_view(), name='announcement_list'),
     path('licitaciones/<int:pk>/', views.AnnouncementDetailView.as_view(), name='announcement_detail'),
@@ -100,7 +93,7 @@ urlpatterns = [
     path('gestion/licitaciones/eliminar/<int:pk>/', views.AnnouncementDeleteView.as_view(), name='announcement_delete'),
 
     # ============================================================
-    # 10. MÓDULO DE CONSULTAS PÚBLICAS
+    # 9. MÓDULO DE CONSULTAS PÚBLICAS
     # ============================================================
     path('consultas-publicas/', views.ConsultationListView.as_view(), name='consultation_list'),
     path('consultas-publicas/<int:pk>/', views.ConsultationDetailView.as_view(), name='consultation_detail'),
@@ -110,7 +103,7 @@ urlpatterns = [
     path('gestion/consultas/eliminar/<int:pk>/', views.ConsultationDeleteView.as_view(), name='consultation_delete'),
 
     # ============================================================
-    # 11. MÓDULO DE EVENTOS INSTITUCIONALES
+    # 10. MÓDULO DE EVENTOS INSTITUCIONALES
     # ============================================================
     path('eventos/', views.EventListView.as_view(), name='event_list'),
     path('eventos/<int:pk>/', views.EventDetailView.as_view(), name='event_detail'),
@@ -120,7 +113,7 @@ urlpatterns = [
     path('gestion/eventos/eliminar/<int:pk>/', views.EventDeleteView.as_view(), name='event_delete'),
 
     # ============================================================
-    # 12. MÓDULO DE DOCUMENTOS DESCARGABLES
+    # 11. MÓDULO DE DOCUMENTOS DESCARGABLES
     # ============================================================
     path('descargables/', views.DownloadableListView.as_view(), name='downloadable_list'),
     path('gestion/descargables/', views.DownloadableManageView.as_view(), name='manage_downloadables'),
@@ -128,10 +121,18 @@ urlpatterns = [
     path('gestion/descargables/editar/<int:pk>/', views.DownloadableUpdateView.as_view(), name='downloadable_update'),
     path('gestion/descargables/eliminar/<int:pk>/', views.DownloadableDeleteView.as_view(), name='delete_downloadable'),
 
+
     # ============================================================
-    # 13. MÓDULO INSTITUCIONAL (GESTIÓN SOBRE NOSOTROS)
+    # 12. MÓDULO DE CATEGORÍAS (EN PARKING - KISS)
     # ============================================================
-    path('gestion/quienes-somos/', views.AboutUsManageView.as_view(), name='manage_about_us'),
-    # Se agregó el <int:pk> a la URL para evitar el AttributeError.
-    path('gestion/quienes-somos/editar/<int:pk>/', views.AboutUsUpdateView.as_view(), name='about_us_update'),
+    # path('gestion/categorias/', views.CategoryManageView.as_view(), name='manage_categories_frontend'),
+    # path('gestion/categorias/crear/', views.CategoryCreateView.as_view(), name='create_category_frontend'),
+    # path('gestion/categorias/editar/<int:pk>/', views.CategoryUpdateView.as_view(), name='update_category_frontend'),
+    # path('gestion/categorias/eliminar/<int:pk>/', views.CategoryDeleteView.as_view(), name='delete_category_frontend'),
+
+    # ============================================================================
+    # 13. MÓDULO INSTITUCIONAL (GESTIÓN SOBRE NOSOTROS) - USA DICCIONARIO ESTÁTICO)
+    # ============================================================================
+    # path('gestion/quienes-somos/', views.AboutUsManageView.as_view(), name='manage_about_us'),
+    # path('gestion/quienes-somos/editar/<int:pk>/', views.AboutUsUpdateView.as_view(), name='about_us_update'),
 ]
