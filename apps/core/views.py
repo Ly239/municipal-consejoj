@@ -60,19 +60,15 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================================
-# MIXIN DE PERMISOS PARA GESTIÓN DEL HOME (🔒 EL CERROJO)
+# MIXIN DE PERMISOS PARA GESTIÓN DEL HOME
 # ============================================================
 
 class CanEditHomeMixin(LoginRequiredMixin, PermissionRequiredMixin):
-    """
-    Mixin para proteger las vistas de gestión del Home.
-    Exige que el usuario esté logueado y tenga el permiso 'can_edit_home'.
-    """
+    """Mixin para proteger las vistas de gestión del Home."""
     permission_required = 'core.can_edit_home'
-    raise_exception = True # Muestra error 403 si no tiene permiso
+    raise_exception = True
 
     def handle_no_permission(self):
-        """Si no está logueado, va al login. Si está logueado pero no tiene permiso, mensaje amigable."""
         if not self.request.user.is_authenticated:
             return super().handle_no_permission()
         
@@ -81,7 +77,7 @@ class CanEditHomeMixin(LoginRequiredMixin, PermissionRequiredMixin):
 
 
 # ============================================================
-# DATOS ESTÁTICOS DE RESPALDO (FALLBACKS)
+# DATOS ESTÁTICOS DE RESPALDO
 # ============================================================
 
 NEWS_DATA = [
@@ -111,6 +107,8 @@ NEWS_DATA = [
     },
 ]
 
+
+
 SYNDICATE_DATA = [
     {
         'name': 'Abogado por designar',
@@ -123,6 +121,8 @@ SYNDICATE_DATA = [
         'image': 'https://images.unsplash.com/photo-1580894732444-8ecded7900cd?w=400',
     },
 ]
+
+
 
 ABOUT_US_DATA = {
     'who_we_are': (
@@ -144,7 +144,7 @@ ABOUT_US_DATA = {
 # ============================================================
 
 class DashboardView(LoginRequiredMixin, TemplateView):
-    """Panel de control con métricas generales aisladas contra fallas."""
+    """Panel de control con métricas generales."""
     template_name = 'core/dashboard.html'
 
     def get_context_data(self, **kwargs):
@@ -156,9 +156,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             context['total_users'] = User.objects.count()
         except Exception as e:
             logger.error(f"Error cargando contadores globales en DashboardView: {e}")
-            context['total_documents'] = 0
-            context['total_gazettes'] = 0
-            context['total_users'] = 0
 
         try:
             try:
@@ -172,10 +169,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                     trash_count += model.all_objects.filter(deleted_at__isnull=False).count()
                 elif hasattr(model, 'objects') and hasattr(model, 'deleted_at'):
                     trash_count += model.objects.filter(deleted_at__isnull=False).count()
-
             context['total_trash'] = trash_count
         except Exception as e:
-            logger.error(f"Error calculando papelera en DashboardView: {e}")
+            logger.error(f"Error calculando papelera: {e}")
             context['total_trash'] = 0
 
         try:
@@ -184,17 +180,13 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             ).order_by('-created_at')[:5]
         except Exception as e:
             logger.error(f"Error cargando documentos recientes: {e}")
-            context['recent_documents'] = []
 
         try:
             context['approved_count'] = Document.objects.filter(is_approved=True, is_annulled=False).count()
             context['pending_count'] = Document.objects.filter(is_approved=False, is_annulled=False).count()
             context['annulled_count'] = Document.objects.filter(is_annulled=True).count()
         except Exception as e:
-            logger.error(f"Error calculando métricas de estado de documentos: {e}")
-            context['approved_count'] = 0
-            context['pending_count'] = 0
-            context['annulled_count'] = 0
+            logger.error(f"Error calculando métricas de estado: {e}")
 
         return context
 
@@ -217,65 +209,50 @@ class HomeView(TemplateView):
             context['ultimas_gacetas'] = Gazette.objects.all()[:3]
         except Exception as e:
             logger.error(f"Error cargando documentos en HomeView: {e}")
-            context['documentos_destacados'] = []
-            context['ultimas_gacetas'] = []
 
         try:
             carousel = News.objects.filter(
-                is_active=True, 
-                status=BaseContent.Status.PUBLISHED
+                is_active=True, status=BaseContent.Status.PUBLISHED
             ).order_by('-created_at')[:3]
             context['carousel_news'] = carousel if carousel.exists() else NEWS_DATA
         except Exception as e:
             logger.error(f"Error cargando noticias de carrusel: {e}")
-            context['carousel_news'] = NEWS_DATA
 
         try:
             context['carousel_activities'] = Activity.objects.filter(
-                is_active=True, 
-                status=BaseContent.Status.PUBLISHED, 
-                is_featured=True
+                is_active=True, status=BaseContent.Status.PUBLISHED, is_featured=True
             ).order_by('-created_at')[:3]
         except Exception as e:
             logger.error(f"Error cargando actividades en HomeView: {e}")
-            context['carousel_activities'] = []
 
         try:
             context['chronicles'] = Chronicle.objects.filter(
-                is_active=True, 
-                status=BaseContent.Status.PUBLISHED
+                is_active=True, status=BaseContent.Status.PUBLISHED
             ).order_by('-created_at')[:3]
         except Exception as e:
             logger.error(f"Error cargando crónicas en HomeView: {e}")
-            context['chronicles'] = []
 
         try:
             context['consultations'] = Consultation.objects.filter(
-                is_active=True, 
-                status=BaseContent.Status.PUBLISHED
+                is_active=True, status=BaseContent.Status.PUBLISHED
             ).order_by('-start_date')[:3]
         except Exception as e:
             logger.error(f"Error cargando consultas públicas: {e}")
-            context['consultations'] = []
 
         try:
             news_qs = News.objects.filter(
-                is_active=True, 
-                status=BaseContent.Status.PUBLISHED
+                is_active=True, status=BaseContent.Status.PUBLISHED
             ).order_by('-created_at')
             context['news_list'] = news_qs[:3] if news_qs.exists() else NEWS_DATA
         except Exception as e:
             logger.error(f"Error cargando noticias secundarias: {e}")
-            context['news_list'] = NEWS_DATA
 
         try:
             context['councilors'] = Councilor.objects.filter(
-                is_active=True, 
-                status=BaseContent.Status.PUBLISHED
+                is_active=True, status=BaseContent.Status.PUBLISHED
             ).order_by('order')
         except Exception as e:
             logger.error(f"Error cargando concejales en HomeView: {e}")
-            context['councilors'] = []
 
         return context
 
@@ -301,13 +278,11 @@ class AboutUsView(TemplateView):
             }
         except Exception as e:
             logger.error(f"Error cargando información institucional: {e}")
-            context['about_data'] = ABOUT_US_DATA
 
         try:
             context['legislatures'] = Legislature.objects.prefetch_related('members').all()
         except Exception as e:
             logger.error(f"Error cargando legislaturas en AboutUsView: {e}")
-            context['legislatures'] = []
 
         return context
 
@@ -317,7 +292,7 @@ class AboutUsView(TemplateView):
 # ============================================================
 
 def news_public_list_frontend(request):
-    """Listado público de noticias activas con filtros por texto, fecha y categoría."""
+    """Listado público de noticias activas con filtros."""
     query = request.GET.get('q', '').strip()
     date_query = request.GET.get('date', '').strip()
     category_slug = request.GET.get('category', '').strip()
@@ -327,9 +302,7 @@ def news_public_list_frontend(request):
 
     if query:
         news_list = news_list.filter(
-            Q(title__icontains=query) | 
-            Q(summary__icontains=query) | 
-            Q(content__icontains=query)
+            Q(title__icontains=query) | Q(summary__icontains=query) | Q(content__icontains=query)
         )
 
     if date_query:
@@ -394,13 +367,12 @@ def news_detail_frontend(request, pk):
         'news_item': news_item,
         'related_news': related_news,
         'detail_url_name': 'core:news_detail_frontend',
-        'is_news_detail': True,
+        'is_news_detail': True, #Bandera para mostrar el sidebar_widget con las categorias, solo si es una noticia.
     }
     return render(request, 'core/generic_detail.html', context)
 
 
 class NewsManageView(CanEditHomeMixin, ListView):
-    """Listado de noticias para administración."""
     model = News
     template_name = 'core/generic_admin_list.html'
     context_object_name = 'object_list'
@@ -409,11 +381,11 @@ class NewsManageView(CanEditHomeMixin, ListView):
         'page_title': 'Gestión de Noticias',
         'page_subtitle': 'Administración y publicación de notas institucionales',
         'header_icon': 'bi-newspaper',
-        'create_url': 'core:create_news_frontend',
+        'create_url': 'core:create_news_frontend',     
         'create_label': 'Nueva Noticia',
         'detail_url_name': 'core:news_detail_frontend',
-        'update_url_name': 'core:update_news_frontend',
-        'delete_url_name': 'core:delete_news_frontend',
+        'update_url_name': 'core:update_news_frontend', 
+        'delete_url_name': 'core:delete_news_frontend', 
     }
 
     def get_queryset(self):
@@ -421,7 +393,6 @@ class NewsManageView(CanEditHomeMixin, ListView):
 
 
 class NewsCreateView(CanEditHomeMixin, CreateView):
-    """Creación administrativa de noticia."""
     model = News
     form_class = NewsForm
     template_name = 'core/generic_form.html'
@@ -442,7 +413,6 @@ class NewsCreateView(CanEditHomeMixin, CreateView):
 
 
 class NewsUpdateView(CanEditHomeMixin, UpdateView):
-    """Edición administrativa de noticia."""
     model = News
     form_class = NewsForm
     template_name = 'core/generic_form.html'
@@ -461,7 +431,6 @@ class NewsUpdateView(CanEditHomeMixin, UpdateView):
 
 
 class NewsDeleteView(CanEditHomeMixin, DeleteView):
-    """Eliminación administrativa de noticia."""
     model = News
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:manage_news_frontend')
@@ -480,7 +449,6 @@ class NewsDeleteView(CanEditHomeMixin, DeleteView):
 # ============================================================
 
 class ChronicleListView(ListView):
-    """Listado público de crónicas."""
     model = Chronicle
     template_name = 'core/generic_cards_grid.html'
     context_object_name = 'object_list'
@@ -497,7 +465,6 @@ class ChronicleListView(ListView):
 
 
 class ChronicleDetailView(DetailView):
-    """Detalle de una crónica por slug."""
     model = Chronicle
     template_name = 'core/generic_detail.html'
     context_object_name = 'object'
@@ -517,7 +484,6 @@ class ChronicleDetailView(DetailView):
 
 
 class ChronicleManageView(CanEditHomeMixin, ListView):
-    """Gestión administrativa de crónicas."""
     model = Chronicle
     template_name = 'core/generic_admin_list.html'
     context_object_name = 'object_list'
@@ -526,11 +492,11 @@ class ChronicleManageView(CanEditHomeMixin, ListView):
         'page_title': 'Gestión de Crónicas',
         'page_subtitle': 'Administración de artículos históricos del municipio',
         'header_icon': 'bi-book',
-        'create_url': 'core:chronicle_create',
+        'create_url': 'core:create_chronicle',       
         'create_label': 'Nueva Crónica',
         'detail_url_name': 'core:chronicle_detail',
-        'update_url_name': 'core:chronicle_update',
-        'delete_url_name': 'core:chronicle_delete',
+        'update_url_name': 'core:edit_chronicle',    
+        'delete_url_name': 'core:delete_chronicle',  
     }
 
     def get_queryset(self):
@@ -538,7 +504,6 @@ class ChronicleManageView(CanEditHomeMixin, ListView):
 
 
 class ChronicleCreateView(CanEditHomeMixin, CreateView):
-    """Creación de crónica."""
     model = Chronicle
     form_class = ChronicleForm
     template_name = 'core/generic_form.html'
@@ -559,7 +524,6 @@ class ChronicleCreateView(CanEditHomeMixin, CreateView):
 
 
 class ChronicleUpdateView(CanEditHomeMixin, UpdateView):
-    """Edición de crónica."""
     model = Chronicle
     form_class = ChronicleForm
     template_name = 'core/generic_form.html'
@@ -574,9 +538,8 @@ class ChronicleUpdateView(CanEditHomeMixin, UpdateView):
 
 
 class ChronicleDeleteView(CanEditHomeMixin, DeleteView):
-    """Eliminación de crónica."""
     model = Chronicle
-    template_name = 'core:generic_confirm_delete.html'
+    template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:manage_chronicles')
     extra_context = {
         'cancel_url': reverse_lazy('core:manage_chronicles'),
@@ -593,7 +556,6 @@ class ChronicleDeleteView(CanEditHomeMixin, DeleteView):
 # ============================================================
 
 class CategoryManageView(CanEditHomeMixin, ListView):
-    """Gestión de categorías."""
     model = Category
     template_name = 'core/generic_admin_list.html'
     context_object_name = 'object_list'
@@ -602,15 +564,14 @@ class CategoryManageView(CanEditHomeMixin, ListView):
         'page_title': 'Gestión de Categorías',
         'page_subtitle': 'Clasificaciones editoriales para noticias y contenidos',
         'header_icon': 'bi-tags',
-        'create_url': 'core:create_category_frontend',
+        'create_url': 'core:create_category_frontend',    
         'create_label': 'Nueva Categoría',
-        'update_url_name': 'core:update_category_frontend',
-        'delete_url_name': 'core:delete_category_frontend',
+        'update_url_name': 'core:update_category_frontend', 
+        'delete_url_name': 'core:delete_category_frontend', 
     }
 
 
 class CategoryCreateView(CanEditHomeMixin, CreateView):
-    """Creación de categoría."""
     model = Category
     form_class = CategoryForm
     template_name = 'core/generic_form.html'
@@ -625,7 +586,6 @@ class CategoryCreateView(CanEditHomeMixin, CreateView):
 
 
 class CategoryUpdateView(CanEditHomeMixin, UpdateView):
-    """Edición de categoría."""
     model = Category
     form_class = CategoryForm
     template_name = 'core/generic_form.html'
@@ -640,7 +600,6 @@ class CategoryUpdateView(CanEditHomeMixin, UpdateView):
 
 
 class CategoryDeleteView(CanEditHomeMixin, DeleteView):
-    """Eliminación de categoría."""
     model = Category
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:manage_categories_frontend')
@@ -659,47 +618,69 @@ class CategoryDeleteView(CanEditHomeMixin, DeleteView):
 # ============================================================
 
 class CommissionsView(ListView):
-    """Vista pública de comisiones optimizada para prefetch."""
     model = Commission
     template_name = 'core/commissions.html'
     context_object_name = 'commissions'
 
     def get_queryset(self):
-        # Usamos select_related porque son ForeignKeys directas
         return Commission.objects.select_related('president', 'vice_president', 'vocal').order_by('number')
-        
+
 
 class CommissionAdminListView(CanEditHomeMixin, ListView):
-    """Gestión de comisiones."""
     model = Commission
-    template_name = 'core/commission_admin_list.html'
-    context_object_name = 'commissions'
+    template_name = 'core/generic_admin_list.html' # Cambiado a genérica
+    context_object_name = 'object_list'
+    paginate_by = 15
+    extra_context = {
+        'page_title': 'Gestión de Comisiones',
+        'page_subtitle': 'Administración de comisiones permanentes',
+        'header_icon': 'bi-people',
+        'create_url': 'core:commission_create',
+        'create_label': 'Nueva Comisión',
+        'detail_url_name': 'core:commissions',
+        'update_url_name': 'core:commission_update',
+        'delete_url_name': 'core:commission_delete',
+    }
 
     def get_queryset(self):
         return Commission.objects.select_related('president', 'vice_president', 'vocal').order_by('number')
- 
+
 
 class CommissionCreateView(CanEditHomeMixin, CreateView):
-    """Crear comisión."""
     model = Commission
     form_class = CommissionForm
-    template_name = 'core/commission_form.html'
+    template_name = 'core/generic_form.html' # Cambiado a genérica
     success_url = reverse_lazy('core:commission_admin_list')
+    extra_context = {
+        'form_title': 'Crear Comisión',
+        'form_subtitle': 'Registra una comisión permanente',
+        'form_icon': 'bi-plus-circle',
+        'submit_label': 'Guardar Comisión',
+        'cancel_url': reverse_lazy('core:commission_admin_list'),
+    }
 
 
 class CommissionUpdateView(CanEditHomeMixin, UpdateView):
-    """Editar comisión."""
     model = Commission
     form_class = CommissionForm
-    template_name = 'core/commission_form.html'
+    template_name = 'core/generic_form.html' # Cambiado a genérica
     success_url = reverse_lazy('core:commission_admin_list')
+    extra_context = {
+        'form_title': 'Editar Comisión',
+        'form_subtitle': 'Actualiza los datos de la comisión',
+        'form_icon': 'bi-pencil-square',
+        'submit_label': 'Guardar Cambios',
+        'cancel_url': reverse_lazy('core:commission_admin_list'),
+    }
 
 
 class CommissionDeleteView(CanEditHomeMixin, DeleteView):
-    """Eliminación de comisión capturando restricciones de clave foránea."""
     model = Commission
-    template_name = 'core/commission_confirm_delete.html'
+    template_name = 'core/generic_confirm_delete.html' # Cambiado a genérica
     success_url = reverse_lazy('core:commission_admin_list')
+    extra_context = {
+        'cancel_url': reverse_lazy('core:commission_admin_list'),
+    }
 
     def delete(self, request, *args, **kwargs):
         try:
@@ -720,7 +701,6 @@ class CommissionDeleteView(CanEditHomeMixin, DeleteView):
 # ============================================================
 
 class CouncilorListView(ListView):
-    """Listado público de concejales y directiva."""
     model = Councilor
     template_name = 'core/generic_cards_grid.html'
     context_object_name = 'object_list'
@@ -748,7 +728,6 @@ class CouncilorListView(ListView):
 
 
 class CouncilorDetailView(DetailView):
-    """Perfil público individual de concejal."""
     model = Councilor
     template_name = 'core/generic_detail.html'
     context_object_name = 'object'
@@ -766,7 +745,6 @@ class CouncilorDetailView(DetailView):
 
 
 class CouncilorCreateView(CanEditHomeMixin, CreateView):
-    """Crear concejal."""
     model = Councilor
     template_name = 'core/generic_form.html'
     fields = ['title', 'author', 'summary', 'content', 'image', 'social_media_url', 'order', 'is_active', 'status']
@@ -785,7 +763,6 @@ class CouncilorCreateView(CanEditHomeMixin, CreateView):
 
 
 class CouncilorUpdateView(CanEditHomeMixin, UpdateView):
-    """Editar concejal."""
     model = Councilor
     template_name = 'core/generic_form.html'
     fields = ['title', 'author', 'summary', 'content', 'image', 'social_media_url', 'order', 'is_active', 'status']
@@ -799,7 +776,6 @@ class CouncilorUpdateView(CanEditHomeMixin, UpdateView):
 
 
 class CouncilorDeleteView(CanEditHomeMixin, DeleteView):
-    """Eliminar concejal capturando restricciones de clave foránea."""
     model = Councilor
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:councilor_list')
@@ -825,36 +801,55 @@ class CouncilorDeleteView(CanEditHomeMixin, DeleteView):
 # ============================================================
 
 class LegislatureListView(ListView):
-    """Listado público de legislaturas."""
     model = Legislature
-    template_name = 'core/legislatures_list.html'
-    context_object_name = 'legislatures'
+    template_name = 'core/generic_cards_grid.html' # Cambiado a genérica
+    context_object_name = 'object_list'
+    extra_context = {
+        'page_title': 'Legislaturas',
+        'page_subtitle': 'Historial de periodos legislativos del Concejo',
+        'detail_url_name': 'core:legislature_list', # Apunta a sí mismo si no hay detail
+        'detail_btn_label': 'Ver Detalles',
+    }
 
     def get_queryset(self):
         return Legislature.objects.prefetch_related('members').order_by('order')
 
 
 class LegislatureCreateView(CanEditHomeMixin, CreateView):
-    """Crear legislatura."""
     model = Legislature
-    template_name = 'core/legislature_form.html'
+    template_name = 'core/generic_form.html' # Cambiado a genérica
     fields = ['roman_id', 'years', 'mayor', 'order']
     success_url = reverse_lazy('core:legislature_list')
+    extra_context = {
+        'form_title': 'Crear Legislatura',
+        'form_subtitle': 'Añade un nuevo periodo legislativo',
+        'form_icon': 'bi-calendar-plus',
+        'submit_label': 'Guardar Legislatura',
+        'cancel_url': reverse_lazy('core:legislature_list'),
+    }
 
 
 class LegislatureUpdateView(CanEditHomeMixin, UpdateView):
-    """Editar legislatura."""
     model = Legislature
-    template_name = 'core/legislature_form.html'
+    template_name = 'core/generic_form.html' # Cambiado a genérica
     fields = ['roman_id', 'years', 'mayor', 'order']
     success_url = reverse_lazy('core:legislature_list')
+    extra_context = {
+        'form_title': 'Editar Legislatura',
+        'form_subtitle': 'Actualiza los datos del periodo',
+        'form_icon': 'bi-pencil-square',
+        'submit_label': 'Guardar Cambios',
+        'cancel_url': reverse_lazy('core:legislature_list'),
+    }
 
 
 class LegislatureDeleteView(CanEditHomeMixin, DeleteView):
-    """Eliminar legislatura capturando restricciones de clave foránea."""
     model = Legislature
-    template_name = 'core/legislature_confirm_delete.html'
+    template_name = 'core/generic_confirm_delete.html' # Cambiado a genérica
     success_url = reverse_lazy('core:legislature_list')
+    extra_context = {
+        'cancel_url': reverse_lazy('core:legislature_list'),
+    }
 
     def delete(self, request, *args, **kwargs):
         try:
@@ -876,7 +871,6 @@ class LegislatureDeleteView(CanEditHomeMixin, DeleteView):
 # --- LICITACIONES Y ANUNCIOS ---
 
 class AnnouncementListView(ListView):
-    """Listado público de Licitaciones y Anuncios."""
     model = Announcement
     template_name = 'core/generic_cards_grid.html'
     context_object_name = 'object_list'
@@ -893,7 +887,6 @@ class AnnouncementListView(ListView):
 
 
 class AnnouncementDetailView(DetailView):
-    """Detalle público de una Licitación/Anuncio."""
     model = Announcement
     template_name = 'core/generic_detail.html'
     context_object_name = 'object'
@@ -909,7 +902,6 @@ class AnnouncementDetailView(DetailView):
 
 
 class AnnouncementManageView(CanEditHomeMixin, ListView):
-    """Gestión de Licitaciones."""
     model = Announcement
     template_name = 'core/generic_admin_list.html'
     context_object_name = 'object_list'
@@ -930,7 +922,6 @@ class AnnouncementManageView(CanEditHomeMixin, ListView):
 
 
 class AnnouncementCreateView(CanEditHomeMixin, CreateView):
-    """Creación de Licitación."""
     model = Announcement
     template_name = 'core/generic_form.html'
     fields = ['title', 'summary', 'content', 'attached_file', 'start_date', 'end_date', 'is_active', 'status']
@@ -951,7 +942,6 @@ class AnnouncementCreateView(CanEditHomeMixin, CreateView):
 
 
 class AnnouncementUpdateView(CanEditHomeMixin, UpdateView):
-    """Edición de Licitación."""
     model = Announcement
     template_name = 'core/generic_form.html'
     fields = ['title', 'summary', 'content', 'attached_file', 'start_date', 'end_date', 'is_active', 'status']
@@ -970,7 +960,6 @@ class AnnouncementUpdateView(CanEditHomeMixin, UpdateView):
 
 
 class AnnouncementDeleteView(CanEditHomeMixin, DeleteView):
-    """Eliminación de Licitación."""
     model = Announcement
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:manage_announcements')
@@ -987,7 +976,6 @@ class AnnouncementDeleteView(CanEditHomeMixin, DeleteView):
 # --- CONSULTAS PÚBLICAS ---
 
 class ConsultationListView(ListView):
-    """Listado público de Consultas Ciudadanas."""
     model = Consultation
     template_name = 'core/generic_cards_grid.html'
     context_object_name = 'object_list'
@@ -1004,7 +992,6 @@ class ConsultationListView(ListView):
 
 
 class ConsultationDetailView(DetailView):
-    """Detalle público de una Consulta."""
     model = Consultation
     template_name = 'core/generic_detail.html'
     context_object_name = 'object'
@@ -1020,7 +1007,6 @@ class ConsultationDetailView(DetailView):
 
 
 class ConsultationManageView(CanEditHomeMixin, ListView):
-    """Gestión de Consultas Públicas."""
     model = Consultation
     template_name = 'core/generic_admin_list.html'
     context_object_name = 'object_list'
@@ -1041,7 +1027,6 @@ class ConsultationManageView(CanEditHomeMixin, ListView):
 
 
 class ConsultationCreateView(CanEditHomeMixin, CreateView):
-    """Creación de Consulta."""
     model = Consultation
     template_name = 'core/generic_form.html'
     fields = ['title', 'summary', 'content', 'attached_file', 'start_date', 'end_date', 'is_active', 'status']
@@ -1062,7 +1047,6 @@ class ConsultationCreateView(CanEditHomeMixin, CreateView):
 
 
 class ConsultationUpdateView(CanEditHomeMixin, UpdateView):
-    """Edición de Consulta."""
     model = Consultation
     template_name = 'core/generic_form.html'
     fields = ['title', 'summary', 'content', 'attached_file', 'start_date', 'end_date', 'is_active', 'status']
@@ -1081,7 +1065,6 @@ class ConsultationUpdateView(CanEditHomeMixin, UpdateView):
 
 
 class ConsultationDeleteView(CanEditHomeMixin, DeleteView):
-    """Eliminación de Consulta."""
     model = Consultation
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:manage_consultations')
@@ -1098,7 +1081,6 @@ class ConsultationDeleteView(CanEditHomeMixin, DeleteView):
 # --- EVENTOS ---
 
 class EventListView(ListView):
-    """Listado público de Eventos."""
     model = Event
     template_name = 'core/generic_cards_grid.html'
     context_object_name = 'object_list'
@@ -1115,7 +1097,6 @@ class EventListView(ListView):
 
 
 class EventDetailView(DetailView):
-    """Detalle público de un Evento."""
     model = Event
     template_name = 'core/generic_detail.html'
     context_object_name = 'object'
@@ -1131,7 +1112,6 @@ class EventDetailView(DetailView):
 
 
 class EventManageView(CanEditHomeMixin, ListView):
-    """Gestión de Eventos."""
     model = Event
     template_name = 'core/generic_admin_list.html'
     context_object_name = 'object_list'
@@ -1152,7 +1132,6 @@ class EventManageView(CanEditHomeMixin, ListView):
 
 
 class EventCreateView(CanEditHomeMixin, CreateView):
-    """Creación de Evento."""
     model = Event
     template_name = 'core/generic_form.html'
     fields = ['title', 'summary', 'content', 'image', 'start_date', 'end_date', 'is_active', 'status']
@@ -1173,7 +1152,6 @@ class EventCreateView(CanEditHomeMixin, CreateView):
 
 
 class EventUpdateView(CanEditHomeMixin, UpdateView):
-    """Edición de Evento."""
     model = Event
     template_name = 'core/generic_form.html'
     fields = ['title', 'summary', 'content', 'image', 'start_date', 'end_date', 'is_active', 'status']
@@ -1188,7 +1166,6 @@ class EventUpdateView(CanEditHomeMixin, UpdateView):
 
 
 class EventDeleteView(CanEditHomeMixin, DeleteView):
-    """Eliminación de Evento."""
     model = Event
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:manage_events')
@@ -1205,7 +1182,6 @@ class EventDeleteView(CanEditHomeMixin, DeleteView):
 # --- DOCUMENTOS DESCARGABLES ---
 
 class DownloadableListView(ListView):
-    """Listado público de Documentos Descargables."""
     model = Downloadable
     template_name = 'core/generic_cards_grid.html'
     context_object_name = 'object_list'
@@ -1221,7 +1197,6 @@ class DownloadableListView(ListView):
 
 
 class DownloadableManageView(CanEditHomeMixin, ListView):
-    """Gestión de Descargables."""
     model = Downloadable
     template_name = 'core/generic_admin_list.html'
     context_object_name = 'object_list'
@@ -1233,7 +1208,7 @@ class DownloadableManageView(CanEditHomeMixin, ListView):
         'create_url': 'core:downloadable_create',
         'create_label': 'Nuevo Descargable',
         'update_url_name': 'core:downloadable_update',
-        'delete_url_name': 'core:downloadable_delete',
+        'delete_url_name': 'core:delete_downloadable', 
     }
 
     def get_queryset(self):
@@ -1241,7 +1216,6 @@ class DownloadableManageView(CanEditHomeMixin, ListView):
 
 
 class DownloadableCreateView(CanEditHomeMixin, CreateView):
-    """Creación de Descargable."""
     model = Downloadable
     template_name = 'core/generic_form.html'
     fields = ['title', 'summary', 'attached_file', 'year', 'is_active', 'status']
@@ -1262,7 +1236,6 @@ class DownloadableCreateView(CanEditHomeMixin, CreateView):
 
 
 class DownloadableUpdateView(CanEditHomeMixin, UpdateView):
-    """Edición de Descargable."""
     model = Downloadable
     template_name = 'core/generic_form.html'
     fields = ['title', 'summary', 'attached_file', 'year', 'is_active', 'status']
@@ -1281,9 +1254,8 @@ class DownloadableUpdateView(CanEditHomeMixin, UpdateView):
 
 
 class DownloadableDeleteView(CanEditHomeMixin, DeleteView):
-    """Eliminación de Descargable."""
     model = Downloadable
-    template_name = 'core/generic_confirm_delete.html'
+    template_name = 'core:generic_confirm_delete.html'
     success_url = reverse_lazy('core:manage_downloadables')
     extra_context = {
         'cancel_url': reverse_lazy('core:manage_downloadables'),
@@ -1302,7 +1274,6 @@ class DownloadableDeleteView(CanEditHomeMixin, DeleteView):
 # --- ACTIVIDADES (Solo Vistas de Lectura Pública y Gestión) ---
 
 class ActivityListView(ListView):
-    """Listado público de actividades del Concejo."""
     model = Activity
     template_name = 'core/generic_cards_grid.html'
     context_object_name = 'object_list'
@@ -1319,7 +1290,6 @@ class ActivityListView(ListView):
 
 
 class ActivityDetailView(DetailView):
-    """Detalle público de una actividad."""
     model = Activity
     template_name = 'core/generic_detail.html'
     context_object_name = 'object'
@@ -1335,7 +1305,6 @@ class ActivityDetailView(DetailView):
 
 
 class ActivityManageView(CanEditHomeMixin, ListView):
-    """Gestión administrativa de actividades."""
     model = Activity
     template_name = 'core/generic_admin_list.html'
     context_object_name = 'object_list'
@@ -1344,23 +1313,17 @@ class ActivityManageView(CanEditHomeMixin, ListView):
         'page_title': 'Gestión de Actividades',
         'page_subtitle': 'Administra la publicación de jornadas e inspecciones de campo',
         'header_icon': 'bi-activity',
-        'create_url': 'core:activity_create',
-        'create_label': 'Nueva Actividad',
         'detail_url_name': 'core:activity_detail',
-        'update_url_name': 'core:activity_update',
-        'delete_url_name': 'core:activity_delete',
+        # Se eliminaron create_url y update/delete_url porque Activity es de solo lectura
     }
 
     def get_queryset(self):
         return Activity.objects.all().order_by('-created_at')
 
-# ❌ Las vistas ActivityCreateView, ActivityUpdateView y ActivityDeleteView fueron eliminadas por ser un proxy de solo lectura.
-
 
 # --- EDICIÓN ADMINISTRATIVA SOBRE NOSOTROS ---
 
 class AboutUsManageView(CanEditHomeMixin, ListView):
-    """Gestión de textos de Quiénes Somos, Misión y Visión."""
     model = AboutUs
     template_name = 'core/generic_admin_list.html'
     context_object_name = 'object_list'
@@ -1374,7 +1337,6 @@ class AboutUsManageView(CanEditHomeMixin, ListView):
 
 
 class AboutUsUpdateView(CanEditHomeMixin, UpdateView):
-    """Edición de sección institucional."""
     model = AboutUs
     template_name = 'core/generic_form.html'
     fields = ['title', 'content', 'image', 'is_active', 'status']
