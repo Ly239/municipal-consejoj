@@ -37,7 +37,7 @@ from .models import (
 
 
 # ============================================================
-# CLASE BASE DE BOOTSTRAP DINÁMICO
+# CLASES BASE DE BOOTSTRAP DINÁMICO
 # ============================================================
 
 class BaseBootstrapForm(forms.ModelForm):
@@ -55,49 +55,63 @@ class BaseBootstrapForm(forms.ModelForm):
                 field.widget.attrs.update({'class': 'form-control'})
 
 
+class PublicableForm(BaseBootstrapForm):
+    """
+    Clase base para formularios que usan el sistema automático de publicación.
+    Añade un switch de 'Publicar' y maneja is_active y status en el save().
+    """
+    publicar_ahora = forms.BooleanField(
+        required=False, 
+        initial=True, 
+        label="Publicar inmediatamente",
+        help_text="Si se desmarca, se guardará como Borrador (Oculto al público)."
+    )
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.cleaned_data.get('publicar_ahora'):
+            instance.is_active = True
+            instance.status = BaseContent.Status.PUBLISHED
+        else:
+            instance.is_active = False
+            instance.status = BaseContent.Status.DRAFT
+            
+        if commit:
+            instance.save()
+        return instance
+
+
 # ============================================================
 # 1. NOTICIAS Y CATEGORÍAS
 # ============================================================
 
-class NewsForm(forms.ModelForm):
+class NewsForm(PublicableForm):
     """Formulario para la creación y edición de Noticias."""
 
     class Meta:
         model = News
         fields = [
-            'title',
-            'summary',
-            'content',
-            'category',
-            'image',
-            'order',
-            'status',
-            'is_active',
-            'is_featured',
-            'social_media_url',
+            'title', 'summary', 'content', 'category', 'image', 
+            'attached_file', 'social_media_url'
         ]
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Título de la noticia'}),
-            'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Extracto o resumen breve'}),
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 6, 'placeholder': 'Contenido completo de la publicación'}),
-            'category': forms.Select(attrs={'class': 'form-select'}),
-            'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'order': forms.NumberInput(attrs={'class': 'form-control'}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'is_featured': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'social_media_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://www.instagram.com/p/...'}),
+            'title': forms.TextInput(attrs={'placeholder': 'Título de la noticia'}),
+            'summary': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Extracto o resumen breve'}),
+            'content': forms.Textarea(attrs={'rows': 6, 'placeholder': 'Contenido completo de la publicación'}),
+            'image': forms.ClearableFileInput(),
+            'attached_file': forms.ClearableFileInput(),
+            'social_media_url': forms.URLInput(attrs={'placeholder': 'https://www.instagram.com/p/...'}),
         }
 
 
-class CategoryForm(forms.ModelForm):
+class CategoryForm(BaseBootstrapForm):
     """Formulario para la gestión de Categorías de contenido."""
 
     class Meta:
         model = Category
         fields = ['name']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Deportes, Economía, Promulgaciones'}),
+            'name': forms.TextInput(attrs={'placeholder': 'Ej. Deportes, Economía, Promulgaciones'}),
         }
 
     def save(self, commit=True):
@@ -112,19 +126,19 @@ class CategoryForm(forms.ModelForm):
 # 2. CRÓNICAS Y CONTENIDO INSTITUCIONAL
 # ============================================================
 
-class ChronicleForm(forms.ModelForm):
+class ChronicleForm(PublicableForm):
     """Formulario para la publicación de Crónicas Históricas."""
 
     class Meta:
         model = Chronicle
-        fields = ['title', 'summary', 'content', 'author', 'image', 'status', ]
+        fields = ['title', 'summary', 'content', 'author', 'image', 'attached_file']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Título de la crónica...'}),
-            'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Breve introducción o resumen...'}),
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 6, 'placeholder': 'Desarrollo completo de la crónica histórica...'}),
-            'author': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del cronista o autor'}),
-            'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
+            'title': forms.TextInput(attrs={'placeholder': 'Título de la crónica...'}),
+            'summary': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Breve introducción o resumen...'}),
+            'content': forms.Textarea(attrs={'rows': 6, 'placeholder': 'Desarrollo completo de la crónica histórica...'}),
+            'author': forms.TextInput(attrs={'placeholder': 'Nombre del cronista o autor'}),
+            'image': forms.ClearableFileInput(),
+            'attached_file': forms.ClearableFileInput(),
         }
 
 
@@ -139,52 +153,47 @@ class AboutUsForm(BaseBootstrapForm):
 # 3. COMISIONES, CONCEJALES Y LEGISLATURAS
 # ============================================================
 
-class CommissionForm(forms.ModelForm):
+class CommissionForm(BaseBootstrapForm):
     """Formulario para la creación y edición de Comisiones Permanentes."""
 
     class Meta:
         model = Commission
         fields = ['number', 'name', 'description', 'image']
         widgets = {
-            'number': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Ej. 1'}),
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de la Comisión'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descripción de la comisión...'}),
-            'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            
+            'number': forms.NumberInput(attrs={'placeholder': 'Ej. 1'}),
+            'name': forms.TextInput(attrs={'placeholder': 'Nombre de la Comisión'}),
+            'description': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Descripción de la comisión...'}),
+            'image': forms.ClearableFileInput(),
         }
 
 
-class CouncilorForm(forms.ModelForm):
+class CouncilorForm(PublicableForm):
     """Formulario para la gestión del perfil de Concejales y Directiva."""
 
     class Meta:
         model = Councilor
-        fields = ['title', 'author', 'summary', 'content', 'image', 'social_media_url', 'order', 'status']
+        fields = ['title', 'author', 'summary', 'content', 'image', 'social_media_url']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre completo del Concejal'}),
-            'author': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cargo (Ej. Presidente, Concejal Principal)'}),
-            'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Resumen biográfico o perfil político'}),
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Trayectoria, comisiones que integra y logros'}),
-            'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'social_media_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'Enlace a perfil institucional'}),
-            'order': forms.NumberInput(attrs={'class': 'form-control'}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
-            
+            'title': forms.TextInput(attrs={'placeholder': 'Nombre completo del Concejal'}),
+            'author': forms.TextInput(attrs={'placeholder': 'Cargo (Ej. Presidente, Concejal Principal)'}),
+            'summary': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Resumen biográfico o perfil político'}),
+            'content': forms.Textarea(attrs={'rows': 5, 'placeholder': 'Trayectoria, comisiones que integra y logros'}),
+            'image': forms.ClearableFileInput(),
+            'social_media_url': forms.URLInput(attrs={'placeholder': 'Enlace a perfil institucional'}),
         }
 
 
-class LegislatureForm(forms.ModelForm):
+class LegislatureForm(BaseBootstrapForm):
     """Formulario para el registro de Períodos Legislativos e Históricos."""
 
     class Meta:
         model = Legislature
         fields = ['roman_id', 'years', 'mayor', 'order']
         widgets = {
-            'roman_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. I, II, III'}),
-            'years': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. 2021 - 2025'}),
-            'mayor': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del Alcalde del período'}),
-            'order': forms.NumberInput(attrs={'class': 'form-control'}),
-            
+            'roman_id': forms.TextInput(attrs={'placeholder': 'Ej. I, II, III'}),
+            'years': forms.TextInput(attrs={'placeholder': 'Ej. 2021 - 2025'}),
+            'mayor': forms.TextInput(attrs={'placeholder': 'Nombre del Alcalde del período'}),
+            'order': forms.NumberInput(attrs={'placeholder': 'Ej. 1'}),
         }
 
 
@@ -198,21 +207,20 @@ class ActivityForm(BaseBootstrapForm):
         fields = '__all__'
 
 
-class EventForm(forms.ModelForm):
+class EventForm(PublicableForm):
     """Formulario para la programación de Eventos Públicos."""
 
     class Meta:
         model = Event
-        fields = ['title', 'summary', 'content', 'start_date', 'end_date', 'image', 'status']
+        fields = ['title', 'summary', 'content', 'start_date', 'end_date', 'image', 'attached_file']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del evento'}),
-            'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Descripción breve'}),
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Agenda o itinerario detallado'}),
-            'start_date': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
-            'end_date': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
-            'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
-            
+            'title': forms.TextInput(attrs={'placeholder': 'Nombre del evento'}),
+            'summary': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Descripción breve'}),
+            'content': forms.Textarea(attrs={'rows': 5, 'placeholder': 'Agenda o itinerario detallado'}),
+            'start_date': forms.DateInput(attrs={'type': 'date'}), # Corregido a type='date'
+            'end_date': forms.DateInput(attrs={'type': 'date'}),   # Corregido a type='date'
+            'image': forms.ClearableFileInput(),
+            'attached_file': forms.ClearableFileInput(),
         }
 
     def clean(self):
@@ -224,20 +232,19 @@ class EventForm(forms.ModelForm):
         return cleaned_data
 
 
-class AnnouncementForm(forms.ModelForm):
+class AnnouncementForm(PublicableForm):
     """Formulario para Licitaciones y Convocatorias Oficiales."""
 
     class Meta:
         model = Announcement
-        fields = ['title', 'summary', 'content', 'start_date', 'end_date', 'status']
+        fields = ['title', 'summary', 'content', 'attached_file', 'start_date', 'end_date']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Título de la licitación o convocatoria'}),
-            'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Objeto del proceso'}),
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Bases y condiciones generales'}),
-            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
-            
+            'title': forms.TextInput(attrs={'placeholder': 'Título de la licitación o convocatoria'}),
+            'summary': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Objeto del proceso'}),
+            'content': forms.Textarea(attrs={'rows': 5, 'placeholder': 'Bases y condiciones generales'}),
+            'attached_file': forms.ClearableFileInput(),
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
         }
 
     def clean(self):
@@ -249,19 +256,19 @@ class AnnouncementForm(forms.ModelForm):
         return cleaned_data
 
 
-class ConsultationForm(forms.ModelForm):
+class ConsultationForm(PublicableForm):
     """Formulario para Consultas Públicas Abiertas a la Comunidad."""
 
     class Meta:
         model = Consultation
-        fields = ['title', 'summary', 'content', 'start_date', 'end_date', 'status']
+        fields = ['title', 'summary', 'content', 'attached_file', 'start_date', 'end_date']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Título de la consulta ciudadana'}),
-            'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Propósito de la consulta'}),
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Texto del anteproyecto u ordenanza'}),
-            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
+            'title': forms.TextInput(attrs={'placeholder': 'Título de la consulta ciudadana'}),
+            'summary': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Propósito de la consulta'}),
+            'content': forms.Textarea(attrs={'rows': 5, 'placeholder': 'Texto del anteproyecto u ordenanza'}),
+            'attached_file': forms.ClearableFileInput(),
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
         }
 
     def clean(self):
@@ -277,16 +284,15 @@ class ConsultationForm(forms.ModelForm):
 # 5. DOCUMENTOS DESCARGABLES
 # ============================================================
 
-class DownloadableForm(forms.ModelForm):
+class DownloadableForm(PublicableForm):
     """Formulario para la carga de Documentos y Formatos Descargables."""
 
     class Meta:
         model = Downloadable
-        fields = ['title', 'summary', 'category', 'status']
+        fields = ['title', 'summary', 'category', 'attached_file', 'year']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del documento o formato'}),
-            'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Instrucciones o descripción del archivo'}),
-            'category': forms.Select(attrs={'class': 'form-select'}),
-            'status': forms.Select(attrs={'class':'form-select'}),
-            
+            'title': forms.TextInput(attrs={'placeholder': 'Nombre del documento o formato'}),
+            'summary': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Instrucciones o descripción del archivo'}),
+            'attached_file': forms.ClearableFileInput(),
+            'year': forms.TextInput(attrs={'placeholder': 'Ej. 2026'}),
         }

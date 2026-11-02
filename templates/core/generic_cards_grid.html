@@ -68,19 +68,16 @@
 
                         <div class="card-body d-flex flex-column p-4">
                             <!-- Fecha u otro metadato -->
-                            {% if object.created_at %}
+                            {% if object.start_date %}
                                 <small class="text-muted mb-2">
-                                    <i class="bi bi-calendar3 me-1"></i> {{ object.created_at|date:"d M, Y" }}
+                                <i class="bi bi-calendar-event me-1"></i> {{ object.start_date|date:"d M, Y" }}
                                 </small>
-                            {% elif object.start_date %}
+                            {% elif object.created_at %}
                                 <small class="text-muted mb-2">
-                                    <i class="bi bi-calendar-event me-1"></i> {{ object.start_date|date:"d M, Y" }}
-                                </small>
-                            {% elif object.publication_date %}
-                                <small class="text-muted mb-2">
-                                    <i class="bi bi-calendar3 me-1"></i> {{ object.publication_date|date:"d M, Y" }}
+                                <i class="bi bi-calendar3 me-1"></i> {{ object.created_at|date:"d M, Y" }}
                                 </small>
                             {% endif %}
+
 
                             <h5 class="card-title fw-bold text-dark mb-2">{{ object.title|default:object.name }}</h5>
                             
@@ -96,15 +93,12 @@
                                     </a>
                                 {% endif %}
 
-                                {% if object.pdf_file %}
-                                    <a href="{{ object.pdf_file.url }}" target="_blank" class="text-danger fs-5" title="Descargar documento PDF">
-                                        <i class="bi bi-file-earmark-pdf-fill"></i>
-                                    </a>
-                                {% elif object.attached_file %}
-                                    <a href="{{ object.attached_file.url }}" target="_blank" class="text-danger fs-5" title="Descargar documento PDF">
-                                        <i class="bi bi-file-earmark-pdf-fill"></i>
+                                {% if object.attached_file %}
+                                    <a href="{{ object.attached_file.url }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill" title="Descargar documento">
+                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> Descargar
                                     </a>
                                 {% endif %}
+
                             </div>
                         </div>
                     </div>
