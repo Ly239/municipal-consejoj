@@ -57,7 +57,7 @@ class NewsForm(PublicableForm):
 class ChronicleForm(PublicableForm):
     class Meta:
         model = Chronicle
-        fields = ['title', 'summary', 'content', 'author', 'image', 'attached_file', 'social_media_url'] # 🆕 URL agregada
+        fields = ['title', 'summary', 'content', 'author', 'image', 'attached_file', 'social_media_url'] #  URL agregada
         widgets = {
             'title': forms.TextInput(attrs={'placeholder': 'Título de la crónica...'}),
             'summary': forms.Textarea(attrs={'rows': 3}),
@@ -74,12 +74,14 @@ class EventForm(PublicableForm):
             'summary': forms.Textarea(attrs={'rows': 2}),
             'content': forms.Textarea(attrs={'rows': 5}),
         }
-    def clean(self):
-        cleaned_data = super().clean()
-        start, end = cleaned_data.get('start_date'), cleaned_data.get('end_date')
-        if start and end and end < start:
-            raise ValidationError("La fecha de finalización no puede ser anterior a la de inicio.")
-        return cleaned_data
+    #def clean(self):
+       # cleaned_data = super().clean()
+       # start, end = cleaned_data.get('start_date'), cleaned_data.get('end_date')
+       # if start and end and end < start:
+           #raise ValidationError("La fecha de finalización no puede ser anterior a la de inicio.")
+        #return cleaned_data
+
+
 
 class AnnouncementForm(PublicableForm):
     class Meta:
@@ -139,10 +141,12 @@ class CategoryForm(BaseBootstrapForm):
         if commit: instance.save()
         return instance
 
+
 class CommissionForm(BaseBootstrapForm):
     class Meta:
         model = Commission
-        fields = ['number', 'name', 'description', 'image']
+        #  Agregamos las 3 FKs para que salgan en el desplegable
+        fields = ['number', 'name', 'description', 'image', 'president', 'vice_president', 'vocal'] 
 
 
 
@@ -158,7 +162,7 @@ class LegislatureForm(BaseBootstrapForm):
 
     class Meta:
         model = Legislature
-        fields = ['roman_id', 'years', 'mayor', 'order']
+        fields = ['roman_id', 'years', 'mayor']
         widgets = {
             'roman_id': forms.TextInput(attrs={'placeholder': 'Ej. I, II, III'}),
             'years': forms.TextInput(attrs={'placeholder': 'Ej. 2021 - 2025'}),
@@ -179,7 +183,7 @@ class LegislatureForm(BaseBootstrapForm):
         instance = super().save(commit=False)
         if commit:
             instance.save()
-            # 🆕 Lógica para procesar el texto y crear los legisladores
+            # Lógica para procesar el texto y crear los legisladores
             texto = self.cleaned_data.get('lista_legisladores')
             if texto is not None:
                 # Borramos los anteriores para que no se dupliquen al editar
