@@ -4,7 +4,7 @@ from django.utils.text import slugify
 
 from .models import (
     BaseContent, News, Chronicle, Category, Commission, Councilor,
-    Legislature, AboutUs, Activity, Announcement, Consultation, Event, Downloadable,
+    Legislature, AboutUs, Activity, Announcement, Consultation, Event, Downloadable, Legislator, 
 )
 
 class BaseBootstrapForm(forms.ModelForm):
@@ -144,10 +144,68 @@ class CommissionForm(BaseBootstrapForm):
         model = Commission
         fields = ['number', 'name', 'description', 'image']
 
+
+
 class LegislatureForm(BaseBootstrapForm):
+    """Formulario para Legislaturas con creación KISS de legisladores."""
+    
+    lista_legisladores = forms.CharField(
+        required=False,
+        label="Lista de Legisladores",
+        help_text="Separa los nombres por comas. Ejemplo: Juan Pérez (Partido A), María Gómez (Partido B). Si no pones el partido entre paréntesis, se guardará como 'Independiente'.",
+        widget=forms.Textarea(attrs={'rows': 3, 'placeholder': 'Ej: Juan Pérez (AD), María Gómez (PSUV)...'})
+    )
+
     class Meta:
         model = Legislature
         fields = ['roman_id', 'years', 'mayor', 'order']
+        widgets = {
+            'roman_id': forms.TextInput(attrs={'placeholder': 'Ej. I, II, III'}),
+            'years': forms.TextInput(attrs={'placeholder': 'Ej. 2021 - 2025'}),
+            'mayor': forms.TextInput(attrs={'placeholder': 'Nombre del Alcalde del período'}),
+            'order': forms.NumberInput(attrs={'placeholder': 'Ej. 1'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Si estamos editando, precargamos los legisladores existentes en el textarea
+        if self.instance and self.instance.pk:
+            miembros = self.instance.members.all()
+            if miembros.exists():
+                nombres = [f"{m.name} ({m.party})" for m in miembros]
+                self.initial['lista_legisladores'] = ", ".join(nombres)
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if commit:
+            instance.save()
+            # 🆕 Lógica para procesar el texto y crear los legisladores
+            texto = self.cleaned_data.get('lista_legisladores')
+            if texto is not None:
+                # Borramos los anteriores para que no se dupliquen al editar
+                instance.members.all().delete()
+                
+                # Separamos por comas y creamos los nuevos
+                items = texto.split(',')
+                for item in items:
+                    item = item.strip()
+                    if item:
+                        # Intentamos extraer el partido entre paréntesis
+                        if '(' in item and item.endswith(')'):
+                            nombre, partido = item.split('(', 1)
+                            partido = partido.rstrip(')').strip()
+                        else:
+                            nombre = item
+                            partido = "Independiente"
+                        
+                        Legislator.objects.create(
+                            legislature=instance,
+                            name=nombre.strip(),
+                            party=partido
+                        )
+        return instance
+
+
 
 class AboutUsForm(BaseBootstrapForm):
     class Meta:

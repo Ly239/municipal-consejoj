@@ -480,17 +480,17 @@ class LegislatureUpdateView(CanEditHomeMixin, UpdateView):
     template_name = 'core/generic_form.html'
     success_url = reverse_lazy('core:legislature_list')
 
+
 class LegislatureDeleteView(CanEditHomeMixin, DeleteView):
     model = Legislature
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:legislature_list')
+
     def delete(self, request, *args, **kwargs):
-        try:
-            messages.success(request, 'Legislatura eliminada.')
-            return super().delete(request, *args, **kwargs)
-        except ProtectedError: 
-            messages.error(request, "No puedes eliminar esta legislatura porque tiene legisladores vinculados.")
-            return redirect(self.success_url)
+        # Como los legisladores usan CASCADE, se borrarán junto con la legislatura.
+        # Ya no es necesario el try/except ProtectedError.
+        messages.success(request, 'Legislatura y sus legisladores asociados eliminados correctamente.')
+        return super().delete(request, *args, **kwargs)
 
 
 # ============================================================

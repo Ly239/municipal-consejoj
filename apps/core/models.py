@@ -678,7 +678,7 @@ class Legislator(TimestampedMixin, models.Model):
     """Miembros de una legislatura."""
     legislature = models.ForeignKey(
         Legislature,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE, #  Cambiado de PROTECT a CASCADE
         related_name='members',
         verbose_name="Legislatura"
     )
