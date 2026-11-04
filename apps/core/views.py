@@ -579,7 +579,7 @@ class AnnouncementUpdateView(CanEditHomeMixin, UpdateView):
 
 class AnnouncementDeleteView(CanEditHomeMixin, DeleteView):
     model = Announcement
-    template_name = 'core:generic_confirm_delete.html'
+    template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:manage_announcements')
     def delete(self, request, *args, **kwargs):
         messages.success(request, 'Licitación eliminada.')
@@ -633,7 +633,7 @@ class ConsultationUpdateView(CanEditHomeMixin, UpdateView):
 
 class ConsultationDeleteView(CanEditHomeMixin, DeleteView):
     model = Consultation
-    template_name = 'core:generic_confirm_delete.html'
+    template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:manage_consultations')
     def delete(self, request, *args, **kwargs):
         messages.success(request, 'Consulta eliminada.')
@@ -687,7 +687,7 @@ class EventUpdateView(CanEditHomeMixin, UpdateView):
 
 class EventDeleteView(CanEditHomeMixin, DeleteView):
     model = Event
-    template_name = 'core:generic_confirm_delete.html'
+    template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:manage_events')
     def delete(self, request, *args, **kwargs):
         messages.success(request, 'Evento eliminado.')
