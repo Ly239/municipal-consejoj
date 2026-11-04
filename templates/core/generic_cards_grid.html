@@ -121,7 +121,7 @@
                             {% endif %}
 
 
-                            <h5 class="card-title fw-bold text-dark mb-2">{{ object.title|default:object.name }}</h5>
+                            <h5 class="card-title fw-bold text-dark mb-2">{{ object.title|default:object }}</h5>
                             
                             <p class="card-text text-muted small flex-grow-1">
                                 {{ object.summary|default:object.content|default:object.description|truncatechars:120 }}
@@ -136,7 +136,7 @@
                                 {% endif %}
 
                                 {% if object.attached_file %}
-                                    <a href="{{ object.attached_file.url }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill" title="Descargar documento">
+                                    <a href="{{ object.attached_file.url }}"download class="btn btn-sm btn-outline-danger rounded-pill" title="Descargar documento">
                                     <i class="bi bi-file-earmark-pdf-fill me-1"></i> Descargar
                                     </a>
                                 {% endif %}
