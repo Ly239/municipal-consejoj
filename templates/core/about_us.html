@@ -155,46 +155,58 @@
         <p class="text-muted mb-4">Composición del Concejo Municipal a lo largo de los años.</p>
 
         <div class="accordion" id="accordionLegislatures">
-        {% for legislature in legislatures %}
-            <div class="accordion-item mb-2 border-0 shadow-sm rounded-3 overflow-hidden">
-            <h2 class="accordion-header" id="heading{{ forloop.counter }}">
-            <button class="accordion-button collapsed text-white fw-bold" type="button" 
-                    data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" 
-                    style="background-color: #1e3a8a;">
-                {{ legislature.id }} Legislatura ({{ legislature.years }})
-            </button>
-            </h2>
-            <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse">
-            <div class="accordion-body bg-light">
-                <p class="small text-muted mb-3">
-                    <i class="bi bi-person-badge-fill me-1"></i>
-                    <strong>Alcalde del Período:</strong> {{ legislature.mayor }}
-                </p>
-                <div class="table-responsive">
-                    <table class="table table-hover bg-white rounded shadow-sm align-middle mb-0">
-                        <thead>
-                            <tr class="table-secondary">
-                                <th scope="col" class="ps-3">Concejal Histórico</th>
-                                <th scope="col">Fracción Política</th>
-                            </tr>
-                        </thead>
-                            <tbody>
-                            {% for member in legislature.members.all %}
-                            <tr>
-                                <td class="ps-3 fw-medium text-dark">{{ member.name }}</td>
-                                <td>
-                                    <span class="badge rounded-pill bg-secondary px-2.5 py-1.5 fs-7">
-                                        {{ member.party }}
-                                    </span>
-                                </td>
+            {% for legislature in legislatures %}
+                <div class="accordion-item mb-2 border-0 shadow-sm rounded-3 overflow-hidden">
+                    <h2 class="accordion-header" id="heading{{ legislature.pk }}">
+                    <!-- FIX: id="heading{{ legislature.pk }}" para evitar colisiones y roman_id para el número romano -->
+                        <button class="accordion-button collapsed text-white fw-bold" type="button" 
+                        data-bs-toggle="collapse" data-bs-target="#collapse{{ legislature.pk }}" 
+                        style="background-color: #1e3a8a;">
+                        <!-- Usamos roman_id -->
+                            {{ legislature.roman_id }} Legislatura ({{ legislature.years }})
+                        </button>
+                    </h2>
+                    
+                    <div id="collapse{{ legislature.pk }}" class="accordion-collapse collapse">
+                        <div class="accordion-body bg-light">
+                            <p class="small text-muted mb-3">
+                                <i class="bi bi-person-badge-fill me-1"></i>
+                                <strong>Alcalde del Período:</strong> {{ legislature.mayor }}
+                            </p>
+                        <div class="table-responsive">
+                            <table class="table table-hover bg-white rounded shadow-sm align-middle mb-0">
+                                <thead>
+                                    <tr class="table-secondary">
+                                        <th scope="col" class="ps-3">Concejal Histórico</th>
+                                        <th scope="col">Fracción Política</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                            
+                                {% for member in legislature.members.all %}
+                                    <tr>
+                                        <td class="ps-3 fw-medium text-dark">{{ member.name }}</td>
+                                        <td>
+                                            <span class="badge rounded-pill bg-secondary px-2.5 py-1.5 fs-7">
+                                            {{ member.party }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                
+                                <!--  Mensaje si la legislatura no tiene miembros cargados aún -->
+                                <tr>
+                                    <td colspan="2" class="text-center text-muted py-3">
+                                No hay legisladores registrados en este período.
+                                    </td>
                                 </tr>
                             {% endfor %}
                             </tbody>
-                    </table>
+                        </table>
+                    </div>
+                    </div>
+                    </div>
                 </div>
-                </div>
-                </div>
-            </div>
             {% endfor %}
         </div>
     </div>
