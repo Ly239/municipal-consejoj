@@ -178,13 +178,22 @@ class AboutUsView(TemplateView):
 # 2. NOTICIAS
 # ============================================================
 
+
 def news_public_list_frontend(request):
     query = request.GET.get('q', '').strip()
     news_list = News.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-created_at')
     if query:
         news_list = news_list.filter(Q(title__icontains=query) | Q(summary__icontains=query))
     
-    context = {'news_list': news_list, 'categories': Category.objects.all(), 'query': query}
+    # Cambiamos 'news_list' por 'object_list' para que la tarjeta genérica lo lea
+    context = {
+        'object_list': news_list, 
+        'page_title': 'Noticias', 
+        'page_subtitle': 'Últimas noticias del Concejo',
+        'detail_url_name': 'core:news_detail_frontend', 
+        'detail_btn_label': 'Leer Noticia',
+        'query': query
+    }
     return render(request, 'core/generic_cards_grid.html', context)
 
 
@@ -216,8 +225,19 @@ class NewsManageView(CanEditHomeMixin, ListView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx.update({'page_title': 'Gestión de Noticias', 'header_icon': 'bi-newspaper', 'create_url': 'core:create_news_frontend', 'create_label': 'Nueva Noticia', 'detail_url_name': 'core:news_detail_frontend', 'update_url_name': 'core:update_news_frontend', 'delete_url_name': 'core:delete_news_frontend'})
+        ctx.update({
+            'page_title': 'Gestión de Noticias', 
+            'header_icon': 'bi-newspaper', 
+            'create_url': 'core:create_news_frontend', 
+            'create_label': 'Nueva Noticia', 
+            'detail_url_name': 'core:news_detail_frontend', 
+            'update_url_name': 'core:update_news_frontend', 
+            'delete_url_name': 'core:delete_news_frontend',
+            'search_url': reverse_lazy('core:manage_news_frontend') #  Activamos el buscador
+        })
         return ctx
+
+
 
 class NewsCreateView(CanEditHomeMixin, CreateView):
     model = News
