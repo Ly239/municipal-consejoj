@@ -8,25 +8,21 @@
 {% include 'core/includes/_navbar.html' %}
 
 <div class="container py-5">
-    <!-- Header de la sección -->
     <div class="row mb-4">
         <div class="col-12 text-center">
             <h1 class="fw-bold text-primary">{{ page_title|default:"Listado Institucional" }}</h1>
-            {% if page_subtitle %}
-                <p class="text-muted lead fs-6">{{ page_subtitle }}</p>
-            {% endif %}
+            {% if page_subtitle %}<p class="text-muted lead fs-6">{{ page_subtitle }}</p>{% endif %}
             <hr class="w-25 mx-auto mt-2">
         </div>
     </div>
 
-    <!-- Grid de Tarjetas -->
     {% if object_list %}
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             {% for object in object_list %}
                 <div class="col">
                     <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden transition-hover position-relative">
-                        
-                        <!-- 🛠️ ACCIONES CONTEXTUALES DE EDICIÓN / ELIMINACIÓN IN-LINE -->
+
+                        <!-- ACCIONES CONTEXTUALES -->
                         {% if user.is_authenticated %}
                             {% has_group user "Administrator" as is_admin %}
                             {% has_group user "ContentManager" as is_content_manager %}
@@ -45,57 +41,21 @@
                                                 <i class="fas fa-trash-alt"></i>
                                             </a>
                                         {% endif %}
-                                    
-
-                                         <!-- Si la tarjeta es una Legislatura, mostramos el botón del Modal -->
+                                        
                                         {% if object.members.exists %}
-                                            <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-3 mt-2" data-bs-toggle="modal" data-bs-target="#modalLegislatura{{ object.pk }}">
-                                                <i class="bi bi-people-fill me-1"></i> Ver Legisladores
+                                            <button type="button" class="btn btn-sm btn-light text-info rounded-circle p-1 px-2" data-bs-toggle="modal" data-bs-target="#modalLegislatura{{ object.pk }}" title="Ver Legisladores">
+                                                <i class="bi bi-people-fill"></i>
                                             </button>
-
-                                            <!--  El Modal con los datos reales -->
-                                            <div class="modal fade" id="modalLegislatura{{ object.pk }}" tabindex="-1" aria-hidden="true">
-                                                <div class="modal-dialog modal-dialog-centered">
-                                                    <div class="modal-content border-0 rounded-4 shadow">
-                                                        <div class="modal-header bg-primary text-white border-0">
-                                                            <h5 class="modal-title"><i class="bi bi-bank me-2"></i> {{ object.title }}</h5>
-                                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                                        </div>
-                                    
-                                                        <div class="modal-body p-4">
-                                                            <p class="text-muted small mb-3">
-                                                            <strong>Alcalde(sa) de ese período:</strong> {{ object.mayor }}
-                                                            </p>
-                                                            <hr>
-                                                            <h6 class="fw-bold mb-3">Miembros del Concejo:</h6>
-                                                        
-                                                        <ul class="list-group list-group-flush">
-                                            
-                                                            {% for member in object.members.all %}
-                                                                <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                                                                    <span><i class="bi bi-person-fill text-secondary me-2"></i>{{ member.name }}</span>
-                                                                    <span class="badge bg-secondary rounded-pill">{{ member.party }}</span>
-                                                                </li>
-                                                            {% endfor %}
-                                                        </ul>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
                                         {% endif %}
-
-
                                     </div>
                                 </div>
                             {% endif %}
                         {% endif %}
 
-
-
-                        <!-- Imagen de la tarjeta (si existe) -->
+                        <!-- IMAGEN O PLACEHOLDER -->
                         {% if object.image %}
                             <div class="position-relative" style="height: 200px; overflow: hidden;">
-                                <img src="{{ object.image.url }}" class="w-100 h-100 object-fit-cover" alt="{{ object.title|default:object.name }}">
+                                <img src="{{ object.image.url }}" class="w-100 h-100 object-fit-cover" alt="{{ object.title|default:object }}">
                                 {% if object.is_featured %}
                                     <span class="position-absolute bottom-0 start-0 m-3 badge bg-warning text-dark shadow-sm">
                                         <i class="bi bi-star-fill me-1"></i> Destacado
@@ -103,31 +63,44 @@
                                 {% endif %}
                             </div>
                         {% else %}
-                            <div class="bg-light d-flex align-items-center justify-content-center text-muted" style="height: 200px;">
-                                <i class="bi bi-image fs-1 opacity-50"></i>
+                            <!-- Fondo con gradiente suave y un ícono acorde al contenido para que no se vea blanco sobre blanco -->
+                            <div class="d-flex align-items-center justify-content-center text-secondary" style="height: 200px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                                {% if object.subtype == 'DOWNLOADABLE' %}
+                                    <i class="bi bi-file-earmark-pdf text-danger opacity-50" style="font-size: 4rem;"></i>
+                                {% elif object.roman_id %}
+                                    <i class="bi bi-bank text-primary opacity-50" style="font-size: 4rem;"></i>
+                                {% else %}
+                                    <i class="bi bi-image opacity-50" style="font-size: 4rem;"></i>
+                                {% endif %}
                             </div>
                         {% endif %}
 
                         <div class="card-body d-flex flex-column p-4">
-                            <!-- Fecha u otro metadato -->
+                            <!-- FECHA -->
                             {% if object.start_date %}
-                                <small class="text-muted mb-2">
-                                <i class="bi bi-calendar-event me-1"></i> {{ object.start_date|date:"d M, Y" }}
-                                </small>
+                                <small class="text-muted mb-2"><i class="bi bi-calendar-event me-1"></i> {{ object.start_date|date:"d M, Y" }}</small>
                             {% elif object.created_at %}
-                                <small class="text-muted mb-2">
-                                <i class="bi bi-calendar3 me-1"></i> {{ object.created_at|date:"d M, Y" }}
-                                </small>
+                                <small class="text-muted mb-2"><i class="bi bi-calendar3 me-1"></i> {{ object.created_at|date:"d M, Y" }}</small>
                             {% endif %}
 
-
                             <h5 class="card-title fw-bold text-dark mb-2">{{ object.title|default:object }}</h5>
-                            
+
+                            <!-- Evitar que el template rompa si no hay summary/content/description (como en Legislaturas) -->
                             <p class="card-text text-muted small flex-grow-1">
-                                {{ object.summary|default:object.content|default:object.description|truncatechars:120 }}
+                                {% if object.mayor %}
+                                    <i class="bi bi-person-badge"></i> Alcalde(sa): {{ object.mayor }}
+                                {% elif object.summary %}
+                                    {{ object.summary|truncatechars:120 }}
+                                {% elif object.content %}
+                                    {{ object.content|truncatechars:120 }}
+                                {% elif object.description %}
+                                    {{ object.description|truncatechars:120 }}
+                                {% else %}
+                                    <span class="fst-italic opacity-75">Sin descripción disponible.</span>
+                                {% endif %}
                             </p>
 
-                            <!-- Acciones e indicadores -->
+                            <!-- BOTONES -->
                             <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
                                 {% if detail_url_name %}
                                     <a href="{% url detail_url_name object.pk %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
@@ -136,70 +109,76 @@
                                 {% endif %}
 
                                 {% if object.attached_file %}
-                                    <a href="{{ object.attached_file.url }}"download class="btn btn-sm btn-outline-danger rounded-pill" title="Descargar documento">
-                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> Descargar
+                                    <a href="{{ object.attached_file.url }}" download class="btn btn-sm btn-outline-danger rounded-pill" title="Descargar documento">
+                                        <i class="bi bi-file-earmark-pdf-fill me-1"></i> Descargar
                                     </a>
                                 {% endif %}
-
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- MODAL DE LEGISLATURAS (Se mantiene fuera de la tarjeta pero dentro del bucle) -->
+                {% if object.members.exists %}
+                    <div class="modal fade" id="modalLegislatura{{ object.pk }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0 rounded-4 shadow">
+                                <div class="modal-header bg-primary text-white border-0">
+                                    <h5 class="modal-title"><i class="bi bi-bank me-2"></i> {{ object.title }}</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <p class="text-muted small mb-3"><strong>Alcalde(sa):</strong> {{ object.mayor }}</p>
+                                    <hr>
+                                    <h6 class="fw-bold mb-3">Miembros del Concejo:</h6>
+                                    <ul class="list-group list-group-flush">
+                                        {% for member in object.members.all %}
+                                            <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                                <span><i class="bi bi-person-fill text-secondary me-2"></i>{{ member.name }}</span>
+                                                <span class="badge bg-secondary rounded-pill">{{ member.party }}</span>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
             {% endfor %}
         </div>
 
-        <!-- Paginación -->
+        <!-- PAGINACIÓN -->
         {% if is_paginated %}
             <nav aria-label="Navegación de páginas" class="mt-5">
                 <ul class="pagination justify-content-center">
                     {% if page_obj.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link rounded-start-pill" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
-                        </li>
+                        <li class="page-item"><a class="page-link rounded-start-pill" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
                     {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link rounded-start-pill">Anterior</span>
-                        </li>
+                        <li class="page-item disabled"><span class="page-link rounded-start-pill">Anterior</span></li>
                     {% endif %}
-
-                    <li class="page-item active">
-                        <span class="page-link bg-primary border-primary">
-                            Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
-                        </span>
-                    </li>
-
+                    <li class="page-item active"><span class="page-link bg-primary border-primary">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
                     {% if page_obj.has_next %}
-                        <li class="page-item">
-                            <a class="page-link rounded-end-pill" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
-                        </li>
+                        <li class="page-item"><a class="page-link rounded-end-pill" href="?page={{ page_obj.next_page_number }}">Siguiente</a></li>
                     {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link rounded-end-pill">Siguiente</span>
-                        </li>
+                        <li class="page-item disabled"><span class="page-link rounded-end-pill">Siguiente</span></li>
                     {% endif %}
                 </ul>
             </nav>
         {% endif %}
 
     {% else %}
-        <!-- Estado vacío -->
         <div class="text-center py-5">
-            <div class="mb-3 text-muted opacity-50">
-                <i class="bi bi-folder2-open display-1"></i>
-            </div>
+            <div class="mb-3 text-muted opacity-50"><i class="bi bi-folder2-open display-1"></i></div>
             <h4 class="text-secondary fw-semibold">No hay registros disponibles</h4>
             <p class="text-muted">Pronto se publicará información en esta sección.</p>
         </div>
     {% endif %}
 </div>
 
+<!-- Nos llevamos el estilo a styles.css. Solo dejamos lo del hover aquí por comodidad. -->
 <style>
-.transition-hover {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-.transition-hover:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
-}
+.transition-hover { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+.transition-hover:hover { transform: translateY(-4px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
 </style>
 {% endblock %}
