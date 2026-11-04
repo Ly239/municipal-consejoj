@@ -364,9 +364,14 @@ class CategoryDeleteView(CanEditHomeMixin, DeleteView):
     success_url = reverse_lazy('core:manage_categories_frontend')
     def delete(self, request, *args, **kwargs):
         try:
+
+            # 1. Intentamos borrar primero
+            response = super().delete(request, *args, **kwargs)
+            # 2. Si no explotó, mostramos el éxito
             messages.success(request, 'Categoría eliminada.')
-            return super().delete(request, *args, **kwargs)
+            return response
         except ProtectedError: 
+            # 3. Si explotó por relación, mostramos el error amigable
             messages.error(request, "No puedes eliminar esta categoría porque tiene noticias asignadas.")
             return redirect(self.success_url)
 
@@ -407,15 +412,21 @@ class CommissionUpdateView(CanEditHomeMixin, UpdateView):
     template_name = 'core/generic_form.html'
     success_url = reverse_lazy('core:commission_admin_list')
 
+
 class CommissionDeleteView(CanEditHomeMixin, DeleteView):
     model = Commission
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:commission_admin_list')
+
     def delete(self, request, *args, **kwargs):
         try:
-            messages.success(request, 'Comisión eliminada.')
-            return super().delete(request, *args, **kwargs)
-        except ProtectedError: 
+            # 1. Intentamos borrar primero
+            response = super().delete(request, *args, **kwargs)
+            # 2. Si no explotó, mostramos el éxito
+            messages.success(request, 'Comisión eliminada correctamente.')
+            return response
+        except ProtectedError:
+            # 3. Si explotó por relación, mostramos el error amigable
             messages.error(request, "No puedes eliminar esta comisión porque tiene miembros asignados.")
             return redirect(self.success_url)
 
@@ -466,11 +477,16 @@ class CouncilorDeleteView(CanEditHomeMixin, DeleteView):
     success_url = reverse_lazy('core:councilor_list')
     def delete(self, request, *args, **kwargs):
         try:
+            # 1. Intentamos borrar primero
+            response = super().delete(request, *args, **kwargs)
+             # 2. Si no explotó, mostramos el éxito
             messages.success(request, 'Concejal eliminado.')
-            return super().delete(request, *args, **kwargs)
-        except ProtectedError: 
+            return response
+        except ProtectedError:
+            # 3. Si explotó por relación, mostramos el error amigable 
             messages.error(request, "No puedes eliminar este concejal porque pertenece a una comisión activa.")
             return redirect(self.success_url)
+
 
 
 # ============================================================
