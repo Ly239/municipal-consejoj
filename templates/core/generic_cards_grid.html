@@ -45,10 +45,52 @@
                                                 <i class="fas fa-trash-alt"></i>
                                             </a>
                                         {% endif %}
+                                    
+
+                                         <!-- Si la tarjeta es una Legislatura, mostramos el botón del Modal -->
+                                        {% if object.members.exists %}
+                                            <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-3 mt-2" data-bs-toggle="modal" data-bs-target="#modalLegislatura{{ object.pk }}">
+                                                <i class="bi bi-people-fill me-1"></i> Ver Legisladores
+                                            </button>
+
+                                            <!--  El Modal con los datos reales -->
+                                            <div class="modal fade" id="modalLegislatura{{ object.pk }}" tabindex="-1" aria-hidden="true">
+                                                <div class="modal-dialog modal-dialog-centered">
+                                                    <div class="modal-content border-0 rounded-4 shadow">
+                                                        <div class="modal-header bg-primary text-white border-0">
+                                                            <h5 class="modal-title"><i class="bi bi-bank me-2"></i> {{ object.title }}</h5>
+                                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                    
+                                                        <div class="modal-body p-4">
+                                                            <p class="text-muted small mb-3">
+                                                            <strong>Alcalde(sa) de ese período:</strong> {{ object.mayor }}
+                                                            </p>
+                                                            <hr>
+                                                            <h6 class="fw-bold mb-3">Miembros del Concejo:</h6>
+                                                        
+                                                        <ul class="list-group list-group-flush">
+                                            
+                                                            {% for member in object.members.all %}
+                                                                <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                                                    <span><i class="bi bi-person-fill text-secondary me-2"></i>{{ member.name }}</span>
+                                                                    <span class="badge bg-secondary rounded-pill">{{ member.party }}</span>
+                                                                </li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+
+
                                     </div>
                                 </div>
                             {% endif %}
                         {% endif %}
+
+
 
                         <!-- Imagen de la tarjeta (si existe) -->
                         {% if object.image %}
