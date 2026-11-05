@@ -437,13 +437,29 @@ class CommissionDeleteView(CanEditHomeMixin, DeleteView):
 
 class CouncilorListView(ListView):
     model = Councilor
-    template_name = 'core/generic_cards_grid.html'
-    context_object_name = 'object_list'
-    def get_queryset(self): return Councilor.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('order')
+    template_name = 'core/councilors.html' 
+    context_object_name = 'councilors'     
+
+    def get_queryset(self):
+        return Councilor.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED)
+
     def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx.update({'page_title': 'Concejales', 'detail_url_name': 'core:councilor_detail', 'detail_btn_label': 'Ver Perfil'})
-        return ctx
+        context = super().get_context_data(**kwargs)
+        qs = self.get_queryset()
+
+        # Separación por jerarquía usando el campo author (Cargo)
+        context['presidente'] = qs.filter(author='Presidente').first()
+        context['vicepresidente'] = qs.filter(author='Vicepresidente').first()
+        
+        # Los concejales se ordenan alfabéticamente por su nombre
+        context['concejales'] = qs.filter(author='Concejal').order_by('title') 
+        
+        # Síndico y Secretaria (usamos filter en lugar de first para permitir varios si los hay)
+        context['sindico'] = qs.filter(author='Síndico Procurador')
+        context['secretario'] = qs.filter(author='Secretario(a)')
+
+        return context
+
 
 class CouncilorDetailView(DetailView):
     model = Councilor

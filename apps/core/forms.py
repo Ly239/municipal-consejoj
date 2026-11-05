@@ -119,17 +119,42 @@ class DownloadableForm(PublicableForm):
             'year': forms.TextInput(attrs={'placeholder': 'Ej. 2026'}),
         }
 
+
 class CouncilorForm(PublicableForm):
+    CARGOS = [
+        ('Presidente', 'Presidente'),
+        ('Vicepresidente', 'Vicepresidente'),
+        ('Concejal', 'Concejal'),
+        ('Síndico Procurador', 'Síndico Procurador'),
+        ('Secretario(a)', 'Secretario(a)'),
+    ]
+    
+    author = forms.ChoiceField(choices=CARGOS, label="Cargo", widget=forms.Select(attrs={'class': 'form-select'}))
+
     class Meta:
         model = Councilor
         fields = ['title', 'author', 'summary', 'content', 'image', 'social_media_url']
         widgets = {
             'title': forms.TextInput(attrs={'placeholder': 'Nombre completo'}),
-            'author': forms.TextInput(attrs={'placeholder': 'Cargo (Ej. Presidente)'}),
-            'summary': forms.Textarea(attrs={'rows': 2}),
-            'content': forms.Textarea(attrs={'rows': 5}),
-            'social_media_url': forms.URLInput(attrs={'placeholder': 'https://...'}),
+            'summary': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Resumen para la tarjeta pública'}),
+            'content': forms.Textarea(attrs={'rows': 5, 'placeholder': 'Trayectoria o perfil completo'}),
+            'image': forms.ClearableFileInput(),
+            'social_media_url': forms.URLInput(attrs={'placeholder': 'https://instagram.com/...'}),
         }
+
+    def clean_author(self):
+        """Valida que no existan cargos únicos duplicados."""
+        author = self.cleaned_data.get('author')
+        
+        # Validamos que solo haya un Presidente, un Vice y un Secretario(a)
+        if author in ['Presidente', 'Vicepresidente', 'Secretario(a)']:
+            # Buscamos si ya existe alguien con ese cargo (excluyendo el actual si estamos editando)
+            exists = Councilor.objects.filter(author=author, is_active=True).exclude(pk=self.instance.pk).exists()
+            if exists:
+                raise forms.ValidationError(f"Ya existe un {author} registrado. Si deseas cambiarlo, edita el registro anterior.")
+        
+        return author
+
 
 class CategoryForm(BaseBootstrapForm):
     class Meta:
