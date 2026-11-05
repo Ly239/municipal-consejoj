@@ -471,6 +471,29 @@ class CouncilorDetailView(DetailView):
         ctx.update({'sidebar_title': 'Otros Concejales', 'recent_items': Councilor.objects.filter(is_active=True).exclude(pk=self.object.pk)[:4], 'back_url': reverse_lazy('core:councilor_list'), 'detail_url_name': 'core:councilor_detail'})
         return ctx
 
+
+class CouncilorManageView(CanEditHomeMixin, ListView):
+    model = Councilor
+    template_name = 'core/generic_admin_list.html'
+    context_object_name = 'object_list'
+    def get_queryset(self):
+        qs = Councilor.objects.all().order_by('author')
+        q = self.request.GET.get('q', '').strip()
+        if q: qs = qs.filter(title__icontains=q)
+        return qs
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            'page_title': 'Gestión de Concejales', 
+            'header_icon': 'bi-person-badge', 
+            'create_url': 'core:councilor_create', 
+            'update_url_name': 'core:councilor_update', 
+            'delete_url_name': 'core:councilor_delete',
+            'search_url': reverse_lazy('core:manage_councilors')
+        })
+        return ctx
+
+
 class CouncilorCreateView(CanEditHomeMixin, CreateView):
     model = Councilor
     form_class = CouncilorForm
@@ -524,6 +547,29 @@ class LegislatureCreateView(CanEditHomeMixin, CreateView):
     form_class = LegislatureForm
     template_name = 'core/generic_form.html'
     success_url = reverse_lazy('core:legislature_list')
+
+
+class LegislatureManageView(CanEditHomeMixin, ListView):
+    model = Legislature
+    template_name = 'core/generic_admin_list.html'
+    context_object_name = 'object_list'
+    def get_queryset(self):
+        qs = Legislature.objects.all().order_by('-order')
+        q = self.request.GET.get('q', '').strip()
+        if q: qs = qs.filter(roman_id__icontains=q)
+        return qs
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            'page_title': 'Gestión de Legislaturas', 
+            'header_icon': 'bi-bank', 
+            'create_url': 'core:legislature_create', 
+            'update_url_name': 'core:legislature_update', 
+            'delete_url_name': 'core:legislature_delete',
+            'search_url': reverse_lazy('core:manage_legislatures')
+        })
+        return ctx
+
 
 class LegislatureUpdateView(CanEditHomeMixin, UpdateView):
     model = Legislature

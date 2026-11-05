@@ -62,6 +62,7 @@ urlpatterns = [
     # ============================================================
     path('concejales/', views.CouncilorListView.as_view(), name='councilor_list'),
     path('concejales/<int:pk>/', views.CouncilorDetailView.as_view(), name='councilor_detail'),
+    path('gestion/concejales/', views.CouncilorManageView.as_view(), name='manage_councilors'),
     path('gestion/concejales/crear/', views.CouncilorCreateView.as_view(), name='councilor_create'),
     path('gestion/concejales/editar/<int:pk>/', views.CouncilorUpdateView.as_view(), name='councilor_update'),
     path('gestion/concejales/eliminar/<int:pk>/', views.CouncilorDeleteView.as_view(), name='councilor_delete'),
@@ -70,6 +71,7 @@ urlpatterns = [
     # 6. MÓDULO DE LEGISLATURAS HISTÓRICAS
     # ============================================================
     path('legislaturas/', views.LegislatureListView.as_view(), name='legislature_list'),
+    path('gestion/legislaturas/', views.LegislatureManageView.as_view(), name='manage_legislatures'),
     path('gestion/legislaturas/crear/', views.LegislatureCreateView.as_view(), name='legislature_create'),
     path('gestion/legislaturas/editar/<int:pk>/', views.LegislatureUpdateView.as_view(), name='legislature_update'),
     path('gestion/legislaturas/eliminar/<int:pk>/', views.LegislatureDeleteView.as_view(), name='legislature_delete'),
