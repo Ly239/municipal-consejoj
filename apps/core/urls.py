@@ -41,7 +41,7 @@ urlpatterns = [
     # 3. MÓDULO DE CRÓNICAS MUNICIPALES
     # ============================================================
     path('cronicas/', views.ChronicleListView.as_view(), name='chronicle_public_list'),
-    path('cronicas/<slug:slug>/', views.ChronicleDetailView.as_view(), name='chronicle_detail'),
+    path('cronicas/<int:pk>/', views.ChronicleDetailView.as_view(), name='chronicle_detail'),
     path('gestion/cronicas/', views.ChronicleManageView.as_view(), name='manage_chronicles'),
     path('gestion/cronicas/crear/', views.ChronicleCreateView.as_view(), name='create_chronicle'),
     path('gestion/cronicas/editar/<int:pk>/', views.ChronicleUpdateView.as_view(), name='edit_chronicle'),
@@ -61,7 +61,7 @@ urlpatterns = [
     # 5. MÓDULO DE CONCEJALES Y DIRECTIVA
     # ============================================================
     path('concejales/', views.CouncilorListView.as_view(), name='councilor_list'),
-    path('concejales/<slug:slug>/', views.CouncilorDetailView.as_view(), name='councilor_detail'),
+    path('concejales/<int:pk>/', views.CouncilorDetailView.as_view(), name='councilor_detail'),
     path('gestion/concejales/crear/', views.CouncilorCreateView.as_view(), name='councilor_create'),
     path('gestion/concejales/editar/<int:pk>/', views.CouncilorUpdateView.as_view(), name='councilor_update'),
     path('gestion/concejales/eliminar/<int:pk>/', views.CouncilorDeleteView.as_view(), name='councilor_delete'),

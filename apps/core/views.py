@@ -280,12 +280,12 @@ class ChronicleDetailView(DetailView):
     model = Chronicle
     template_name = 'core/generic_detail.html'
     context_object_name = 'object'
-    slug_field = 'slug'
-    slug_url_kwarg = 'slug'
+  
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx.update({'sidebar_title': 'Otras Crónicas', 'recent_items': Chronicle.objects.filter(is_active=True).exclude(pk=self.object.pk)[:3], 'back_url': reverse_lazy('core:chronicle_public_list'), 'detail_url_name': 'core:chronicle_detail'})
         return ctx
+
 
 class ChronicleManageView(CanEditHomeMixin, ListView):
     model = Chronicle
@@ -465,8 +465,7 @@ class CouncilorDetailView(DetailView):
     model = Councilor
     template_name = 'core/generic_detail.html'
     context_object_name = 'object'
-    slug_field = 'slug'
-    slug_url_kwarg = 'slug'
+   
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx.update({'sidebar_title': 'Otros Concejales', 'recent_items': Councilor.objects.filter(is_active=True).exclude(pk=self.object.pk)[:4], 'back_url': reverse_lazy('core:councilor_list'), 'detail_url_name': 'core:councilor_detail'})
