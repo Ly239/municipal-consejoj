@@ -756,12 +756,27 @@ class EventDeleteView(CanEditHomeMixin, DeleteView):
 
 
 # --- DESCARGABLES ---
+
 class DownloadableListView(ListView):
     model = Downloadable
     template_name = 'core/generic_cards_grid.html'
     context_object_name = 'object_list'
-    extra_context = {'page_title': 'Descargables', 'detail_btn_label': 'Descargar PDF'}
-    def get_queryset(self): return Downloadable.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-created_at')
+    
+    def get_queryset(self):
+        qs = Downloadable.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-created_at')
+        q = self.request.GET.get('q', '').strip()
+        if q: qs = qs.filter(title__icontains=q)
+        return qs
+        
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            'page_title': 'Descargables', 
+            'detail_btn_label': 'Descargar PDF',
+            'search_url': reverse_lazy('core:downloadable_list') #  Buscador para el público
+        })
+        return ctx
+
 
 class DownloadableManageView(CanEditHomeMixin, ListView):
     model = Downloadable
@@ -776,6 +791,7 @@ class DownloadableManageView(CanEditHomeMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         ctx.update({'page_title': 'Gestión de Descargables', 'header_icon': 'bi-file-earmark-arrow-down', 'create_url': 'core:downloadable_create', 'update_url_name': 'core:downloadable_update', 'delete_url_name': 'core:delete_downloadable'})
         return ctx
+
 
 class DownloadableCreateView(CanEditHomeMixin, CreateView):
     model = Downloadable
@@ -829,9 +845,15 @@ class ActivityManageView(CanEditHomeMixin, ListView):
         q = self.request.GET.get('q', '').strip()
         if q: qs = qs.filter(title__icontains=q)
         return qs
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx.update({'page_title': 'Gestión de Actividades', 'header_icon': 'bi-activity', 'detail_url_name': 'core:activity_detail'})
+        ctx.update({
+            'page_title': 'Gestión de Actividades', 
+            'header_icon': 'bi-activity', 
+            'detail_url_name': 'core:activity_detail',
+            'search_url': reverse_lazy('core:manage_activities') # Buscador
+        })
         return ctx
 
 
