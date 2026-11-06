@@ -74,13 +74,13 @@ class EventForm(PublicableForm):
             'summary': forms.Textarea(attrs={'rows': 2}),
             'content': forms.Textarea(attrs={'rows': 5}),
         }
-    #def clean(self):
-       # cleaned_data = super().clean()
-       # start, end = cleaned_data.get('start_date'), cleaned_data.get('end_date')
-       # if start and end and end < start:
-           #raise ValidationError("La fecha de finalización no puede ser anterior a la de inicio.")
-        #return cleaned_data
 
+    def clean(self):
+        cleaned_data = super().clean()
+        start, end = cleaned_data.get('start_date'), cleaned_data.get('end_date')
+        if start and end and end < start:
+            raise ValidationError("La fecha de finalización no puede ser anterior a la de inicio.")
+        return cleaned_data
 
 
 class AnnouncementForm(PublicableForm):
