@@ -10,9 +10,8 @@
             <strong>RUBIO ES ENCANTO Y CAFÉ</strong>
         </span>
         <div>
-            <a href="#" style="color: #003B4F; margin-left: 12px; text-decoration: none;" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-            <a href="#" style="color: #003B4F; margin-left: 12px; text-decoration: none;" aria-label="X"><i class="fab fa-x-twitter"></i></a>
-            <a href="#" style="color: #003B4F; margin-left: 12px; text-decoration: none;" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+            <a href="https://www.facebook.com/concejomunicipaljunin1/" target="_blank" rel="noopener noreferrer" style="color: #003B4F; margin-left: 12px; text-decoration: none;" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+            <a href="https://www.instagram.com/concejomunicipaljunin/" target="_blank" rel="noopener noreferrer" style="color: #003B4F; margin-left: 12px; text-decoration: none;" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
         </div>
     </div>
 </div>
@@ -88,9 +87,18 @@
                     <i class="fas fa-sign-out-alt"></i>
                 </a>
             {% else %}
-                <a href="{% url 'users:login' %}" class="btn btn-corporate btn-sm" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                    Iniciar Sesión
+                
+               
+                <!-- ACCESO ADMINISTRATIVO DISCRETO (Candado Mimetizado) -->
+                <a href="{% url 'users:login' %}" 
+                   style="color: #003B4F; text-decoration: none; padding: 5px 10px; cursor: default; transition: none; display: inline-block; border: 1px dashed rgba(0, 59, 79, 0.3); border-radius: 4px; text-align: center; line-height: 1;" 
+                   aria-label="Acceso Interno">
+                    <!-- Este SVG dibuja el candado plano exacto de tu referencia y hereda tu color corporativo -->
+                    <svg xmlns="http://w3.org" viewBox="0 0 448 512" style="width: 16px; height: 16px; fill: currentColor; vertical-align: middle;">
+                        <path d="M144 144v48H304V144c0-44.2-35.8-80-80-80s-80 35.8-80 80zM80 192V144C80 64.5 144.5 0 224 0s144 64.5 144 144v48h16c35.3 0 64 28.7 64 64V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V256c0-35.3 28.7-64 64-64H80z"/>
+                    </svg>
                 </a>
+    
             {% endif %}
         </div>
     </div>
