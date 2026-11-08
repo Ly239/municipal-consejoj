@@ -558,8 +558,13 @@ class LegislatureManageView(CanEditHomeMixin, ListView):
         q = self.request.GET.get('q', '').strip()
         if q: qs = qs.filter(roman_id__icontains=q)
         return qs
+        
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        # Inyectamos el título virtual para que la tabla no explote
+        for leg in ctx['object_list']: 
+            leg.title = f"Legislatura {leg.roman_id} ({leg.years})" 
+            
         ctx.update({
             'page_title': 'Gestión de Legislaturas', 
             'header_icon': 'bi-bank', 

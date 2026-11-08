@@ -63,7 +63,7 @@
                                         <img src="{{ item.image.url }}" class="rounded me-3" style="width: 42px; height: 42px; object-fit: cover;" alt="">
                                     {% endif %}
                                     <div>
-                                        <span class="fw-semibold text-dark d-block">{{ item.title|default:item.name }}</span>
+                                        <span class="fw-semibold text-dark d-block">{{ item.title|default:item }}</span>
                                         {% if item.author %}
                                             <small class="text-muted">Por {{ item.author }}</small>
                                         {% endif %}
