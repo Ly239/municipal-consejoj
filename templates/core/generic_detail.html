@@ -52,8 +52,6 @@
                     {% endif %}
                     {% if object.created_at %}
                         <span class="me-3"><i class="bi bi-calendar-event text-primary"></i> {{ object.created_at|date:"d \d\e F, Y" }}</span>
-                    {% elif object.publication_date %}
-                        <span class="me-3"><i class="bi bi-calendar-event text-primary"></i> {{ object.publication_date|date:"d \d\e F, Y" }}</span>
                     {% endif %}
                     {% if object.category %}
                         <span class="badge bg-secondary-subtle text-dark border ms-2">{{ object.category.name }}</span>
@@ -97,7 +95,7 @@
                         <i class="fas fa-link text-primary fa-2x me-3 align-middle"></i>
                         <span class="fw-bold text-dark">Enlace externo.</span>
                     </div>
-                    <a href="{{ object.social_media_url }}" class="btn btn-outline-primary rounded-pill px-4 shadow-sm" target="_blank">
+                    <a href="{{ object.social_media_url }}" class="btn btn-outline-primary rounded-pill px-4 shadow-sm" target="_blank" rel="noopener noreferrer">
                         <i class="fas fa-external-link-alt me-2"></i> Visitar Enlace
                     </a>
                 </div>
@@ -122,7 +120,7 @@
                     {% for recent in recent_items %}
                         <a href="{% if detail_url_name %}{% url detail_url_name recent.pk %}{% else %}#{% endif %}" class="list-group-item list-group-item-action bg-transparent py-3 px-0 border-bottom">
                             <h6 class="mb-1 fw-bold text-dark">{{ recent.title|default:recent.name }}</h6>
-                            <small class="text-muted"><i class="bi bi-clock me-1"></i> {{ recent.created_at|date:"d M, Y"|default:recent.publication_date|date:"d M, Y" }}</small>
+                            <small class="text-muted"><i class="bi bi-clock me-1"></i> {{ recent.created_at|date:"d M, Y"|default:"—" }}</small>
                         </a>
                     {% empty %}
                         <p class="text-muted small mb-0 py-2">No hay otros registros disponibles en este momento.</p>
