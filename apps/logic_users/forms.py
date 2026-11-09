@@ -55,25 +55,10 @@ class LoginForm(forms.Form):
 
 
 # ------------------------------------------------------------
-# 2. FORMULARIO DE REGISTRO (opcional, para uso futuro)
+# 2. FORMULARIO DE REGISTRO (Administrador)
 # ------------------------------------------------------------
-class RegisterForm(forms.Form):
-    """Formulario para registrar nuevos usuarios (no se usa actualmente)."""
-    username = forms.CharField(
-        label="Nombre de Usuario",
-        max_length=150,
-        widget=forms.TextInput(attrs={
-            'placeholder': 'Define nombre de usuario',
-            'class': 'form-control'
-        })
-    )
-    email = forms.EmailField(
-        label="Correo electrónico",
-        widget=forms.EmailInput(attrs={
-            'placeholder': 'tu@gmail.com',
-            'class': 'form-control'
-        })
-    )
+class RegisterForm(forms.ModelForm):
+    """Formulario para registrar nuevos usuarios con validación de cédula y papelera."""
     password = forms.CharField(
         label="Contraseña",
         widget=forms.PasswordInput(attrs={
@@ -89,25 +74,95 @@ class RegisterForm(forms.Form):
         })
     )
 
+    class Meta:
+        model = User
+        fields = ['username', 'id_number', 'first_name', 'last_name', 'email']
+        widgets = {
+            'username': forms.TextInput(attrs={'placeholder': 'Define nombre de usuario', 'class': 'form-control'}),
+            'id_number': forms.TextInput(attrs={'placeholder': 'V-12345678', 'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'placeholder': 'Nombre', 'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'placeholder': 'Apellido', 'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'placeholder': 'tu@gmail.com', 'class': 'form-control'}),
+        }
+
     def clean_username(self):
         username = self.cleaned_data.get('username')
+        if not username:
+            return username
+
+        if len(username) < 4 or len(username) > 20:
+            raise forms.ValidationError("El nombre de usuario debe tener entre 4 y 20 caracteres.")
+        if not re.match(r'^[A-Za-z0-9_]+$', username):
+            raise forms.ValidationError("El nombre de usuario solo puede contener letras, números y guión bajo (_).")
+        
         try:
-            if User.objects.filter(username=username).exists():
-                raise forms.ValidationError("Este nombre de usuario ya está en uso.")
+            existing = User.all_objects.filter(username=username).first()
+            if existing:
+                if existing.is_deleted:
+                    raise forms.ValidationError("Este nombre de usuario ya existe en la papelera. Restáuralo o elimínalo definitivamente.")
+                else:
+                    raise forms.ValidationError("Este nombre de usuario ya está registrado.")
             return username
         except Exception as e:
-            logger.error(f"Error en clean_username: {e}")
+            logger.error(f"Error en clean_username (RegisterForm): {e}")
             raise forms.ValidationError("Error al validar el nombre de usuario.")
+
+    def clean_id_number(self):
+        id_number = self.cleaned_data.get('id_number')
+        if not id_number:
+            raise forms.ValidationError("La cédula de identidad es obligatoria.")
+
+        try:
+            validate_venezuelan_id(id_number)
+        except ValidationError as e:
+            raise e
+        except Exception as e:
+            logger.error(f"Error en clean_id_number (validate): {e}")
+            raise forms.ValidationError("Error al validar la cédula.")
+
+        try:
+            existing = User.all_objects.filter(id_number=id_number).first()
+            if existing:
+                if existing.is_deleted:
+                    raise forms.ValidationError("Esta cédula ya existe en la papelera. Restáurala o elimínala definitivamente.")
+                else:
+                    raise forms.ValidationError("Esta cédula ya está registrada.")
+            return id_number
+        except Exception as e:
+            logger.error(f"Error en clean_id_number (RegisterForm): {e}")
+            raise forms.ValidationError("Error al validar la cédula.")
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
+        if not email:
+            return email
+
         try:
-            if User.objects.filter(email=email).exists():
-                raise forms.ValidationError("Este correo electrónico ya está registrado.")
+            existing = User.all_objects.filter(email=email).first()
+            if existing:
+                if existing.is_deleted:
+                    raise forms.ValidationError("Este correo ya existe en la papelera. Restáuralo o elimínalo definitivamente.")
+                else:
+                    raise forms.ValidationError("Este correo ya está registrado.")
             return email
         except Exception as e:
-            logger.error(f"Error en clean_email: {e}")
+            logger.error(f"Error en clean_email (RegisterForm): {e}")
             raise forms.ValidationError("Error al validar el correo electrónico.")
+
+    def clean_password(self):
+        password = self.cleaned_data.get('password')
+        if not password:
+            return password
+
+        if len(password) < 8 or len(password) > 15:
+            raise forms.ValidationError("La contraseña debe tener entre 8 y 15 caracteres.")
+        if not re.search(r'[A-Z]', password):
+            raise forms.ValidationError("La contraseña debe contener al menos una letra mayúscula.")
+        if not re.search(r'\d', password):
+            raise forms.ValidationError("La contraseña debe contener al menos un número.")
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+            raise forms.ValidationError("La contraseña debe contener al menos un carácter especial (ej: !@#$%^&*).")
+        return password
 
     def clean(self):
         cleaned_data = super().clean()
@@ -117,6 +172,14 @@ class RegisterForm(forms.Form):
             self.add_error('password_confirm', "Las contraseñas no coinciden.")
         return cleaned_data
 
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        password = self.cleaned_data.get("password")
+        if password:
+            user.set_password(password)
+        if commit:
+            user.save()
+        return user
 
 # ------------------------------------------------------------
 # 3. FORMULARIO DE CAMBIO DE USUARIO (para el admin)

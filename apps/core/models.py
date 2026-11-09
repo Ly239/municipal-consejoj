@@ -224,6 +224,8 @@ class BaseContent(TimestampedMixin, models.Model):
 
     class Meta:
         # ordering usa created_at (campo real) — publication_date es property.
+        
+        app_label = 'core'
         ordering = ['order', '-created_at']
         verbose_name = "Contenido del Home"
         verbose_name_plural = "Contenidos del Home"

@@ -1,0 +1,208 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Historia y Símbolos del Municipio Junín - Portal Institucional{% endblock %}
+
+{% block content %}
+<!-- Estilos embebidos directamente para evitar problemas con el base.html -->
+<style>
+  .history-card {
+    border: none;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .history-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  }
+  .symbol-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+    transition: all 0.3s ease;
+  }
+  .symbol-card:hover {
+    border-color: #3b82f6;
+    background: #ffffff;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  }
+  .img-placeholder {
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px dashed #cbd5e1;
+    background-color: #f1f5f9;
+  }
+  .reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+  .reveal-on-scroll.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+
+<div class="container py-5" style="margin-top: 30px; margin-bottom: 60px;">
+    
+    <!-- Hero / Encabezado Institucional -->
+    <div class="row justify-content-center mb-5 reveal-on-scroll">
+        <div class="col-lg-10 text-center">
+            <span class="badge px-3 py-2 mb-3 shadow-sm" style="background-color: var(--color-light-blue); color: var(--color-dark-blue); font-weight: 600;">
+                <i class="fas fa-landmark me-1"></i> Patrimonio, Identidad y Territorio
+            </span>
+            <h1 class="fw-bold display-5 mb-3" style="color: var(--color-dark-blue);">Historia y Símbolos del Municipio Junín</h1>
+            <p class="text-muted lead px-md-4">
+                Reseña histórica del origen del territorio, el legado cafetalero de la Hacienda La Victoria, los símbolos municipales y la estructura geopolítica de Rubio.
+            </p>
+            <hr class="w-25 mx-auto mt-4" style="border-top: 3px solid var(--color-light-blue); opacity: 1;">
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            
+            <!-- 1. Orígenes, Don Gervasio Rubio y la Hacienda La Victoria -->
+            <div class="card history-card mb-4 p-4 p-md-5 reveal-on-scroll" style="border-left: 6px solid var(--color-dark-blue) !important;">
+                <h3 class="h4 fw-bold mb-3" style="color: var(--color-dark-blue);">
+                    <i class="fas fa-seedling me-2" style="color: var(--color-light-blue);"></i> Fundación y la Histórica Hacienda "La Victoria"
+                </h3>
+                <p class="text-secondary" style="line-height: 1.8;">
+                    Los orígenes poblacionales del municipio se remontan a finales del siglo XVIII, cuando <strong>Don Gervasio Rubio</strong> adquirió las tierras de la emblemática <em>Hacienda La Victoria</em> en 1794. Alrededor de este asentamiento agrícola y con la donación de los terrenos para la iglesia principal y la plaza, se comenzó a articular el poblado que más tarde adoptaría el nombre de Rubio en honor a su fundador.
+                </p>
+                <div class="my-3 text-center">
+                    <img src="{% static 'images/history/hacienda_la_victoria.jpg' %}" alt="Hacienda La Victoria" class="img-fluid img-placeholder" onerror="this.style.display='none';">
+                    <small class="text-muted d-block mt-1"><em>Figura 1: Representación de la Hacienda La Victoria / Orígenes de Rubio.</em></small>
+                </div>
+            </div>
+
+            <!-- 2. El Auge Cafetalero -->
+            <div class="card history-card mb-4 p-4 p-md-5 reveal-on-scroll" style="border-left: 6px solid var(--color-light-blue) !important;">
+                <h3 class="h4 fw-bold mb-3" style="color: var(--color-dark-blue);">
+                    <i class="fas fa-coffee me-2" style="color: var(--color-dark-blue);"></i> El Auge Cafetalero y la Cuna del Café Venezolano
+                </h3>
+                <p class="text-secondary" style="line-height: 1.8;">
+                    Durante el siglo XIX y principios del XX, el valle de Rubio se consolidó como el motor principal de la producción agroexportadora de café en Venezuela. La calidad del grano cultivado en las haciendas juninenses no solo abasteció el mercado nacional, sino que abrió vías comerciales internacionales hacia Europa y Norteamérica. Este florecimiento económico impulsó el tendido de vías de transporte, trillas mecanizadas y estructuras arquitectónicas que marcaron la época de oro del municipio.
+                </p>
+                <div class="my-3 text-center">
+                    <img src="{% static 'images/history/auge_cafetalero.jpg' %}" alt="Auge Cafetalero en Junín" class="img-fluid img-placeholder" onerror="this.style.display='none';">
+                    <small class="text-muted d-block mt-1"><em>Figura 2: Trilladoras y cultivo tradicional del café en Junín.</em></small>
+                </div>
+            </div>
+
+            <!-- 3. Consolidación Político-Territorial (1899) y "Ciudad de los Puentes" -->
+            <div class="card history-card mb-4 p-4 p-md-5 reveal-on-scroll" style="border-left: 6px solid var(--color-dark-blue) !important;">
+                <h3 class="h4 fw-bold mb-3" style="color: var(--color-dark-blue);">
+                    <i class="fas fa-archway me-2" style="color: var(--color-light-blue);"></i> Evolución Territorial (1899) y la "Ciudad de los Puentes"
+                </h3>
+                <p class="text-secondary" style="line-height: 1.8;">
+                    En 1899 se formalizó la creación del Distrito Junín, honrando el histórico combate independentista. Su geografía montañosa, dividida por múltiples ríos y quebradas (como el río Carapo), exigió la construcción de puentes de calicanto y metálicos para interconectar los sectores urbanos y agrícolas, ganándole entrañablemente el título de la <strong>"Ciudad de los Puentes"</strong>.
+                </p>
+            </div>
+
+            <!-- 4. Símbolos Patrios y Naturales del Municipio -->
+            <div class="card history-card mb-5 p-4 p-md-5 reveal-on-scroll" style="border-left: 6px solid var(--color-light-blue) !important;">
+                <h3 class="h4 fw-bold mb-4" style="color: var(--color-dark-blue);">
+                    <i class="fas fa-flag me-2" style="color: var(--color-dark-blue);"></i> Símbolos Patrios y Emblemas Naturales
+                </h3>
+                
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="symbol-card p-3 h-100 text-center">
+                            <img src="{% static 'images/symbols/escudo_junin.png' %}" alt="Escudo de Junín" class="img-fluid mb-2" style="max-height: 120px;" onerror="this.src='https://via.placeholder.com/120?text=Escudo+Junin';">
+                            <h5 class="fw-bold text-dark mt-2">Escudo de Armas</h5>
+                            <p class="text-secondary small mb-0">Representa la victoria de la gesta independentista, la riqueza cafetalera y la sobriedad edilicia del municipio.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="symbol-card p-3 h-100 text-center">
+                            <img src="{% static 'images/symbols/bandera_junin.png' %}" alt="Bandera de Junín" class="img-fluid mb-2" style="max-height: 120px;" onerror="this.src='https://via.placeholder.com/120?text=Bandera+Junin';">
+                            <h5 class="fw-bold text-dark mt-2">Bandera Municipal</h5>
+                            <p class="text-secondary small mb-0">Sus franjas y colores exaltan la abundancia de los ríos, la fertilidad de las montañas y la cultura de paz.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="symbol-card p-3 h-100 text-center py-4">
+                            <i class="fas fa-music fa-3x text-primary mb-2"></i>
+                            <h5 class="fw-bold text-dark mt-2">Himno del Municipio Junín</h5>
+                            <p class="text-secondary small mb-0">Lírica solemne que rinde tributo al esfuerzo de los agricultores, la memoria de Gervasio Rubio y el civismo juninense.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="symbol-card p-3 h-100 text-center">
+                            <img src="{% static 'images/symbols/emblema_natural.png' %}" alt="Símbolos Naturales" class="img-fluid mb-2" style="max-height: 120px;" onerror="this.src='https://via.placeholder.com/120?text=Simbolo+Natural';">
+                            <h5 class="fw-bold text-dark mt-2">Símbolos Naturales</h5>
+                            <p class="text-secondary small mb-0">La flora autóctona del piedemonte andino y las especies de aves que adornan el ecosistema cordillerano.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. División Geopolítica y Mapa del Municipio -->
+            <div class="card history-card mb-5 p-4 p-md-5 reveal-on-scroll" style="border-left: 6px solid var(--color-dark-blue) !important;">
+                <h3 class="h4 fw-bold mb-3" style="color: var(--color-dark-blue);">
+                    <i class="fas fa-map-marked-alt me-2" style="color: var(--color-light-blue);"></i> Geopolítica y División Territorial
+                </h3>
+                
+                <div class="my-4 text-center">
+                    <img src="{% static 'images/maps/mapa_municipio_junin.png' %}" alt="Mapa Político del Municipio Junín" class="img-fluid img-placeholder" style="max-height: 400px;" onerror="this.src='https://via.placeholder.com/800x400?text=Mapa+Division+Territorial+Municipio+Junin';">
+                    <small class="text-muted d-block mt-2"><em>Mapa 1: Delimitación parroquial y territorial del Municipio Junín.</em></small>
+                </div>
+
+                <div class="p-4 rounded border bg-light mt-3">
+                    <h5 class="fw-bold text-dark mb-3"><i class="fas fa-info-circle text-primary me-2"></i>Ficha de Organización Territorial</h5>
+                    <ul class="list-unstyled text-secondary mb-0" style="line-height: 1.8;">
+                        <li><strong>Capital Municipal:</strong> Rubio (Asiento de los Poderes Públicos Municipales y Concejo Municipal).</li>
+                        <li><strong>Parroquias que lo Integran:</strong>
+                            <ul class="mb-0">
+                                <li><strong>Parroquia Capital Rubio:</strong> Centro político, comercial e histórico del municipio.</li>
+                                <li><strong>Parroquia Bramón:</strong> Eje cafetalero histórico y centro agroindustrial.</li>
+                                <li><strong>Parroquia Quinimarí:</strong> Zona caracterizada por su producción agrícola y belleza natural.</li>
+                                <li><strong>Parroquia La Petrólea:</strong> Referencia histórica de los primeros yacimientos petroleros del país.</li>
+                            </ul>
+                        </li>
+                        <li class="mt-2"><strong>Sectores y Comunidades Relevantes:</strong> Las Cumbres, Cuatricenario, Santa Bárbara, Kilómetro 5, Matanzas, La Victoria y los valles agrícolas periféricos.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Botón de Retorno -->
+            <div class="text-center mt-5 reveal-on-scroll">
+                <a href="{% url 'core:home' %}" class="btn btn-corporate-filled px-4 py-2 shadow-sm">
+                    <i class="fas fa-arrow-left me-2"></i> Volver al Inicio
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Script nativo embebido para las animaciones -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.reveal-on-scroll').forEach(el => {
+      observer.observe(el);
+    });
+  });
+</script>
+{% endblock %}

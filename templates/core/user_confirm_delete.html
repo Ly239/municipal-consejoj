@@ -1,0 +1,7 @@
+{% extends 'core/delete_base.html' %}
+
+{% block delete_title %}Usuario{% endblock %}
+{% block breadcrumb_list %}Usuarios{% endblock %}
+{% block back_url %}{% url 'users:user_list' %}{% endblock %}
+{% block cancel_url %}{% url 'users:user_list' %}{% endblock %}
+{% block delete_icon %}fas fa-user-times{% endblock %}

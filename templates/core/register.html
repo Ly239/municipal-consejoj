@@ -1,56 +1,97 @@
-{% extends 'core/base.html' %}
-{% load static %}
+{% extends 'core/form_base.html' %}
 
-{% block title %}Registro - Concejo Municipal de Junín{% endblock %}
+{% block title %}Registrar Usuario - Concejo Municipal de Junín{% endblock %}
 
-{% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card shadow-sm">
-            <div class="card-header bg-success text-white">
-                <h4 class="mb-0"><i class="fas fa-user-plus me-2"></i>Registro de usuario</h4>
-            </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    <!-- Los field errors los renderiza cada form.campo inline -->
-                    {% if form.non_field_errors %}
-                        <div class="alert alert-danger">
-                            <ul class="mb-0">
-                                {% for error in form.non_field_errors %}
-                                <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    {% endif %}
+{% block form_title %}Gestión de Usuarios{% endblock %}
+{% block breadcrumb_list %}Usuarios{% endblock %}
+{% block form_entity %}Usuario{% endblock %}
+{% block form_icon %}fas fa-user-plus{% endblock %}
+{% block form_heading %}Registrar Nuevo Usuario Corporativo{% endblock %}
+{% block form_heading2 %}Nuevo Usuario{% endblock %}
 
+{% block back_url %}{% url 'users:user_list' %}{% endblock %}
+{% block volver_url %}{% url 'users:user_list' %}{% endblock %}
+{% block cancel_url %}{% url 'users:user_list' %}{% endblock %}
 
-                    <div class="mb-3">
-                        {{ form.username.label_tag }}
-                        {{ form.username }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form.email.label_tag }}
-                        {{ form.email }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form.password.label_tag }}
-                        {{ form.password }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form.password_confirm.label_tag }}
-                        {{ form.password_confirm }}
-                    </div>
-                    <button type="submit" class="btn btn-success w-100">
-                        <i class="fas fa-user-check me-2"></i>Registrarse
-                    </button>
-                </form>
-                <hr>
-                <p class="text-center mb-0">
-                    <small>¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión aquí</a></small>
-                </p>
-            </div>
-        </div>
+{% block form_fields %}
+  <div class="alert alert-info py-2 mb-4" style="border-left: 4px solid var(--color-dark-blue);">
+    <i class="fas fa-shield-alt me-1"></i>
+    <strong>Registro Administrativo:</strong> Crea la cuenta corporativa del usuario. Posteriormente podrás asignarle su rol específico (Grupo) desde el panel de edición.
+  </div>
+
+  <div class="row g-3">
+    <!-- Cédula de Identidad -->
+    <div class="col-md-6">
+      <label for="{{ form.id_number.id_for_label }}" class="form-label fw-bold">
+        Cédula de Identidad <span class="text-danger">*</span>
+      </label>
+      {{ form.id_number }}
+      {% if form.id_number.help_text %}
+        <div class="form-text text-muted small">{{ form.id_number.help_text }}</div>
+      {% endif %}
+      {% if form.id_number.errors %}
+        <div class="text-danger small mt-1">{{ form.id_number.errors.0 }}</div>
+      {% endif %}
     </div>
-</div>
+
+    <!-- Nombre de Usuario -->
+    <div class="col-md-6">
+      <label for="{{ form.username.id_for_label }}" class="form-label fw-bold">
+        Nombre de Usuario <span class="text-danger">*</span>
+      </label>
+      {{ form.username }}
+      {% if form.username.errors %}
+        <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Nombres -->
+    <div class="col-md-6">
+      <label for="{{ form.first_name.id_for_label }}" class="form-label fw-bold">Nombres</label>
+      {{ form.first_name }}
+      {% if form.first_name.errors %}
+        <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Apellidos -->
+    <div class="col-md-6">
+      <label for="{{ form.last_name.id_for_label }}" class="form-label fw-bold">Apellidos</label>
+      {{ form.last_name }}
+      {% if form.last_name.errors %}
+        <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Correo Electrónico -->
+    <div class="col-12">
+      <label for="{{ form.email.id_for_label }}" class="form-label fw-bold">Correo Electrónico</label>
+      {{ form.email }}
+      {% if form.email.errors %}
+        <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Contraseña -->
+    <div class="col-md-6">
+      <label for="{{ form.password.id_for_label }}" class="form-label fw-bold">
+        Contraseña <span class="text-danger">*</span>
+      </label>
+      {{ form.password }}
+      {% if form.password.errors %}
+        <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Confirmar Contraseña -->
+    <div class="col-md-6">
+      <label for="{{ form.password_confirm.id_for_label }}" class="form-label fw-bold">
+        Confirmar Contraseña <span class="text-danger">*</span>
+      </label>
+      {{ form.password_confirm }}
+      {% if form.password_confirm.errors %}
+        <div class="text-danger small mt-1">{{ form.password_confirm.errors.0 }}</div>
+      {% endif %}
+    </div>
+  </div>
 {% endblock %}

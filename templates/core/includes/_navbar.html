@@ -70,14 +70,14 @@
                 {% endif %}
 
                 <!-- Usuario y Cierre de Sesión -->
-                <a href="{% url 'profile' %}" class="btn btn-outline-dark btn-sm rounded-pill px-3 text-truncate" style="max-width: 130px;" title="{{ user.username }}">
+                <a href="{% url 'users:profile' %}" class="btn btn-outline-dark btn-sm rounded-pill px-3 text-truncate" style="max-width: 130px;" title="{{ user.username }}">
                     <i class="fas fa-user me-1"></i> {{ user.username }}
                 </a>
-                <a href="{% url 'logout' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3" title="Cerrar Sesión">
+                <a href="{% url 'users:logout' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3" title="Cerrar Sesión">
                     <i class="fas fa-sign-out-alt"></i>
                 </a>
             {% else %}
-                <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-semibold" style="border-color: #003B4F; color: #003B4F;">
+                <a href="{% url 'users:login' %}" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-semibold" style="border-color: #003B4F; color: #003B4F;">
                     Iniciar Sesión
                 </a>
             {% endif %}

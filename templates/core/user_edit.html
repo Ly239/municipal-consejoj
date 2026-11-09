@@ -1,0 +1,57 @@
+{% extends 'core/form_base.html' %}
+
+{% block title %}Editar Usuario - Concejo Municipal de Junín{% endblock %}
+
+{% block form_title %}Usuario{% endblock %}
+{% block breadcrumb_list %}Usuarios{% endblock %}
+{% block form_entity %}Usuario{% endblock %}
+{% block form_icon %}fas fa-user-edit{% endblock %}
+{% block form_heading %}Editar Usuario: {{ object.username }}{% endblock %}
+{% block form_heading2 %}Editar Usuario{% endblock %}
+
+{% block back_url %}{% url 'users:user_list' %}{% endblock %}
+{% block volver_url %}{% url 'users:user_list' %}{% endblock %}
+{% block cancel_url %}{% url 'users:user_list' %}{% endblock %}
+
+{% block form_fields %}
+  <!-- Información de solo lectura -->
+  <div class="alert alert-info py-2">
+    <i class="fas fa-info-circle me-1"></i>
+    Los datos personales solo pueden ser modificados por el propio usuario desde su perfil. 
+    Acá solo puedes cambiar el <strong>rol</strong> y el <strong>estado de la cuenta</strong>.
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label fw-bold">Usuario</label>
+    <input type="text" class="form-control" value="{{ object.username }}" disabled>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label fw-bold">Cédula</label>
+    <input type="text" class="form-control" value="{{ object.id_number }}" disabled>
+  </div>
+
+  <div class="mb-3">
+    <label for="id_rol" class="form-label fw-bold">Rol del usuario</label>
+    <select name="rol" id="id_rol" class="form-select">
+      {% for group in role_choices %}
+        <option value="{{ group.name }}"
+          {% for g in object.groups.all %}
+            {% if g.name == group.name %}selected{% endif %}
+          {% endfor %}>
+          {{ group.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="mb-3 form-check">
+    {{ form.is_active }}
+    <label class="form-check-label fw-bold" for="{{ form.is_active.id_for_label }}">
+      ¿Usuario activo? (Permite iniciar sesión)
+    </label>
+    {% if form.is_active.errors %}
+      <div class="text-danger small">{{ form.is_active.errors }}</div>
+    {% endif %}
+  </div>
+{% endblock %}

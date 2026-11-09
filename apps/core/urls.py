@@ -16,6 +16,7 @@ limitations under the License.
 
 from django.urls import path
 from . import views
+from .views import MunicipalHistoryView
 
 app_name = 'core'
 
@@ -135,4 +136,12 @@ urlpatterns = [
     # ============================================================
     path('gestion/quienes-somos/', views.AboutUsManageView.as_view(), name='manage_about_us'),
     path('gestion/quienes-somos/editar/', views.AboutUsUpdateView.as_view(), name='about_us_update'),
+
+ # ============================================================
+    # 14. MÓDULO HISTORIA MUNICIPAL
+    # ============================================================
+
+
+    path('historia-municipal/', MunicipalHistoryView.as_view(), name='municipal_history'),
+
 ]

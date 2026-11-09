@@ -33,3 +33,9 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+#=========================================#
+# Manejador de errores #
+#=========================================#
+handler404 = 'django.views.defaults.page_not_found'
+handler303 = 'django.views.defaults.permission_denied' # Opcional para el 403
