@@ -26,6 +26,19 @@
                     <div class="slide-content">
                         <h1>{{ news.title }}</h1>
                         
+                       
+                        <!--  Validamos si la imagen viene de BD (tiene .url) o del diccionario (es un string) -->
+                        {% if news.image %}
+                            {% if news.image.url %}
+                                <div class="hero-slide" style="background-image: url('{{ news.image.url }}');">
+                            {% else %}
+                                <div class="hero-slide" style="background-image: url('{{ news.image }}');">
+                            {% endif %}
+                        {% else %}
+                            <div class="hero-slide" style="background-image: url('{% static 'core/img/default_consejo.jpg' %}');">
+                        {% endif %}
+                       
+                        
                         <!-- FECHA (Nuevo bloque) -->
                         <div class="news-meta">
                             <span><i class="fas fa-calendar-alt"></i>{{ news.date }}</span>
