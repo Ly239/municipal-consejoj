@@ -23,9 +23,6 @@
         <div class="carousel-item {% if forloop.first %}active{% endif %}">
             <a href="{% url 'core:news_detail_frontend' news.id %}" class="text-decoration-none d-block">
                 <div class="hero-slide" style="background-image: url('{{ news.image }}');">
-                    <div class="slide-content">
-                        <h1>{{ news.title }}</h1>
-                        
                        
                         <!--  Validamos si la imagen viene de BD (tiene .url) o del diccionario (es un string) -->
                         {% if news.image %}
@@ -39,6 +36,9 @@
                         {% endif %}
                        
                         
+                     <div class="slide-content">
+                        <h1>{{ news.title }}</h1>
+                                
                         <!-- FECHA (Nuevo bloque) -->
                         <div class="news-meta">
                             <span><i class="fas fa-calendar-alt"></i>{{ news.date }}</span>
