@@ -146,13 +146,15 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
 def _format_spanish_date(value):
     """
-    Devuelve una fecha en español (ej. '9 de noviembre de 2026'),
+    Devuelve una fecha en español (ej. '9 de noviembre de 2026 a las 5:50 p.m.').
     sin importar el idioma configurado en settings.LANGUAGE_CODE.
     """
     if timezone.is_aware(value):
         value = timezone.localtime(value)
     with translation.override('es'):
-        return date_format(value, 'j \\d\\e F \\d\\e Y')
+        # Agregamos el formato de hora: \a \l\a\s (a las) g:i a (5:50 p.m.)
+        return date_format(value, 'j \\d\\e F \\d\\e Y \\a \\l\\a\\s g:i a')
+
 
 
 def _build_slide(news):
