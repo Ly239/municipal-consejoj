@@ -9,42 +9,33 @@
 
 <!-- ============================================ -->
 <!-- 1. HERO CARRUSEL (Estilo El Hatillo)        -->
+<!--    Datos: carousel_slides (lista uniforme    -->
+<!--    armada en HomeView, sea de BD o respaldo) -->
 <!-- ============================================ -->
 <div id="heroCarousel" class="carousel slide hero-carousel" data-bs-ride="carousel">
     <div class="carousel-indicators">
-        {% for news in news_list|slice:":3" %}
-        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ forloop.counter0 }}" 
-                class="{% if forloop.first %}active{% endif %}"></button>
+        {% for slide in carousel_slides %}
+        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ forloop.counter0 }}"
+                class="{% if forloop.first %}active{% endif %}" aria-label="Noticia {{ forloop.counter }}"></button>
         {% endfor %}
     </div>
 
     <div class="carousel-inner">
-        {% for news in news_list|slice:":3" %}
+        {% for slide in carousel_slides %}
         <div class="carousel-item {% if forloop.first %}active{% endif %}">
-            <a href="{% url 'core:news_detail_frontend' news.id %}" class="text-decoration-none d-block">
-                <div class="hero-slide" style="background-image: url('{{ news.image }}');">
-                       
-                        <!--  Validamos si la imagen viene de BD (tiene .url) o del diccionario (es un string) -->
-                        {% if news.image %}
-                            {% if news.image.url %}
-                                <div class="hero-slide" style="background-image: url('{{ news.image.url }}');">
-                            {% else %}
-                                <div class="hero-slide" style="background-image: url('{{ news.image }}');">
-                            {% endif %}
-                        {% else %}
-                            <div class="hero-slide" style="background-image: url('{% static 'core/img/default_consejo.jpg' %}');">
-                        {% endif %}
-                       
-                        
-                     <div class="slide-content">
-                        <h1>{{ news.title }}</h1>
-                                
-                        <!-- FECHA (Nuevo bloque) -->
+            <a href="{% url 'core:news_detail_frontend' slide.id %}" class="text-decoration-none d-block">
+                <!-- UN SOLO contenedor hero-slide por diapositiva -->
+                <div class="hero-slide"
+                     style="background-image: url('{% if slide.image_url %}{{ slide.image_url }}{% else %}{% static 'core/img/default_consejo.jpg' %}{% endif %}');">
+                    <div class="slide-content">
+                        <h1>{{ slide.title }}</h1>
+
+                        <!-- FECHA (ya viene formateada desde la vista) -->
                         <div class="news-meta">
-                            <span><i class="fas fa-calendar-alt"></i>{{ news.date }}</span>
+                            <span><i class="fas fa-calendar-alt"></i>{{ slide.date }}</span>
                         </div>
-                        
-                        <p>{{ news.description|truncatechars:120 }}</p>
+
+                        <p>{{ slide.description|truncatechars:120 }}</p>
                         <span class="btn-hero">Leer más <i class="fas fa-arrow-right ms-2"></i></span>
                     </div>
                 </div>
@@ -53,12 +44,14 @@
         {% endfor %}
     </div>
 
+    {% if carousel_slides|length > 1 %}
     <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
     </button>
     <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
         <span class="carousel-control-next-icon" aria-hidden="true"></span>
     </button>
+    {% endif %}
 </div>
 
 <!-- ============================================ -->
@@ -130,7 +123,7 @@
             <!-- PUNTO DE INTEGRACIÓN DE ROLES: Aquí el usuario con rol de Crónicas puede acceder a gestionar -->
             <!-- TODO: if request.user.is_authenticated and request.user.has_perm('core.can_manage_chronicles') -->
         </div>
-        
+
         <div class="row g-4">
             {% for chronicle in chronicles %}
             <div class="col-md-4">
@@ -253,7 +246,7 @@
 <!-- ============================================ -->
 <div id="documents" class="documents-section mt-5">
     <h2 class="documents-header"><i class="fas fa-folder-open me-2"></i>Documentos del Concejo</h2>
-    
+
     <!-- Buscador visual -->
     <div class="downloads-search mt-3" style="max-width: 500px;">
         <i class="fas fa-search"></i>

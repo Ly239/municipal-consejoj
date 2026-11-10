@@ -30,6 +30,9 @@ from django.views.generic import (
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import Http404
+from django.utils import timezone, translation
+from django.utils.formats import date_format
+from django.utils.html import strip_tags
 
 # Apps externas
 from documents.models import Document, Gazette
@@ -137,23 +140,92 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         return context
 
 
+# ============================================================
+# PORTAL PÚBLICO
+# ============================================================
+
+def _format_spanish_date(value):
+    """
+    Devuelve una fecha en español (ej. '9 de noviembre de 2026'),
+    sin importar el idioma configurado en settings.LANGUAGE_CODE.
+    """
+    if timezone.is_aware(value):
+        value = timezone.localtime(value)
+    with translation.override('es'):
+        return date_format(value, 'j \\d\\e F \\d\\e Y')
+
+
+def _build_slide(news):
+    """
+    Convierte UNA noticia en un diccionario con las mismas claves,
+    venga de la base de datos (objeto News) o de los datos de respaldo
+    (diccionario NEWS_DATA). Así la plantilla no necesita condicionales.
+
+    Claves devueltas: id, title, description, image_url, date
+    """
+    # Caso 1: dato estático de respaldo (ya trae la fecha formateada)
+    if isinstance(news, dict):
+        return {
+            'id': news['id'],
+            'title': news['title'],
+            'description': news['description'],
+            'image_url': news.get('image', ''),
+            'date': news['date'],
+        }
+
+    # Caso 2: noticia real de la base de datos
+    # La imagen es un ImageField: se usa .url (si no hay archivo, queda vacío
+    # y la plantilla mostrará la imagen por defecto).
+    image_url = news.image.url if news.image else ''
+    text = strip_tags(news.summary or news.content or '')
+    return {
+        'id': news.pk,
+        'title': news.title,
+        'description': text,
+        'image_url': image_url,
+        'date': _format_spanish_date(news.created_at),  # created_at, no publication_date
+    }
+
+
 class HomeView(TemplateView):
     template_name = 'core/home.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        # Red de seguridad: el carrusel SIEMPRE tiene diapositivas,
+        # aunque algo falle más abajo.
+        context['carousel_slides'] = [_build_slide(n) for n in NEWS_DATA]
+
         try:
-            carousel = News.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-created_at')[:3]
-            context['carousel_news'] = carousel if carousel.exists() else NEWS_DATA
-            news_qs = News.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-created_at')
-            context['news_list'] = news_qs[:3] if news_qs.exists() else NEWS_DATA
-            context['chronicles'] = Chronicle.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-created_at')[:3]
-            context['consultations'] = Consultation.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-start_date')[:3]
-            context['councilors'] = Councilor.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('order')
-            context['documentos_destacados'] = Document.objects.select_related('gazette', 'document_type').order_by('-emission_date')[:2]
+            published_news = News.objects.filter(
+                is_active=True, status=BaseContent.Status.PUBLISHED
+            ).order_by('-created_at')
+
+            # UNA sola consulta (antes: exists() + slice = dos consultas)
+            latest = list(published_news[:3])
+            if latest:
+                context['carousel_slides'] = [_build_slide(n) for n in latest]
+
+            # Se mantiene por compatibilidad con otras partes del Home
+            context['news_list'] = latest if latest else NEWS_DATA
+
+            context['chronicles'] = Chronicle.objects.filter(
+                is_active=True, status=BaseContent.Status.PUBLISHED
+            ).order_by('-created_at')[:3]
+            context['consultations'] = Consultation.objects.filter(
+                is_active=True, status=BaseContent.Status.PUBLISHED
+            ).order_by('-start_date')[:3]
+            context['councilors'] = Councilor.objects.filter(
+                is_active=True, status=BaseContent.Status.PUBLISHED
+            ).order_by('order')
+            context['documentos_destacados'] = Document.objects.select_related(
+                'gazette', 'document_type'
+            ).order_by('-emission_date')[:2]
         except Exception as e:
             logger.error(f"Error Home: {e}")
         return context
+
 
 
 class AboutUsView(TemplateView):
