@@ -170,8 +170,27 @@ class CategoryForm(BaseBootstrapForm):
 class CommissionForm(BaseBootstrapForm):
     class Meta:
         model = Commission
-        #  Agregamos las 3 FKs para que salgan en el desplegable
+        # Agregamos las 3 FKs para que salgan en el desplegable
         fields = ['number', 'name', 'description', 'image', 'president', 'vice_president', 'vocal'] 
+
+    def clean(self):
+        """Valida que un mismo concejal no ocupe más de un cargo en la misma comisión."""
+        cleaned_data = super().clean()
+        president = cleaned_data.get('president')
+        vice_president = cleaned_data.get('vice_president')
+        vocal = cleaned_data.get('vocal')
+
+        # Validaciones cruzadas
+        if president and vice_president and president == vice_president:
+            self.add_error('vice_president', "El vicepresidente no puede ser la misma persona que el presidente.")
+        
+        if president and vocal and president == vocal:
+            self.add_error('vocal', "El vocal no puede ser la misma persona que el presidente.")
+        
+        if vice_president and vocal and vice_president == vocal:
+            self.add_error('vocal', "El vocal no puede ser la misma persona que el vicepresidente.")
+
+        return cleaned_data
 
 
 
