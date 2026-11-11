@@ -25,6 +25,23 @@ class SoftDeleteMixin(models.Model):
     class Meta:
         abstract = True
 
+
+    # Limpieza de archivos al actualizar
+    def save(self, *args, **kwargs):
+        if self.pk:
+            try:
+                old_obj = self.__class__.all_objects.get(pk=self.pk)
+                for field in self._meta.get_fields():
+                    if isinstance(field, (models.FileField, models.ImageField)):
+                        old_file = getattr(old_obj, field.name, None)
+                        new_file = getattr(self, field.name, None)
+                        if old_file and old_file.name and old_file != new_file:
+                            old_file.delete(save=False)
+            except self.__class__.DoesNotExist:
+                pass
+        super().save(*args, **kwargs)
+
+
     def soft_delete(self):
         """Marca el registro como borrado (borrado suave)."""
         self.deleted_at = timezone.now()
@@ -40,9 +57,18 @@ class SoftDeleteMixin(models.Model):
         self.deleted_at = timezone.now()
         self.save(using=using)
 
+
     def hard_delete(self, using=None, keep_parents=False):
-        """Borrado físico real (permanente). Usar con precaución."""
+        """Borrado físico real (permanente).
+        Limpia archivos adjuntos antes de borrar la fila para no dejar
+        archivos huérfanos ocupando disco (Django NO los borra por defecto)."""
+        for field in self._meta.get_fields():
+            if isinstance(field, (models.FileField, models.ImageField)):
+                file = getattr(self, field.name, None)
+                if file and file.name:
+                    file.delete(save=False)
         super().delete(using=using, keep_parents=keep_parents)
+
 
     @property
     def is_deleted(self):
@@ -64,6 +90,7 @@ class ActiveManager(models.Manager):
     """Manager que devuelve solo objetos NO borrados suavemente (deleted_at is None)."""
     def get_queryset(self):
         return super().get_queryset().filter(deleted_at__isnull=True)
+
 
 
 # ------------------------------------------------------------------------

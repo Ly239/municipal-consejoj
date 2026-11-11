@@ -7,12 +7,19 @@
 {% block page_title %}Documentos{% endblock %}
 {% block page_subtitle %}Gestión de documentos legales del Concejo Municipal{% endblock %}
 
-{% block create_button %}
-<a href="{% url 'documents:document_create' %}" class="btn btn-primary btn-sm">
-  <i class="fas fa-plus"></i> Nuevo Documento
+
+{% block header_actions %}
+<a href="{% url 'documents:document_export_excel' %}?{{ request.GET.urlencode }}"
+   class="btn btn-corporate btn-sm me-2">
+    <i class="fas fa-file-excel"></i> Exportar Excel
 </a>
 {% endblock %}
 
+{% block create_button %}
+<a href="{% url 'documents:document_create' %}" class="btn btn-corporate-filled btn-sm">
+  <i class="fas fa-plus"></i> Nuevo Documento
+</a>
+{% endblock %}
 
 {% block toolbar %}
 <div class="card shadow-sm border-0 mb-4">
@@ -120,17 +127,26 @@
           </span>
         {% endif %}
 
+
         {% if request.GET.doc_type %}
-          <span class="badge rounded-pill me-1" style="background-color: var(--color-light-blue); color: white;">
-            Tipo aplicado
+          <span class="badge rounded-pill me-1" style="background-color: var(--color-light-blue); color: white;">Tipo:
+            {% for type in document_types %}
+              {% if type.id|stringformat:"s" == request.GET.doc_type %}{{ type.name }}{% endif %}
+            {% endfor %}
           </span>
         {% endif %}
 
+
         {% if request.GET.status %}
-          <span class="badge rounded-pill me-1" style="background-color: var(--color-light-blue); color: white;">
-            Estado: {{ request.GET.status }}
+          <span class="badge rounded-pill me-1" style="background-color: var(--color-light-blue); color: white;">Estado:
+            {% if request.GET.status == "approved" %}
+            Aprobado
+            {% elif request.GET.status == "pending" %}Pendiente
+            {% elif request.GET.status == "annulled" %}Anulado
+            {% endif %}
           </span>
         {% endif %}
+
 
         {% if request.GET.date_from %}
           <span class="badge rounded-pill me-1" style="background-color: var(--color-light-blue); color: white;">

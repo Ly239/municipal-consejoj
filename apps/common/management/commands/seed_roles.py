@@ -39,6 +39,7 @@ class Command(BaseCommand):
 
     def assign_permissions(self):
         """Asigna permisos a cada grupo según su rol."""
+
         # ------------------------------------------------------------
         # 1. GRUPO EMPLOYEE (Personal de secretaría)
         # ------------------------------------------------------------
@@ -52,7 +53,7 @@ class Command(BaseCommand):
                 'soft_delete_document',
             ]
         )
-        employee_group.permissions.add(*employee_perms)
+        employee_group.permissions.set(employee_perms)
         self.stdout.write(self.style.SUCCESS(
             f'✅ {GROUP_EMPLOYEE} tiene {employee_group.permissions.count()} permisos.'
         ))
@@ -63,22 +64,21 @@ class Command(BaseCommand):
         admin_group = Group.objects.get(name=GROUP_ADMINISTRATOR)
         admin_perms = Permission.objects.filter(
             codename__in=[
-                'add_document', 'change_document', 'view_document',
-                'delete_document',
-                'soft_delete_document',
-                'restore_document',      # ✅ Restaurar desde papelera
-                'add_gazette', 'change_gazette', 'view_gazette',
-                'delete_gazette',
-                'soft_delete_gazette',
-                'restore_gazette',
-                'view_documenttype',
-                'view_issuingentity',
-                'can_approve_document',
-                'can_reject_document',
-                'can_manage_users',
+                # Documentos
+                'add_document', 'change_document', 'view_document', 'delete_document',
+                'soft_delete_document', 'restore_document',
+                # Gacetas
+                'add_gazette', 'change_gazette', 'view_gazette', 'delete_gazette',
+                'soft_delete_gazette', 'restore_gazette',
+                # Catálogos
+                'view_documenttype', 'view_issuingentity',
+                # Custom (documentos y usuarios)
+                'can_approve_document', 'can_reject_document', 'can_manage_users',
+                # Custom (core / Home)
+                'can_edit_home',
             ]
         )
-        admin_group.permissions.add(*admin_perms)
+        admin_group.permissions.set(admin_perms)
         self.stdout.write(self.style.SUCCESS(
             f'✅ {GROUP_ADMINISTRATOR} tiene {admin_group.permissions.count()} permisos.'
         ))
@@ -93,7 +93,7 @@ class Command(BaseCommand):
                 'view_gazette',
             ]
         )
-        viewer_group.permissions.add(*viewer_perms)
+        viewer_group.permissions.set(viewer_perms)
         self.stdout.write(self.style.SUCCESS(
             f'✅ {GROUP_VIEWER} tiene {viewer_group.permissions.count()} permisos.'
         ))
@@ -102,7 +102,12 @@ class Command(BaseCommand):
         # 4. GRUPO CONTENT_MANAGER (Gestor de contenido del Home)
         # ------------------------------------------------------------
         content_group = Group.objects.get(name=GROUP_CONTENT_MANAGER)
-        # Pendiente de permisos (modelos de core no creados aún)
+        content_perms = Permission.objects.filter(
+            codename__in=[
+                'can_edit_home',
+            ]
+        )
+        content_group.permissions.set(content_perms)
         self.stdout.write(self.style.SUCCESS(
-            f'✅ {GROUP_CONTENT_MANAGER} pendiente de permisos (modelos de core no creados aún).'
+            f'✅ {GROUP_CONTENT_MANAGER} tiene {content_group.permissions.count()} permisos.'
         ))

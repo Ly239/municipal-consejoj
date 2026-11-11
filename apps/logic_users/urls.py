@@ -11,6 +11,8 @@ from .views import (
 
 app_name = 'users'
 
+app_name = 'users' 
+
 urlpatterns = [
     # Rutas de autenticación y perfil existentes
     path('login/', UserLoginView.as_view(), name='login'),

@@ -1,0 +1,71 @@
+{% load static %}
+{% load groups %}
+{% load trash_tags %}
+
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+
+      <!-- BOTÓN VOLVER (Con respaldo si no hay historial) -->
+    {% if request.resolver_match.url_name != 'core:home' and request.resolver_match.url_name != 'core:dashboard' %}
+    <a href="#" onclick="if (history.length > 1) { history.back(); } else { window.location.href = '{% url 'documents:document_list' %}'; }" class="btn btn-outline-secondary btn-sm me-3" title="Volver" style="border-radius: 50px; border: 1px solid #003B4F; color: #003B4F;">
+      <i class="fas fa-arrow-left"></i>
+    </a>
+    {% endif %}
+
+
+    <!-- LOGO -->
+    <a class="navbar-brand" href="{% url 'core:home' %}">
+      <img src="{% static 'core/img/logo_concejo.jpg' %}" alt="Concejo" style="height: 45px;">
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+      <!-- CAMBIO 1: Añadido gap-lg-3 para que los enlaces respiren y no se amontonen en pantallas medianas -->
+      <ul class="navbar-nav gap-lg-3">
+        <li class="nav-item"><a class="nav-link active" href="{% url 'core:home' %}">Inicio</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'documents:document_list' %}">Documentos</a></li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'documents:gazette_list' %}">
+            <i class="fas fa-book me-1"></i>Gacetas
+          </a>
+        </li>
+        <!-- ============================================ -->
+        <!-- 🗑️ PAPELERA (solo Superadmin, Administrator y Employee) -->
+        <!-- ============================================ -->
+        {% if user.is_authenticated %}
+          {% if user.is_superuser or user|has_group:"Administrator" or user|has_group:"Employee" %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'common:trash_list' %}" title="Papelera de reciclaje" style="color: #003B4F;">
+                <i class="fas fa-trash-alt me-1"></i>Papelera
+                {% with count=trash_count %}
+                  {% if count > 0 %}
+                    <span class="badge bg-danger rounded-pill ms-1">{{ count }}</span>
+                  {% endif %}
+                {% endwith %}
+              </a>
+            </li>
+          {% endif %}
+        {% endif %}
+      </ul>
+    </div>
+
+    <!-- CAMBIO 2: Añadido ms-lg-3 y align-items-center para separar los botones del menú y centrarlos verticalmente -->
+    <div class="d-flex gap-2 align-items-center ms-lg-3">
+      {% if user.is_authenticated %}
+        <!-- CAMBIO 3: Añadido max-width y truncado para que el nombre de usuario largo no rompa el botón -->
+        <a href="{% url 'users:profile' %}" class="btn btn-corporate-filled btn-sm" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          <i class="fas fa-user me-1"></i>{{ user.username }}
+        </a>
+        <a href="{% url 'users:logout' %}" class="btn btn-corporate-filled btn-sm">
+          <i class="fas fa-sign-out-alt me-1"></i>Salir
+        </a>
+      {% else %}
+        <a href="{% url 'users:login' %}" class="btn btn-nav-outline">Iniciar Sesión</a>
+        
+      {% endif %}
+    </div>
+  </div>
+</nav>

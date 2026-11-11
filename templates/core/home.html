@@ -9,29 +9,33 @@
 
 <!-- ============================================ -->
 <!-- 1. HERO CARRUSEL (Estilo El Hatillo)        -->
+<!--    Datos: carousel_slides (lista uniforme    -->
+<!--    armada en HomeView, sea de BD o respaldo) -->
 <!-- ============================================ -->
 <div id="heroCarousel" class="carousel slide hero-carousel" data-bs-ride="carousel">
     <div class="carousel-indicators">
-        {% for news in news_list|slice:":3" %}
-        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ forloop.counter0 }}" 
-                class="{% if forloop.first %}active{% endif %}"></button>
+        {% for slide in carousel_slides %}
+        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ forloop.counter0 }}"
+                class="{% if forloop.first %}active{% endif %}" aria-label="Noticia {{ forloop.counter }}"></button>
         {% endfor %}
     </div>
 
     <div class="carousel-inner">
-        {% for news in news_list|slice:":3" %}
+        {% for slide in carousel_slides %}
         <div class="carousel-item {% if forloop.first %}active{% endif %}">
-            <a href="{% url 'core:news_detail_frontend' news.id %}" class="text-decoration-none d-block">
-                <div class="hero-slide" style="background-image: url('{{ news.image }}');">
+            <a href="{% url 'core:news_detail_frontend' slide.id %}" class="text-decoration-none d-block">
+                <!-- UN SOLO contenedor hero-slide por diapositiva -->
+                <div class="hero-slide"
+                     style="background-image: url('{% if slide.image_url %}{{ slide.image_url }}{% else %}{% static 'core/img/default_consejo.jpg' %}{% endif %}');">
                     <div class="slide-content">
-                        <h1>{{ news.title }}</h1>
-                        
-                        <!-- FECHA (Nuevo bloque) -->
+                        <h1>{{ slide.title }}</h1>
+
+                        <!-- FECHA (ya viene formateada desde la vista) -->
                         <div class="news-meta">
-                            <span><i class="fas fa-calendar-alt"></i>{{ news.date }}</span>
+                            <span><i class="fas fa-calendar-alt me-1"></i>{{ slide.date }}</span>
                         </div>
-                        
-                        <p>{{ news.description|truncatechars:120 }}</p>
+
+                        <p>{{ slide.description|truncatechars:120 }}</p>
                         <span class="btn-hero">Leer más <i class="fas fa-arrow-right ms-2"></i></span>
                     </div>
                 </div>
@@ -40,12 +44,14 @@
         {% endfor %}
     </div>
 
+    {% if carousel_slides|length > 1 %}
     <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
     </button>
     <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
         <span class="carousel-control-next-icon" aria-hidden="true"></span>
     </button>
+    {% endif %}
 </div>
 
 <!-- ============================================ -->
@@ -117,7 +123,7 @@
             <!-- PUNTO DE INTEGRACIÓN DE ROLES: Aquí el usuario con rol de Crónicas puede acceder a gestionar -->
             <!-- TODO: if request.user.is_authenticated and request.user.has_perm('core.can_manage_chronicles') -->
         </div>
-        
+
         <div class="row g-4">
             {% for chronicle in chronicles %}
             <div class="col-md-4">
@@ -126,7 +132,7 @@
                     <img src="{{ chronicle.image.url }}" class="card-img-top rounded mb-3" style="height: 160px; object-fit: cover;" alt="{{ chronicle.title }}">
                     {% endif %}
                     <div class="card-body p-0 d-flex flex-column">
-                        <small class="text-muted d-block mb-1"><i class="fas fa-calendar-alt me-1" style="color: var(--color-light-blue);"></i> {{ chronicle.publication_date|date:"d M, Y" }}</small>
+                        <small class="text-muted d-block mb-1"><i class="fas fa-calendar-alt me-1" style="color: var(--color-light-blue);"></i> {{ chronicle.created_at|date:"d M, Y" }}</small>
                         <h5 class="fw-bold mb-2" style="color: var(--color-dark-blue);">{{ chronicle.title }}</h5>
                         <p class="text-muted small mb-3 flex-grow-1">{{ chronicle.content|truncatechars:90 }}</p>
                         <a href="#" class="btn btn-sm btn-outline-primary rounded-pill align-self-start" style="border-color: var(--color-dark-blue); color: var(--color-dark-blue);">Leer crónica</a>
@@ -240,7 +246,7 @@
 <!-- ============================================ -->
 <div id="documents" class="documents-section mt-5">
     <h2 class="documents-header"><i class="fas fa-folder-open me-2"></i>Documentos del Concejo</h2>
-    
+
     <!-- Buscador visual -->
     <div class="downloads-search mt-3" style="max-width: 500px;">
         <i class="fas fa-search"></i>

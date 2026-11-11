@@ -9,21 +9,36 @@
 {% block page_subtitle %}Gacetas municipales publicadas{% endblock %}
 {% block table_title %}Listado de Gacetas{% endblock %}
 
+
+{% block header_actions %}
+<div class="btn-group btn-group-sm me-2" role="group" aria-label="Filtro por tipo">
+    <a href="{% url 'documents:gazette_list' %}"
+       class="btn btn-corporate btn-sm {% if not request.GET.tipo %}active{% endif %}">
+        Todas
+    </a>
+    <a href="{% url 'documents:gazette_list' %}?tipo=ordinaria"
+       class="btn btn-corporate btn-sm {% if request.GET.tipo == 'ordinaria' %}active{% endif %}">
+        Ordinarias
+    </a>
+    <a href="{% url 'documents:gazette_list' %}?tipo=extraordinaria"
+       class="btn btn-corporate btn-sm {% if request.GET.tipo == 'extraordinaria' %}active{% endif %}">
+        Extraordinarias
+    </a>
+</div>
+<a href="{% url 'documents:gazette_export_excel' %}?{{ request.GET.urlencode }}"
+   class="btn btn-corporate btn-sm me-2">
+    <i class="fas fa-file-excel"></i> Exportar Excel
+</a>
+{% endblock %}
+
 {% block create_button %}
-<a href="{% url 'documents:gazette_create' %}" class="btn btn-primary btn-sm">
+<a href="{% url 'documents:gazette_create' %}" class="btn btn-corporate-filled btn-sm">
   <i class="fas fa-plus"></i> Nueva Gaceta
 </a>
 {% endblock %}
 
+
 {% block table_content %}
-<!-- Breadcrumb de navegación -->
-<nav aria-label="breadcrumb" class="mb-3">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'core:home' %}"><i class="fas fa-home"></i> Inicio</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Gestión</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Gacetas</li>
-    </ol>
-</nav>
 
 {% if object_list %}
 <div class="table-responsive">

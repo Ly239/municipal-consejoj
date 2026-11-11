@@ -10,16 +10,22 @@
             <strong>RUBIO ES ENCANTO Y CAFÉ</strong>
         </span>
         <div>
-            <a href="#" style="color: #003B4F; margin-left: 12px; text-decoration: none;" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-            <a href="#" style="color: #003B4F; margin-left: 12px; text-decoration: none;" aria-label="X"><i class="fab fa-x-twitter"></i></a>
-            <a href="#" style="color: #003B4F; margin-left: 12px; text-decoration: none;" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+            <a href="https://www.facebook.com/concejomunicipaljunin1/" target="_blank" rel="noopener noreferrer" style="color: #003B4F; margin-left: 12px; text-decoration: none;" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+            <a href="https://www.instagram.com/concejomunicipaljunin/" target="_blank" rel="noopener noreferrer" style="color: #003B4F; margin-left: 12px; text-decoration: none;" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
         </div>
     </div>
 </div>
 
-<!-- NAVBAR PRINCIPAL UNIFICADO -->
+<!-- NAVBAR PUBLICO  -->
 <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm">
     <div class="container">
+
+        <!-- BOTÓN VOLVER (Con respaldo si no hay historial) -->
+        {% if request.resolver_match.url_name != 'core:home' and request.resolver_match.url_name != 'core:dashboard' %}
+            <a href="#" onclick="if (history.length > 1) { history.back(); } else { window.location.href = '{% url 'documents:document_list' %}'; }" class="btn btn-outline-secondary btn-sm me-3" title="Volver" style="border-radius: 50px; border: 1px solid #003B4F; color: #003B4F;">
+            <i class="fas fa-arrow-left"></i>
+            </a>
+        {% endif %}
 
         <!-- LOGO INSTITUCIONAL -->
         <a class="navbar-brand" href="{% url 'core:home' %}">
@@ -38,7 +44,7 @@
                 <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{% url 'core:home' %}">Inicio</a></li>
                 <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{% url 'core:news_public_list_frontend' %}">Noticias</a></li>
                 <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{% url 'core:councilor_list' %}">Concejales</a></li>
-                <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{% url 'documents:document_list' %}">Documentos</a></li>
+                <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{% url 'core:home' %}#documents">Documentos</a></li>
                 <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{% url 'core:chronicle_public_list' %}">Crónicas</a></li>
                 <li class="nav-item"><a class="nav-link fw-semibold text-dark" href="{% url 'core:about_us' %}">Sobre Nosotros</a></li>
             </ul>
@@ -49,8 +55,12 @@
             {% if user.is_authenticated %}
                 <!-- Evaluamos los roles de manera segura con el simple_tag -->
                 {% has_group user "Administrator" as is_admin %}
+                
                 {% has_group user "ContentManager" as is_content_manager %}
+                
                 {% has_group user "Employee" as is_employee %}
+
+                {% has_group user "Viewer" as is_viewer %}
 
                 <!-- Papelera (Solo roles operativos autorizados) -->
                 {% if user.is_superuser or is_admin or is_employee %}
@@ -63,23 +73,32 @@
                 {% endif %}
 
                 <!-- Acceso al Panel de Gestión (Operadores y Administradores) -->
-                {% if user.is_superuser or is_admin or is_content_manager or is_employee %}
-                    <a href="{% url 'core:dashboard' %}" class="btn btn-sm rounded-pill px-3 text-dark fw-bold" style="background-color: #0AB1D4;">
+                {% if user.is_superuser or is_admin or is_content_manager or is_employee or is_viewer %}
+                    <a href="{% url 'core:dashboard' %}" class="btn btn-corporate-filled btn-sm" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                         <i class="fas fa-tachometer-alt me-1"></i> Gestión
                     </a>
                 {% endif %}
 
                 <!-- Usuario y Cierre de Sesión -->
-                <a href="{% url 'users:profile' %}" class="btn btn-outline-dark btn-sm rounded-pill px-3 text-truncate" style="max-width: 130px;" title="{{ user.username }}">
+                <a href="{% url 'users:profile' %}" class="btn btn-corporate-filled btn-sm" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                     <i class="fas fa-user me-1"></i> {{ user.username }}
                 </a>
                 <a href="{% url 'users:logout' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3" title="Cerrar Sesión">
                     <i class="fas fa-sign-out-alt"></i>
                 </a>
             {% else %}
-                <a href="{% url 'users:login' %}" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-semibold" style="border-color: #003B4F; color: #003B4F;">
-                    Iniciar Sesión
+                
+               
+                <!-- ACCESO ADMINISTRATIVO DISCRETO (Candado Mimetizado) -->
+                <a href="{% url 'users:login' %}" 
+                   style="color: #003B4F; text-decoration: none; padding: 5px 10px; cursor: default; transition: none; display: inline-block; border: 1px dashed rgba(0, 59, 79, 0.3); border-radius: 4px; text-align: center; line-height: 1;" 
+                   aria-label="Acceso Interno">
+                    <!-- Este SVG dibuja el candado plano exacto de tu referencia y hereda tu color corporativo -->
+                    <svg xmlns="http://w3.org" viewBox="0 0 448 512" style="width: 16px; height: 16px; fill: currentColor; vertical-align: middle;">
+                        <path d="M144 144v48H304V144c0-44.2-35.8-80-80-80s-80 35.8-80 80zM80 192V144C80 64.5 144.5 0 224 0s144 64.5 144 144v48h16c35.3 0 64 28.7 64 64V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V256c0-35.3 28.7-64 64-64H80z"/>
+                    </svg>
                 </a>
+    
             {% endif %}
         </div>
     </div>

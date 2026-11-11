@@ -1,18 +1,31 @@
 """
-Comando para crear permisos de soft delete y restore 
+Comando para crear permisos de soft delete y restore
 para todos los modelos que heredan de SoftDeleteMixin.
+
+— Fix de robustez:
+- Se reemplaza la comparación por string en MRO ('SoftDeleteMixin')
+  por `issubclass(model, SoftDeleteMixin)`. Razón: si alguien renombra
+  la clase en el futuro, la comparación por string falla silenciosamente
+  y los permisos dejan de crearse.
+
+- Se filtra explícitamente por modelos NO abstractos, evitando procesar
+  clases base intermedias.
 """
 from django.core.management.base import BaseCommand
 from django.apps import apps
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 
+from common.models import SoftDeleteMixin   # ← NUEVO: import directo
+
 
 class Command(BaseCommand):
     help = 'Crea permisos de soft delete y restore para modelos con SoftDeleteMixin'
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.MIGRATE_HEADING('Iniciando creación de permisos de Soft Delete...'))
+        self.stdout.write(
+            self.style.MIGRATE_HEADING('Iniciando creación de permisos de Soft Delete...')
+        )
         self.create_softdelete_permissions()
 
     def create_softdelete_permissions(self):
@@ -23,7 +36,9 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING('No se encontraron modelos con SoftDeleteMixin'))
             return
 
-        self.stdout.write(self.style.SUCCESS(f'Encontrados {len(softdelete_models)} modelos con SoftDeleteMixin:'))
+        self.stdout.write(
+            self.style.SUCCESS(f'Encontrados {len(softdelete_models)} modelos con SoftDeleteMixin:')
+        )
         for model in softdelete_models:
             self.stdout.write(f'   • {model._meta.label}')
 
@@ -32,14 +47,20 @@ class Command(BaseCommand):
             created = self.create_model_permissions(model)
             total_created += created
             if created > 0:
-                self.stdout.write(self.style.SUCCESS(f'Permisos creados para: {model._meta.model_name}'))
+                self.stdout.write(
+                    self.style.SUCCESS(f'Permisos creados para: {model._meta.model_name}')
+                )
             else:
-                self.stdout.write(self.style.WARNING(f'Permisos ya existían para: {model._meta.model_name}'))
+                self.stdout.write(
+                    self.style.WARNING(f'Permisos ya existían para: {model._meta.model_name}')
+                )
 
-        self.stdout.write(self.style.SUCCESS(f'Proceso completado. Total de permisos creados: {total_created}'))
+        self.stdout.write(
+            self.style.SUCCESS(f'Proceso completado. Total de permisos creados: {total_created}')
+        )
 
     def get_softdelete_models(self):
-        """Obtiene todos los modelos que heredan de SoftDeleteMixin."""
+        """Obtiene todos los modelos que heredan de SoftDeleteMixin (excluye abstractos)."""
         softdelete_models = []
         for model in apps.get_models():
             if self.is_softdelete_model(model):
@@ -47,11 +68,18 @@ class Command(BaseCommand):
         return softdelete_models
 
     def is_softdelete_model(self, model):
-        """Verifica si un modelo hereda de SoftDeleteMixin."""
-        for base in model.__mro__:
-            if base.__name__ == 'SoftDeleteMixin' and hasattr(model, '_meta'):
-                return True
-        return False
+        """
+        Verifica si un modelo hereda de SoftDeleteMixin.
+
+        Se usa `issubclass` en lugar de comparar por nombre en el MRO.
+        Razón: la comparación por string es frágil — si la clase se renombra
+        en el futuro, el chequeo falla silenciosamente y los permisos
+        dejan de crearse.
+        """
+        return (
+            issubclass(model, SoftDeleteMixin)
+            and not model._meta.abstract
+        )
 
     def create_model_permissions(self, model):
         """

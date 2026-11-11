@@ -46,6 +46,7 @@ class AllUserManager(BaseUserManager):
         return super().get_queryset()
 
 
+
 # ============================================================
 # MODELO DE USUARIO PERSONALIZADO
 # ============================================================
@@ -98,10 +99,18 @@ class User(AbstractUser, TimestampedMixin, SoftDeleteMixin):
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email', 'id_number']
 
+
     class Meta:
         db_table = "users"
         verbose_name = "Usuario"
         verbose_name_plural = "Usuarios"
+
+        # Permiso custom (no existe en el auto de Django).
+        # Se asigna al grupo Administrator en seed_roles.py.
+        permissions = [
+            ('can_manage_users', 'Can manage users'),
+        ]
+
 
     def __str__(self):
         return f"{self.username} ({self.email})"

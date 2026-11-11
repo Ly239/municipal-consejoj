@@ -7,6 +7,7 @@ from django.db import models
 from common.models import BaseModel
 from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator
+from django.core.validators import FileExtensionValidator
 
 #Para capturar errores
 logger = logging.getLogger(__name__)
@@ -167,12 +168,14 @@ class Document(BaseModel):
         upload_to='documents/pdfs/%Y/%m/',
         blank=True,
         null=True,
+        validators=[FileExtensionValidator(allowed_extensions=['pdf'])],
         verbose_name="Archivo PDF"
     )
     image = models.ImageField(
         upload_to='documents/images/%Y/%m/',
         blank=True,
         null=True,
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'webp'])], 
         verbose_name="Imagen"
     )
 
@@ -195,6 +198,15 @@ class Document(BaseModel):
                 check=~models.Q(is_approved=True, is_annulled=True),
                 name="document_no_approved_and_annulled"
             )
+        ]
+
+
+        # Permisos custom (no existen auto en Django).
+        # Django ya crea add/change/delete/view automáticamente.
+        # Estos se asignan al grupo Administrator en seed_roles.py.
+        permissions = [
+            ('can_approve_document', 'Can approve document'),
+            ('can_reject_document', 'Can reject document'),
         ]
 
     def __str__(self):

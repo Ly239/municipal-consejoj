@@ -31,11 +31,15 @@ urlpatterns = [
 ]
 
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Al final del archivo, fuera de la lista urlpatterns:
+# Vista para la template error404:
+def mi_vista_404(request, exception):
+    return render(request, 'template404/404.html', status=404)
 
-#=========================================#
-# Manejador de errores #
-#=========================================#
-handler404 = 'django.views.defaults.page_not_found'
-handler303 = 'django.views.defaults.permission_denied' # Opcional para el 403
+handler404 = 'configs.urls.mi_vista_404'
+
+
+# if settings.DEBUG:
+    # urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

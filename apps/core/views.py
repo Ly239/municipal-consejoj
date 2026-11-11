@@ -14,14 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+# Standard library
 import logging
 from types import SimpleNamespace
 
-from django.shortcuts import render, redirect, get_object_or_404
+# Django
+from django.shortcuts import render, redirect
 from django.db.models import Q, ProtectedError
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.urls import reverse_lazy
 from django.views.generic import (
     TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView
@@ -29,29 +30,24 @@ from django.views.generic import (
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import Http404
+from django.utils import timezone, translation
+from django.utils.formats import date_format
+from django.utils.html import strip_tags
 
-
-# Modelos externos
+# Apps externas
 from documents.models import Document, Gazette
 
-# Modelos locales (Arquitectura BaseContent)
+# Core local
 from .models import (
     BaseContent, News, Chronicle, Councilor, AboutUs,
     Activity, Announcement, Consultation, Event, Downloadable,
-    Category, Commission, CommissionMember, Legislature, Legislator
+    Category, Commission, Legislature, Legislator
 )
+# Importamos todos los formularios correctamente
 from .forms import (
-    NewsForm, 
-    CategoryForm, 
-    ChronicleForm, 
-    CommissionForm, 
-    AboutUsForm, 
-    ActivityForm,
-    AnnouncementForm,
-    ConsultationForm,
-    EventForm,
-    DownloadableForm,
-    LegislatureForm,
+    NewsForm, ChronicleForm, CategoryForm, CommissionForm, CouncilorForm,
+    LegislatureForm, AboutUsForm, ActivityForm, AnnouncementForm,
+    ConsultationForm, EventForm, DownloadableForm
 )
 
 User = get_user_model()
@@ -59,1397 +55,908 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================================
-# DATOS ESTÁTICOS DE RESPALDO (FALLBACKS)
+# MIXIN DE PERMISOS
+# ============================================================
+
+class CanEditHomeMixin(LoginRequiredMixin, PermissionRequiredMixin):
+    permission_required = 'core.can_edit_home'
+    raise_exception = True
+
+    def handle_no_permission(self):
+        if not self.request.user.is_authenticated:
+            return super().handle_no_permission()
+        messages.error(self.request, "No tienes permisos para gestionar el contenido del Home.")
+        return redirect('core:home')
+
+
+# ============================================================
+# DATOS ESTÁTICOS DE RESPALDO
 # ============================================================
 
 NEWS_DATA = [
     {
-        'id': 1,
-        'title': 'Concejo Municipal fortalece labores de rescate de los «Ángeles de la Autopista»',
-        'description': 'En el marco de la Sesión Ordinaria N° 55, el Concejo Municipal concretó la entrega formal de una antena Starlink al cuerpo paramédico.',
-        'image': 'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=800',
-        'date': '20 de agosto de 2026',
-        'category': 'Social',
+        'id': 1, 'title': 'Concejo Municipal fortalece labores de rescate', 
+        'description': 'En el marco de la Sesión Ordinaria...', 
+        'image': 'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=800', 
+        'date': '20 de agosto de 2026', 'category': 'Social',
     },
     {
-        'id': 2,
-        'title': 'Nueva ordenanza para la protección del medio ambiente',
-        'description': 'El Concejo Municipal aprobó la ordenanza que regula el uso de plásticos de un solo uso en el municipio Junín.',
-        'image': 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800',
-        'date': '18 de agosto de 2026',
-        'category': 'Cultura',
+        'id': 2, 'title': 'Nueva ordenanza para la protección del medio ambiente', 
+        'description': 'El Concejo Municipal aprobó la ordenanza...', 
+        'image': 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800', 
+        'date': '18 de agosto de 2026', 'category': 'Cultura',
     },
     {
-        'id': 3,
-        'title': 'Jornada de atención al ciudadano en Rubio',
-        'description': 'Jornada integral de atención ciudadana realizada en la plaza Bolívar de Rubio.',
-        'image': 'https://images.unsplash.com/photo-1573164713988-8665fc963095?w=800',
-        'date': '15 de agosto de 2026',
-        'category': 'Salud',
+        'id': 3, 'title': 'Jornada de atención al ciudadano en Rubio', 
+        'description': 'Jornada integral de atención ciudadana...', 
+        'image': 'https://images.unsplash.com/photo-1573164713988-8665fc963095?w=800', 
+        'date': '15 de agosto de 2026', 'category': 'Salud',
     },
 ]
 
 SYNDICATE_DATA = [
-    {
-        'name': 'Abogado por designar',
-        'position': 'Síndico Procurador Municipal',
-        'image': 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400',
-    },
-    {
-        'name': 'Daymar C.',
-        'position': 'Secretaria Municipal del Concejo',
-        'image': 'https://images.unsplash.com/photo-1580894732444-8ecded7900cd?w=400',
-    },
+    {'name': 'Abogado por designar', 'position': 'Síndico Procurador Municipal', 'image': 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400'},
+    {'name': 'Daymar C.', 'position': 'Secretaria Municipal del Concejo', 'image': 'https://images.unsplash.com/photo-1580894732444-8ecded7900cd?w=400'},
 ]
 
 ABOUT_US_DATA = {
-    'who_we_are': (
-        'El Concejo Municipal del Municipio Junín es un órgano colegiado, legislativo y deliberante, '
-        'integrado por siete (7) concejales principales elegidos mediante voto popular.'
-    ),
-    'mission': (
-        'Ejercer la función legislativa municipal mediante la creación, discusión y aprobación de ordenanzas locales.'
-    ),
-    'vision': (
-        'Ser una institución legislativa de vanguardia, transparente, eficiente y cercana a los ciudadanos de Junín.'
-    ),
+    'who_we_are': 'El Concejo Municipal del Municipio Junín es un órgano colegiado...',
+    'mission': 'Ejercer la función legislativa municipal mediante la creación...',
+    'vision': 'Ser una institución legislativa de vanguardia, transparente...',
     'image_main': 'core/img/quienes_somos_junin.jpg'
 }
 
-
 # ============================================================
-# 1. PANEL DE CONTROL (DASHBOARD ADMINISTRATIVO)
+# 1. PANEL DE CONTROL Y PORTAL PÚBLICO
 # ============================================================
 
 class DashboardView(LoginRequiredMixin, TemplateView):
-    """Panel de control con métricas generales aisladas contra fallas."""
     template_name = 'core/dashboard.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
         try:
             context['total_documents'] = Document.objects.count()
             context['total_gazettes'] = Gazette.objects.count()
             context['total_users'] = User.objects.count()
         except Exception as e:
-            logger.error(f"Error cargando contadores globales en DashboardView: {e}")
-            context['total_documents'] = 0
-            context['total_gazettes'] = 0
-            context['total_users'] = 0
+            logger.error(f"Error Dashboard: {e}")
 
-        # Cálculo seguro de elementos en papelera
         try:
-            try:
-                from common.views import TRASH_MODELS
-            except ImportError:
-                from apps.common.views import TRASH_MODELS
-
+            from common.views import TRASH_MODELS
             trash_count = 0
             for model in TRASH_MODELS:
                 if hasattr(model, 'all_objects') and hasattr(model, 'deleted_at'):
                     trash_count += model.all_objects.filter(deleted_at__isnull=False).count()
-                elif hasattr(model, 'objects') and hasattr(model, 'deleted_at'):
-                    trash_count += model.objects.filter(deleted_at__isnull=False).count()
-
             context['total_trash'] = trash_count
-        except Exception as e:
-            logger.error(f"Error calculando papelera en DashboardView: {e}")
-            context['total_trash'] = 0
+        except Exception: context['total_trash'] = 0
 
         try:
-            context['recent_documents'] = Document.objects.select_related(
-                'document_type', 'gazette'
-            ).order_by('-created_at')[:5]
-        except Exception as e:
-            logger.error(f"Error cargando documentos recientes: {e}")
-            context['recent_documents'] = []
-
-        try:
+            context['recent_documents'] = Document.objects.select_related('document_type', 'gazette').order_by('-created_at')[:5]
             context['approved_count'] = Document.objects.filter(is_approved=True, is_annulled=False).count()
             context['pending_count'] = Document.objects.filter(is_approved=False, is_annulled=False).count()
             context['annulled_count'] = Document.objects.filter(is_annulled=True).count()
-        except Exception as e:
-            logger.error(f"Error calculando métricas de estado de documentos: {e}")
-            context['approved_count'] = 0
-            context['pending_count'] = 0
-            context['annulled_count'] = 0
-
+        except Exception: pass
         return context
-    raise_exception = True
+
 
 # ============================================================
-# 2. PORTAL PÚBLICO GENERAL (HOME & INSTITUCIONAL)
+# PORTAL PÚBLICO
 # ============================================================
+
+def _format_spanish_date(value):
+    """
+    Devuelve una fecha en español (ej. '9 de noviembre de 2026 a las 5:50 p.m.').
+    sin importar el idioma configurado en settings.LANGUAGE_CODE.
+    """
+    if timezone.is_aware(value):
+        value = timezone.localtime(value)
+    with translation.override('es'):
+        # Agregamos el formato de hora: \a \l\a\s (a las) g:i a (5:50 p.m.)
+        return date_format(value, 'j \\d\\e F \\d\\e Y \\a \\l\\a\\s g:i a')
+
+
+
+def _build_slide(news):
+    """
+    Convierte UNA noticia en un diccionario con las mismas claves,
+    venga de la base de datos (objeto News) o de los datos de respaldo
+    (diccionario NEWS_DATA). Así la plantilla no necesita condicionales.
+
+    Claves devueltas: id, title, description, image_url, date
+    """
+    # Caso 1: dato estático de respaldo (ya trae la fecha formateada)
+    if isinstance(news, dict):
+        return {
+            'id': news['id'],
+            'title': news['title'],
+            'description': news['description'],
+            'image_url': news.get('image', ''),
+            'date': news['date'],
+        }
+
+    # Caso 2: noticia real de la base de datos
+    # La imagen es un ImageField: se usa .url (si no hay archivo, queda vacío
+    # y la plantilla mostrará la imagen por defecto).
+    image_url = news.image.url if news.image else ''
+    text = strip_tags(news.summary or news.content or '')
+    return {
+        'id': news.pk,
+        'title': news.title,
+        'description': text,
+        'image_url': image_url,
+        'date': _format_spanish_date(news.created_at),  # created_at, no publication_date
+    }
+
 
 class HomeView(TemplateView):
-    """Portada web con resiliencia y datos estáticos de respaldo."""
     template_name = 'core/home.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
+        # Red de seguridad: el carrusel SIEMPRE tiene diapositivas,
+        # aunque algo falle más abajo.
+        context['carousel_slides'] = [_build_slide(n) for n in NEWS_DATA]
+
         try:
+            published_news = News.objects.filter(
+                is_active=True, status=BaseContent.Status.PUBLISHED
+            ).order_by('-created_at')
+
+            # UNA sola consulta (antes: exists() + slice = dos consultas)
+            latest = list(published_news[:3])
+            if latest:
+                context['carousel_slides'] = [_build_slide(n) for n in latest]
+
+            # Se mantiene por compatibilidad con otras partes del Home
+            context['news_list'] = latest if latest else NEWS_DATA
+
+            context['chronicles'] = Chronicle.objects.filter(
+                is_active=True, status=BaseContent.Status.PUBLISHED
+            ).order_by('-created_at')[:3]
+            context['consultations'] = Consultation.objects.filter(
+                is_active=True, status=BaseContent.Status.PUBLISHED
+            ).order_by('-start_date')[:3]
+            context['councilors'] = Councilor.objects.filter(
+                is_active=True, status=BaseContent.Status.PUBLISHED
+            ).order_by('order')
             context['documentos_destacados'] = Document.objects.select_related(
                 'gazette', 'document_type'
             ).order_by('-emission_date')[:2]
-            context['ultimas_gacetas'] = Gazette.objects.all()[:3]
         except Exception as e:
-            logger.error(f"Error cargando documentos en HomeView: {e}")
-            context['documentos_destacados'] = []
-            context['ultimas_gacetas'] = []
-
-        try:
-            carousel = News.objects.filter(
-                is_active=True, 
-                status=BaseContent.Status.PUBLISHED
-            ).order_by('-created_at')[:3]
-            context['carousel_news'] = carousel if carousel.exists() else NEWS_DATA
-        except Exception as e:
-            logger.error(f"Error cargando noticias de carrusel: {e}")
-            context['carousel_news'] = NEWS_DATA
-
-        try:
-            context['carousel_activities'] = Activity.objects.filter(
-                is_active=True, 
-                status=BaseContent.Status.PUBLISHED, 
-                is_featured=True
-            ).order_by('-created_at')[:3]
-        except Exception as e:
-            logger.error(f"Error cargando actividades en HomeView: {e}")
-            context['carousel_activities'] = []
-
-        try:
-            context['chronicles'] = Chronicle.objects.filter(
-                is_active=True, 
-                status=BaseContent.Status.PUBLISHED
-            ).order_by('-created_at')[:3]
-        except Exception as e:
-            logger.error(f"Error cargando crónicas en HomeView: {e}")
-            context['chronicles'] = []
-
-        try:
-            context['consultations'] = Consultation.objects.filter(
-                is_active=True, 
-                status=BaseContent.Status.PUBLISHED
-            ).order_by('-start_date')[:3]
-        except Exception as e:
-            logger.error(f"Error cargando consultas públicas: {e}")
-            context['consultations'] = []
-
-        try:
-            news_qs = News.objects.filter(
-                is_active=True, 
-                status=BaseContent.Status.PUBLISHED
-            ).order_by('-created_at')
-            context['news_list'] = news_qs[:3] if news_qs.exists() else NEWS_DATA
-        except Exception as e:
-            logger.error(f"Error cargando noticias secundarias: {e}")
-            context['news_list'] = NEWS_DATA
-
-        try:
-            context['councilors'] = Councilor.objects.filter(
-                is_active=True, 
-                status=BaseContent.Status.PUBLISHED
-            ).order_by('order')
-        except Exception as e:
-            logger.error(f"Error cargando concejales en HomeView: {e}")
-            context['councilors'] = []
-
+            logger.error(f"Error Home: {e}")
         return context
-    raise_exception = True
 
 
 
 class AboutUsView(TemplateView):
-    """Página institucional con respaldo local."""
     template_name = 'core/about_us.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
         try:
             about_items = AboutUs.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED)
-            who = about_items.filter(slug='quienes-somos').first()
-            mission = about_items.filter(slug='mision').first()
-            vision = about_items.filter(slug='vision').first()
-
             context['about_data'] = {
-                'who_we_are': who.content if who else ABOUT_US_DATA['who_we_are'],
-                'mission': mission.content if mission else ABOUT_US_DATA['mission'],
-                'vision': vision.content if vision else ABOUT_US_DATA['vision'],
+                'who_we_are': about_items.filter(slug='quienes-somos').first().content if about_items.filter(slug='quienes-somos').exists() else ABOUT_US_DATA['who_we_are'],
+                'mission': about_items.filter(slug='mision').first().content if about_items.filter(slug='mision').exists() else ABOUT_US_DATA['mission'],
+                'vision': about_items.filter(slug='vision').first().content if about_items.filter(slug='vision').exists() else ABOUT_US_DATA['vision'],
                 'image_main': ABOUT_US_DATA['image_main']
             }
-        except Exception as e:
-            logger.error(f"Error cargando información institucional: {e}")
-            context['about_data'] = ABOUT_US_DATA
-
-        try:
             context['legislatures'] = Legislature.objects.prefetch_related('members').all()
-        except Exception as e:
-            logger.error(f"Error cargando legislaturas en AboutUsView: {e}")
-            context['legislatures'] = []
-
+        except Exception: context['about_data'] = ABOUT_US_DATA
         return context
-    raise_exception = True
-
 
 
 # ============================================================
-# 3. MÓDULO DE NOTICIAS (FRONTEND Y GESTIÓN)
+# 2. NOTICIAS
 # ============================================================
+
 
 def news_public_list_frontend(request):
-    """Listado público de noticias activas con filtros por texto, fecha y categoría."""
     query = request.GET.get('q', '').strip()
-    date_query = request.GET.get('date', '').strip()
-    category_slug = request.GET.get('category', '').strip()
-
     news_list = News.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-created_at')
-    categories = Category.objects.all()
-
     if query:
-        news_list = news_list.filter(
-            Q(title__icontains=query) | 
-            Q(summary__icontains=query) | 
-            Q(content__icontains=query)
-        )
-
-    if date_query:
-        try:
-            news_list = news_list.filter(created_at__date=date_query)
-        except (ValidationError, ValueError):
-            date_query = ''
-
-    if category_slug:
-        news_list = news_list.filter(category__slug=category_slug)
-
+        news_list = news_list.filter(Q(title__icontains=query) | Q(summary__icontains=query))
+    
+    # Cambiamos 'news_list' por 'object_list' para que la tarjeta genérica lo lea
     context = {
-        'news_list': news_list,
-        'categories': categories,
-        'query': query,
-        'date_query': date_query,
-        'selected_category': category_slug,
+        'object_list': news_list, 
+        'page_title': 'Noticias', 
+        'page_subtitle': 'Últimas noticias del Concejo',
+        'detail_url_name': 'core:news_detail_frontend', 
+        'detail_btn_label': 'Leer Noticia',
+        'query': query
     }
-    return render(request, 'core/news_public_list.html', context)
-    raise_exception = True
+    return render(request, 'core/generic_cards_grid.html', context)
+
 
 def news_detail_frontend(request, pk):
-    """Detalle individual de noticia con fallback sintético."""
     try:
         news_item = News.objects.get(pk=pk, is_active=True)
-        if news_item.category:
-            related_news = News.objects.filter(
-                is_active=True, category=news_item.category
-            ).exclude(pk=pk).order_by('-created_at')[:3]
-        else:
-            related_news = News.objects.filter(is_active=True).exclude(pk=pk).order_by('-created_at')[:3]
-
+        related_news = News.objects.filter(is_active=True, category=news_item.category).exclude(pk=pk).order_by('-created_at')[:3] if news_item.category else News.objects.filter(is_active=True).exclude(pk=pk).order_by('-created_at')[:3]
     except News.DoesNotExist:
         fallback = next((item for item in NEWS_DATA if item['id'] == pk), None)
         if fallback:
-            news_item = SimpleNamespace(
-                pk=fallback['id'],
-                id=fallback['id'],
-                title=fallback['title'],
-                summary=fallback['description'],
-                content=fallback['description'],
-                image=SimpleNamespace(url=fallback['image']) if fallback.get('image') else None,
-                category=SimpleNamespace(name=fallback['category']) if fallback.get('category') else None,
-                created_at=fallback['date'],
-                attached_file=None,
-                show_pdf_inline=False,
-                social_media_url=None,
-            )
+            news_item = SimpleNamespace(pk=fallback['id'], id=fallback['id'], title=fallback['title'], name=fallback['title'], slug=None, summary=fallback['description'], description=fallback['description'], content=fallback['description'], image=SimpleNamespace(url=fallback['image']), category=SimpleNamespace(name=fallback['category']), created_at=fallback['date'], publication_date=fallback['date'], author='Concejo Municipal', attached_file=None, show_pdf_inline=False, social_media_url=None)
             related_news = []
-        else:
-            raise Http404("La noticia solicitada no existe.")
+        else: raise Http404("La noticia no existe.")
 
-    context = {
-        'object': news_item,
-        'news_item': news_item,
-        'related_news': related_news,
-        'detail_url_name': 'core:news_detail_frontend',
-    }
-    return render(request, 'core/generic_detail.html', context)
-    raise_exception = True
+    return render(request, 'core/generic_detail.html', {'object': news_item, 'news_item': news_item, 'related_news': related_news, 'detail_url_name': 'core:news_detail_frontend', 'is_news_detail': True})
 
-class NewsManageView(LoginRequiredMixin, ListView):
-    """Listado de noticias para administración."""
+
+class NewsManageView(CanEditHomeMixin, ListView):
     model = News
     template_name = 'core/generic_admin_list.html'
     context_object_name = 'object_list'
     paginate_by = 20
-    extra_context = {
-        'page_title': 'Gestión de Noticias',
-        'page_subtitle': 'Administración y publicación de notas institucionales',
-        'header_icon': 'bi-newspaper',
-        'create_url': 'core:news_create_frontend',
-        'create_label': 'Nueva Noticia',
-        'detail_url_name': 'core:news_detail_frontend',
-        'update_url_name': 'core:news_update_frontend',
-        'delete_url_name': 'core:news_delete_frontend',
-    }
-
+    
     def get_queryset(self):
-        return News.objects.all().order_by('-created_at')
-    raise_exception = True
+        qs = News.objects.all().order_by('-created_at')
+        q = self.request.GET.get('q', '').strip()
+        if q: qs = qs.filter(title__icontains=q) #  Buscador
+        return qs
 
-class NewsCreateView(LoginRequiredMixin, CreateView):
-    """Creación administrativa de noticia."""
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            'page_title': 'Gestión de Noticias', 
+            'header_icon': 'bi-newspaper', 
+            'create_url': 'core:create_news_frontend', 
+            'create_label': 'Nueva Noticia', 
+            'detail_url_name': 'core:news_detail_frontend', 
+            'update_url_name': 'core:update_news_frontend', 
+            'delete_url_name': 'core:delete_news_frontend',
+            'search_url': reverse_lazy('core:manage_news_frontend') #  Activamos el buscador
+        })
+        return ctx
+
+
+
+class NewsCreateView(CanEditHomeMixin, CreateView):
     model = News
     form_class = NewsForm
     template_name = 'core/generic_form.html'
     success_url = reverse_lazy('core:manage_news_frontend')
-    extra_context = {
-        'form_title': 'Registrar Nueva Noticia',
-        'form_subtitle': 'Publica comunicados oficiales en el portal institucional',
-        'form_icon': 'bi-plus-circle',
-        'submit_label': 'Guardar Noticia',
-        'cancel_url': reverse_lazy('core:manage_news_frontend'),
-    }
-
+    extra_context = {'form_title': 'Registrar Nueva Noticia'}
     def form_valid(self, form):
-        form.instance.content_type = BaseContent.ContentType.NEWS
-        if self.request.user.is_authenticated:
-            form.instance.created_by = self.request.user
-        messages.success(self.request, 'Noticia creada exitosamente.')
+        form.instance.created_by = self.request.user
         return super().form_valid(form)
-    raise_exception = True
 
-class NewsUpdateView(LoginRequiredMixin, UpdateView):
-    """Edición administrativa de noticia."""
+class NewsUpdateView(CanEditHomeMixin, UpdateView):
     model = News
-    form_class = NewsForm
+    form_class = NewsForm 
     template_name = 'core/generic_form.html'
     success_url = reverse_lazy('core:manage_news_frontend')
-    extra_context = {
-        'form_title': 'Editar Noticia',
-        'form_subtitle': 'Actualiza los datos o la imagen destacada de la noticia',
-        'form_icon': 'bi-pencil-square',
-        'submit_label': 'Guardar Cambios',
-        'cancel_url': reverse_lazy('core:manage_news_frontend'),
-    }
+    extra_context = {'form_title': 'Editar Noticia'}
 
-    def form_valid(self, form):
-        messages.success(self.request, 'Noticia actualizada exitosamente.')
-        return super().form_valid(form)
-    raise_exception = True
-
-class NewsDeleteView(LoginRequiredMixin, DeleteView):
-    """Eliminación administrativa de noticia."""
+class NewsDeleteView(CanEditHomeMixin, DeleteView):
     model = News
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:manage_news_frontend')
-    extra_context = {
-        'cancel_url': reverse_lazy('core:manage_news_frontend'),
-    }
-    raise_exception = True
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Noticia eliminada.')
+        return super().delete(request, *args, **kwargs)
+
 
 # ============================================================
-# 4. MÓDULO DE CRÓNICAS MUNICIPALES
+# 3. CRÓNICAS
 # ============================================================
 
 class ChronicleListView(ListView):
-    """Listado público de crónicas."""
     model = Chronicle
     template_name = 'core/generic_cards_grid.html'
     context_object_name = 'object_list'
-    paginate_by = 9
-    extra_context = {
-        'page_title': 'Crónicas Municipales',
-        'page_subtitle': 'Memoria histórica y relatos tradicionales del Municipio Junín',
-        'detail_url_name': 'core:chronicle_detail',
-        'detail_btn_label': 'Leer Crónica',
-    }
-
-    def get_queryset(self):
-        return Chronicle.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-created_at')
-    raise_exception = True
+    extra_context = {'page_title': 'Crónicas', 'detail_url_name': 'core:chronicle_detail', 'detail_btn_label': 'Leer Crónica'}
+    def get_queryset(self): return Chronicle.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-created_at')
 
 class ChronicleDetailView(DetailView):
-    """Detalle de una crónica por slug."""
     model = Chronicle
     template_name = 'core/generic_detail.html'
     context_object_name = 'object'
-    slug_field = 'slug'
-    slug_url_kwarg = 'slug'
-
+  
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['sidebar_title'] = 'Otras Crónicas'
-        context['recent_items'] = Chronicle.objects.filter(
-            is_active=True
-        ).exclude(pk=self.object.pk).order_by('-created_at')[:3]
-        context['back_url'] = reverse_lazy('core:chronicle_public_list')
-        context['back_label'] = 'Volver a Crónicas'
-        context['detail_url_name'] = 'core:chronicle_detail'
-        return context
-    raise_exception = True
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({'sidebar_title': 'Otras Crónicas', 'recent_items': Chronicle.objects.filter(is_active=True).exclude(pk=self.object.pk)[:3], 'back_url': reverse_lazy('core:chronicle_public_list'), 'detail_url_name': 'core:chronicle_detail'})
+        return ctx
 
-class ChronicleManageView(LoginRequiredMixin, ListView):
-    """Gestión administrativa de crónicas."""
+
+class ChronicleManageView(CanEditHomeMixin, ListView):
     model = Chronicle
     template_name = 'core/generic_admin_list.html'
     context_object_name = 'object_list'
     paginate_by = 15
-    extra_context = {
-        'page_title': 'Gestión de Crónicas',
-        'page_subtitle': 'Administración de artículos históricos del municipio',
-        'header_icon': 'bi-book',
-        'create_url': 'core:chronicle_create',
-        'create_label': 'Nueva Crónica',
-        'detail_url_name': 'core:chronicle_detail',
-        'update_url_name': 'core:chronicle_update',
-        'delete_url_name': 'core:chronicle_delete',
-    }
-
     def get_queryset(self):
-        return Chronicle.objects.all().order_by('-created_at')
-    raise_exception = True
+        qs = Chronicle.objects.all().order_by('-created_at')
+        q = self.request.GET.get('q', '').strip()
+        if q: qs = qs.filter(title__icontains=q)
+        return qs
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({'page_title': 'Gestión de Crónicas', 'header_icon': 'bi-book', 'create_url': 'core:create_chronicle', 'create_label': 'Nueva Crónica', 'detail_url_name': 'core:chronicle_detail', 'update_url_name': 'core:edit_chronicle', 'delete_url_name': 'core:delete_chronicle'})
+        return ctx
 
-
-
-
-class ChronicleCreateView(LoginRequiredMixin, CreateView):
-    """Creación de crónica."""
+class ChronicleCreateView(CanEditHomeMixin, CreateView):
     model = Chronicle
     form_class = ChronicleForm
     template_name = 'core/generic_form.html'
     success_url = reverse_lazy('core:manage_chronicles')
-    extra_context = {
-        'form_title': 'Registrar Nueva Crónica',
-        'form_subtitle': 'Agrega un relato histórico al repositorio municipal',
-        'form_icon': 'bi-bookmark-plus',
-        'submit_label': 'Guardar Crónica',
-        'cancel_url': reverse_lazy('core:manage_chronicles'),
-    }
-
+    extra_context = {'form_title': 'Registrar Crónica'}
     def form_valid(self, form):
-        form.instance.content_type = BaseContent.ContentType.CHRONICLE
-        if self.request.user.is_authenticated:
-            form.instance.created_by = self.request.user
-        messages.success(self.request, "¡Crónica guardada exitosamente!")
+        form.instance.created_by = self.request.user
         return super().form_valid(form)
-    raise_exception = True
 
-class ChronicleUpdateView(LoginRequiredMixin, UpdateView):
-    """Edición de crónica."""
+class ChronicleUpdateView(CanEditHomeMixin, UpdateView):
     model = Chronicle
     form_class = ChronicleForm
     template_name = 'core/generic_form.html'
     success_url = reverse_lazy('core:manage_chronicles')
-    extra_context = {
-        'form_title': 'Editar Crónica',
-        'form_subtitle': 'Actualiza el contenido o la imagen de la crónica',
-        'form_icon': 'bi-pencil-square',
-        'submit_label': 'Guardar Cambios',
-        'cancel_url': reverse_lazy('core:manage_chronicles'),
-    }
-    raise_exception = True
+    extra_context = {'form_title': 'Editar Crónica'}
 
-
-
-class ChronicleDeleteView(LoginRequiredMixin, DeleteView):
-    """Eliminación de crónica."""
+class ChronicleDeleteView(CanEditHomeMixin, DeleteView):
     model = Chronicle
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:manage_chronicles')
-    extra_context = {
-        'cancel_url': reverse_lazy('core:manage_chronicles'),
-    }
-    raise_exception = True
-
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Crónica eliminada.')
+        return super().delete(request, *args, **kwargs)
 
 
 # ============================================================
-# 5. MÓDULO DE CATEGORÍAS (GESTIÓN)
+# 4. CATEGORÍAS (CON TRY/EXCEPT)
 # ============================================================
 
-class CategoryManageView(LoginRequiredMixin, ListView):
-    """Gestión de categorías."""
+class CategoryManageView(CanEditHomeMixin, ListView):
     model = Category
     template_name = 'core/generic_admin_list.html'
     context_object_name = 'object_list'
-    paginate_by = 15
-    extra_context = {
-        'page_title': 'Gestión de Categorías',
-        'page_subtitle': 'Clasificaciones editoriales para noticias y contenidos',
-        'header_icon': 'bi-tags',
-        'create_url': 'core:category_create',
-        'create_label': 'Nueva Categoría',
-        'update_url_name': 'core:category_update',
-        'delete_url_name': 'core:category_delete',
-    }
-    raise_exception = True
+    def get_queryset(self):
+        qs = Category.objects.all()
+        q = self.request.GET.get('q', '').strip()
+        if q: qs = qs.filter(name__icontains=q)
+        return qs
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({'page_title': 'Gestión de Categorías', 'header_icon': 'bi-tags', 'create_url': 'core:create_category_frontend', 'create_label': 'Nueva Categoría', 'update_url_name': 'core:update_category_frontend', 'delete_url_name': 'core:delete_category_frontend'})
+        return ctx
 
-class CategoryCreateView(LoginRequiredMixin, CreateView):
-    """Creación de categoría."""
+class CategoryCreateView(CanEditHomeMixin, CreateView):
     model = Category
     form_class = CategoryForm
     template_name = 'core/generic_form.html'
     success_url = reverse_lazy('core:manage_categories_frontend')
-    extra_context = {
-        'form_title': 'Crear Categoría',
-        'form_subtitle': 'Añade una etiqueta de clasificación',
-        'form_icon': 'bi-tag-fill',
-        'submit_label': 'Guardar',
-        'cancel_url': reverse_lazy('core:manage_categories_frontend'),
-    }
-    raise_exception = True
 
-
-
-class CategoryUpdateView(LoginRequiredMixin, UpdateView):
-    """Edición de categoría."""
+class CategoryUpdateView(CanEditHomeMixin, UpdateView):
     model = Category
     form_class = CategoryForm
     template_name = 'core/generic_form.html'
     success_url = reverse_lazy('core:manage_categories_frontend')
-    extra_context = {
-        'form_title': 'Editar Categoría',
-        'form_subtitle': 'Modifica la etiqueta',
-        'form_icon': 'bi-pencil-square',
-        'submit_label': 'Guardar Cambios',
-        'cancel_url': reverse_lazy('core:manage_categories_frontend'),
-    }
-    raise_exception = True
 
-
-
-class CategoryDeleteView(LoginRequiredMixin, DeleteView):
-    """Eliminación de categoría."""
+class CategoryDeleteView(CanEditHomeMixin, DeleteView):
     model = Category
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:manage_categories_frontend')
-    extra_context = {
-        'cancel_url': reverse_lazy('core:manage_categories_frontend'),
-    }
-    raise_exception = True
+    def delete(self, request, *args, **kwargs):
+        try:
 
+            # 1. Intentamos borrar primero
+            response = super().delete(request, *args, **kwargs)
+            # 2. Si no explotó, mostramos el éxito
+            messages.success(request, 'Categoría eliminada.')
+            return response
+        except ProtectedError: 
+            # 3. Si explotó por relación, mostramos el error amigable
+            messages.error(request, "No puedes eliminar esta categoría porque tiene noticias asignadas.")
+            return redirect(self.success_url)
 
 
 # ============================================================
-# 6. MÓDULO DE COMISIONES PERMANENTES
+# 5. COMISIONES (CON TRY/EXCEPT)
 # ============================================================
 
 class CommissionsView(ListView):
-    """Vista pública de comisiones optimizada para prefetch."""
     model = Commission
     template_name = 'core/commissions.html'
     context_object_name = 'commissions'
+    def get_queryset(self): return Commission.objects.select_related('president', 'vice_president', 'vocal').order_by('number')
 
-    def get_queryset(self):
-        return Commission.objects.prefetch_related('members__councilor').order_by('number')
-    raise_exception = True
-
-
-
-class CommissionAdminListView(LoginRequiredMixin, ListView):
-    """Gestión de comisiones."""
+class CommissionAdminListView(CanEditHomeMixin, ListView):
     model = Commission
-    template_name = 'core/commission_admin_list.html'
-    context_object_name = 'commissions'
-
+    template_name = 'core/generic_admin_list.html'
+    context_object_name = 'object_list'
     def get_queryset(self):
-        return Commission.objects.prefetch_related('members__councilor').order_by('number')
-    raise_exception = True
+        qs = Commission.objects.select_related('president', 'vice_president', 'vocal').order_by('number')
+        q = self.request.GET.get('q', '').strip()
+        if q: qs = qs.filter(name__icontains=q)
+        return qs
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({'page_title': 'Gestión de Comisiones', 'header_icon': 'bi-people', 'create_url': 'core:commission_create', 'update_url_name': 'core:commission_update', 'delete_url_name': 'core:commission_delete'})
+        return ctx
 
-class CommissionCreateView(LoginRequiredMixin, CreateView):
-    """Crear comisión."""
+class CommissionCreateView(CanEditHomeMixin, CreateView):
     model = Commission
     form_class = CommissionForm
-    template_name = 'core/commission_form.html'
+    template_name = 'core/generic_form.html'
     success_url = reverse_lazy('core:commission_admin_list')
-    raise_exception = True
 
-class CommissionUpdateView(LoginRequiredMixin, UpdateView):
-    """Editar comisión."""
+class CommissionUpdateView(CanEditHomeMixin, UpdateView):
     model = Commission
     form_class = CommissionForm
-    template_name = 'core/commission_form.html'
+    template_name = 'core/generic_form.html'
     success_url = reverse_lazy('core:commission_admin_list')
-    raise_exception = True
 
-class CommissionDeleteView(LoginRequiredMixin, DeleteView):
-    """Eliminación de comisión capturando restricciones de clave foránea."""
+
+class CommissionDeleteView(CanEditHomeMixin, DeleteView):
     model = Commission
-    template_name = 'core/commission_confirm_delete.html'
+    template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:commission_admin_list')
 
-    def form_valid(self, form):
+    def delete(self, request, *args, **kwargs):
         try:
-            response = super().form_valid(form)
-            messages.success(self.request, "Comisión eliminada correctamente.")
+            # 1. Intentamos borrar primero
+            response = super().delete(request, *args, **kwargs)
+            # 2. Si no explotó, mostramos el éxito
+            messages.success(request, 'Comisión eliminada correctamente.')
             return response
         except ProtectedError:
-            messages.error(
-                self.request,
-                "No se puede eliminar esta comisión porque tiene miembros con asignación activa. "
-                "Reasigne o elimine los miembros primero."
-            )
+            # 3. Si explotó por relación, mostramos el error amigable
+            messages.error(request, "No puedes eliminar esta comisión porque tiene miembros asignados.")
             return redirect(self.success_url)
-    raise_exception = True
+
 
 # ============================================================
-# 7. MÓDULO DE CONCEJALES Y DIRECTIVA
+# 6. CONCEJALES (CON TRY/EXCEPT)
 # ============================================================
 
 class CouncilorListView(ListView):
-    """Listado público de concejales y directiva."""
     model = Councilor
-    template_name = 'core/generic_cards_grid.html'
-    context_object_name = 'object_list'
+    template_name = 'core/councilors.html' 
+    context_object_name = 'councilors'     
 
     def get_queryset(self):
-        return Councilor.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('order')
+        return Councilor.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['page_title'] = "Concejales y Junta Directiva"
-        context['page_subtitle'] = "Conoce a los representantes del cuerpo edilicio del Municipio Junín"
-        context['detail_url_name'] = 'core:councilor_detail'
-        context['detail_btn_label'] = "Ver Perfil"
+        qs = self.get_queryset()
 
-        try:
-            syndicate_qs = Councilor.objects.filter(
-                is_active=True, 
-                status=BaseContent.Status.PUBLISHED,
-                author__in=['Síndico Procurador Municipal', 'Secretaria Municipal del Concejo']
-            ).order_by('order')
-            context['syndicate'] = syndicate_qs if syndicate_qs.exists() else SYNDICATE_DATA
-        except Exception:
-            context['syndicate'] = SYNDICATE_DATA
+        # Separación por jerarquía usando el campo author (Cargo)
+        context['presidente'] = qs.filter(author='Presidente').first()
+        context['vicepresidente'] = qs.filter(author='Vicepresidente').first()
+        
+        # Los concejales se ordenan alfabéticamente por su nombre
+        context['concejales'] = qs.filter(author='Concejal').order_by('title') 
+        
+        # Síndico y Secretaria (usamos filter en lugar de first para permitir varios si los hay)
+        context['sindico'] = qs.filter(author='Síndico Procurador')
+        context['secretario'] = qs.filter(author='Secretario(a)')
+
         return context
-    raise_exception = True
-
 
 
 class CouncilorDetailView(DetailView):
-    """Perfil público individual de concejal."""
     model = Councilor
     template_name = 'core/generic_detail.html'
     context_object_name = 'object'
-    slug_field = 'slug'
-    slug_url_kwarg = 'slug'
-
+   
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['sidebar_title'] = 'Otros Concejales'
-        context['recent_items'] = Councilor.objects.filter(is_active=True).exclude(pk=self.object.pk)[:4]
-        context['back_url'] = reverse_lazy('core:councilor_list')
-        context['back_label'] = 'Volver a Concejales'
-        context['detail_url_name'] = 'core:councilor_detail'
-        return context
-    raise_exception = True
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({'sidebar_title': 'Otros Concejales', 'recent_items': Councilor.objects.filter(is_active=True).exclude(pk=self.object.pk)[:4], 'back_url': reverse_lazy('core:councilor_list'), 'detail_url_name': 'core:councilor_detail'})
+        return ctx
 
 
-
-class CouncilorCreateView(LoginRequiredMixin, CreateView):
-    """Crear concejal."""
+class CouncilorManageView(CanEditHomeMixin, ListView):
     model = Councilor
-    template_name = 'core/generic_form.html'
-    fields = ['title', 'author', 'summary', 'content', 'image', 'social_media_url', 'order', 'is_active', 'status']
-    success_url = reverse_lazy('core:councilor_list')
-    extra_context = {
-        'form_title': 'Registrar Concejal',
-        'form_subtitle': 'Añade un miembro al cuerpo edilicio',
-        'submit_label': 'Guardar',
-        'cancel_url': reverse_lazy('core:councilor_list'),
-    }
+    template_name = 'core/generic_admin_list.html'
+    context_object_name = 'object_list'
+    def get_queryset(self):
+        qs = Councilor.objects.all().order_by('author')
+        q = self.request.GET.get('q', '').strip()
+        if q: qs = qs.filter(title__icontains=q)
+        return qs
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            'page_title': 'Gestión de Concejales', 
+            'header_icon': 'bi-person-badge', 
+            'create_url': 'core:councilor_create', 
+            'update_url_name': 'core:councilor_update', 
+            'delete_url_name': 'core:councilor_delete',
+            'search_url': reverse_lazy('core:manage_councilors')
+        })
+        return ctx
 
+
+class CouncilorCreateView(CanEditHomeMixin, CreateView):
+    model = Councilor
+    form_class = CouncilorForm
+    template_name = 'core/generic_form.html'
+    success_url = reverse_lazy('core:councilor_list')
     def form_valid(self, form):
-        form.instance.content_type = BaseContent.ContentType.COUNCILOR
-        if self.request.user.is_authenticated:
-            form.instance.created_by = self.request.user
+        form.instance.created_by = self.request.user
         return super().form_valid(form)
-    raise_exception = True
 
-
-
-
-class CouncilorUpdateView(LoginRequiredMixin, UpdateView):
-    """Editar concejal."""
+class CouncilorUpdateView(CanEditHomeMixin, UpdateView):
     model = Councilor
+    form_class = CouncilorForm
     template_name = 'core/generic_form.html'
-    fields = ['title', 'author', 'summary', 'content', 'image', 'social_media_url', 'order', 'is_active', 'status']
     success_url = reverse_lazy('core:councilor_list')
-    extra_context = {
-        'form_title': 'Editar Concejal',
-        'form_subtitle': 'Actualiza la información del concejal',
-        'submit_label': 'Guardar Cambios',
-        'cancel_url': reverse_lazy('core:councilor_list'),
-    }
-    raise_exception = True
 
-
-
-class CouncilorDeleteView(LoginRequiredMixin, DeleteView):
-    """Eliminar concejal capturando restricciones de clave foránea."""
+class CouncilorDeleteView(CanEditHomeMixin, DeleteView):
     model = Councilor
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:councilor_list')
-    extra_context = {
-        'cancel_url': reverse_lazy('core:councilor_list'),
-    }
-
-    def form_valid(self, form):
+    def delete(self, request, *args, **kwargs):
         try:
-            response = super().form_valid(form)
-            messages.success(self.request, "Concejal eliminado correctamente.")
+            # 1. Intentamos borrar primero
+            response = super().delete(request, *args, **kwargs)
+             # 2. Si no explotó, mostramos el éxito
+            messages.success(request, 'Concejal eliminado.')
             return response
         except ProtectedError:
-            messages.error(
-                self.request,
-                "No se puede eliminar este concejal porque pertenece a una comisión o legislatura activa."
-            )
+            # 3. Si explotó por relación, mostramos el error amigable 
+            messages.error(request, "No puedes eliminar este concejal porque pertenece a una comisión activa.")
             return redirect(self.success_url)
-    raise_exception = True
+
+
 
 # ============================================================
-# 8. MÓDULO DE LEGISLATURAS HISTÓRICAS
+# 7. LEGISLATURAS (CON TRY/EXCEPT Y TITLE VIRTUAL)
 # ============================================================
 
 class LegislatureListView(ListView):
-    """Listado público de legislaturas."""
     model = Legislature
-    template_name = 'core/legislatures_list.html'
-    context_object_name = 'legislatures'
+    template_name = 'core/generic_cards_grid.html'
+    context_object_name = 'object_list'
+    extra_context = {'page_title': 'Legislaturas', 'page_subtitle': 'Historial de periodos legislativos'}
+    def get_queryset(self): return Legislature.objects.prefetch_related('members').order_by('order')
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        for leg in ctx['object_list']: leg.title = f"Legislatura {leg.roman_id} ({leg.years})" 
+        return ctx
 
+class LegislatureCreateView(CanEditHomeMixin, CreateView):
+    model = Legislature
+    form_class = LegislatureForm
+    template_name = 'core/generic_form.html'
+    success_url = reverse_lazy('core:legislature_list')
+
+
+class LegislatureManageView(CanEditHomeMixin, ListView):
+    model = Legislature
+    template_name = 'core/generic_admin_list.html'
+    context_object_name = 'object_list'
     def get_queryset(self):
-        return Legislature.objects.prefetch_related('members').order_by('order')
-    raise_exception = True
+        qs = Legislature.objects.all().order_by('-order')
+        q = self.request.GET.get('q', '').strip()
+        if q: qs = qs.filter(roman_id__icontains=q)
+        return qs
+        
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        # Inyectamos el título virtual para que la tabla no explote
+        for leg in ctx['object_list']: 
+            leg.title = f"Legislatura {leg.roman_id} ({leg.years})" 
+            
+        ctx.update({
+            'page_title': 'Gestión de Legislaturas', 
+            'header_icon': 'bi-bank', 
+            'create_url': 'core:legislature_create', 
+            'update_url_name': 'core:legislature_update', 
+            'delete_url_name': 'core:legislature_delete',
+            'search_url': reverse_lazy('core:manage_legislatures')
+        })
+        return ctx
 
-class LegislatureCreateView(LoginRequiredMixin, CreateView):
-    """Crear legislatura."""
+
+class LegislatureUpdateView(CanEditHomeMixin, UpdateView):
     model = Legislature
-    template_name = 'core/legislature_form.html'
-    fields = ['roman_id', 'years', 'mayor', 'order']
+    form_class = LegislatureForm
+    template_name = 'core/generic_form.html'
     success_url = reverse_lazy('core:legislature_list')
-    raise_exception = True
 
-class LegislatureUpdateView(LoginRequiredMixin, UpdateView):
-    """Editar legislatura."""
+
+class LegislatureDeleteView(CanEditHomeMixin, DeleteView):
     model = Legislature
-    template_name = 'core/legislature_form.html'
-    fields = ['roman_id', 'years', 'mayor', 'order']
-    success_url = reverse_lazy('core:legislature_list')
-    raise_exception = True
-
-class LegislatureDeleteView(LoginRequiredMixin, DeleteView):
-    """Eliminar legislatura capturando restricciones de clave foránea."""
-    model = Legislature
-    template_name = 'core/legislature_confirm_delete.html'
+    template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:legislature_list')
 
-    def form_valid(self, form):
-        try:
-            response = super().form_valid(form)
-            messages.success(self.request, "Legislatura eliminada correctamente.")
-            return response
-        except ProtectedError:
-            messages.error(
-                self.request,
-                "No se puede eliminar esta legislatura porque posee legisladores vinculados."
-            )
-            return redirect(self.success_url)
-    raise_exception = True
+    def delete(self, request, *args, **kwargs):
+        # Como los legisladores usan CASCADE, se borrarán junto con la legislatura.
+        # Ya no es necesario el try/except ProtectedError.
+        messages.success(request, 'Legislatura y sus legisladores asociados eliminados correctamente.')
+        return super().delete(request, *args, **kwargs)
+
 
 # ============================================================
-# 9. ACTIVIDADES, CONSULTAS, EVENTOS Y DESCARGABLES
+# 8. ACTIVIDADES Y SUBTIPOS
 # ============================================================
-
-# --- LICITACIONES Y ANUNCIOS ---
 
 class AnnouncementListView(ListView):
-    """Listado público de Licitaciones y Anuncios."""
     model = Announcement
     template_name = 'core/generic_cards_grid.html'
     context_object_name = 'object_list'
-    paginate_by = 9
-    extra_context = {
-        'page_title': 'Licitaciones y Anuncios',
-        'page_subtitle': 'Convocatorias públicas y licitaciones del Municipio Junín',
-        'detail_url_name': 'core:announcement_detail',
-        'detail_btn_label': 'Ver Licitación',
-    }
-
-    def get_queryset(self):
-        return Announcement.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-start_date')
-    raise_exception = True
+    extra_context = {'page_title': 'Licitaciones', 'detail_url_name': 'core:announcement_detail'}
+    def get_queryset(self): return Announcement.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-start_date')
 
 class AnnouncementDetailView(DetailView):
-    """Detalle público de una Licitación/Anuncio."""
     model = Announcement
     template_name = 'core/generic_detail.html'
-    context_object_name = 'object'
-    
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['sidebar_title'] = 'Otras Licitaciones'
-        context['recent_items'] = Announcement.objects.filter(is_active=True).exclude(pk=self.object.pk)[:4]
-        context['back_url'] = reverse_lazy('core:announcement_list')
-        context['back_label'] = 'Volver a Licitaciones'
-        context['detail_url_name'] = 'core:announcement_detail'
-        return context
-    raise_exception = True
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({'sidebar_title': 'Otras Licitaciones', 'recent_items': Announcement.objects.filter(is_active=True).exclude(pk=self.object.pk)[:4], 'back_url': reverse_lazy('core:announcement_list'), 'detail_url_name': 'core:announcement_detail'})
+        return ctx
 
-
-
-class AnnouncementManageView(LoginRequiredMixin, ListView):
-    """Gestión de Licitaciones."""
+class AnnouncementManageView(CanEditHomeMixin, ListView):
     model = Announcement
     template_name = 'core/generic_admin_list.html'
     context_object_name = 'object_list'
-    paginate_by = 15
-    extra_context = {
-        'page_title': 'Gestión de Licitaciones y Anuncios',
-        'page_subtitle': 'Administración de procesos licitatorios y convocatorias oficiales',
-        'header_icon': 'bi-megaphone',
-        'create_url': 'core:announcement_create',
-        'create_label': 'Nueva Licitación',
-        'detail_url_name': 'core:announcement_detail',
-        'update_url_name': 'core:announcement_update',
-        'delete_url_name': 'core:announcement_delete',
-    }
-
     def get_queryset(self):
-        return Announcement.objects.all().order_by('-start_date')
-    raise_exception = True
+        qs = Announcement.objects.all().order_by('-start_date')
+        q = self.request.GET.get('q', '').strip()
+        if q: qs = qs.filter(title__icontains=q)
+        return qs
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({'page_title': 'Gestión de Licitaciones', 'header_icon': 'bi-megaphone', 'create_url': 'core:announcement_create', 'update_url_name': 'core:announcement_update', 'delete_url_name': 'core:announcement_delete'})
+        return ctx
 
-
-
-class AnnouncementCreateView(LoginRequiredMixin, CreateView):
-    """Creación de Licitación."""
+class AnnouncementCreateView(CanEditHomeMixin, CreateView):
     model = Announcement
+    form_class = AnnouncementForm
     template_name = 'core/generic_form.html'
-    fields = ['title', 'summary', 'content', 'attached_file', 'start_date', 'end_date', 'is_active', 'status']
     success_url = reverse_lazy('core:manage_announcements')
-    extra_context = {
-        'form_title': 'Registrar Nueva Licitación',
-        'form_subtitle': 'Publica las bases y condiciones para ofertas públicas',
-        'form_icon': 'bi-megaphone-fill',
-        'submit_label': 'Publicar Licitación',
-        'cancel_url': reverse_lazy('core:manage_announcements'),
-    }
-
     def form_valid(self, form):
-        form.instance.content_type = BaseContent.ContentType.ANNOUNCEMENT
-        if self.request.user.is_authenticated:
-            form.instance.created_by = self.request.user
-        messages.success(self.request, "Anuncio o licitación creada correctamente.")
+        form.instance.created_by = self.request.user
         return super().form_valid(form)
-    raise_exception = True
 
-
-
-class AnnouncementUpdateView(LoginRequiredMixin, UpdateView):
-    """Edición de Licitación."""
+class AnnouncementUpdateView(CanEditHomeMixin, UpdateView):
     model = Announcement
+    form_class = AnnouncementForm
     template_name = 'core/generic_form.html'
-    fields = ['title', 'summary', 'content', 'attached_file', 'start_date', 'end_date', 'is_active', 'status']
     success_url = reverse_lazy('core:manage_announcements')
-    extra_context = {
-        'form_title': 'Editar Licitación',
-        'form_subtitle': 'Modifica la información o extiende la fecha límite del anuncio',
-        'form_icon': 'bi-pencil-square',
-        'submit_label': 'Guardar Cambios',
-        'cancel_url': reverse_lazy('core:manage_announcements'),
-    }
 
-    def form_valid(self, form):
-        messages.success(self.request, "Anuncio o licitación actualizada.")
-        return super().form_valid(form)
-    raise_exception = True
-
-
-
-
-class AnnouncementDeleteView(LoginRequiredMixin, DeleteView):
-    """Eliminación de Licitación."""
+class AnnouncementDeleteView(CanEditHomeMixin, DeleteView):
     model = Announcement
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:manage_announcements')
-    extra_context = {
-        'cancel_url': reverse_lazy('core:manage_announcements'),
-    }
-    raise_exception = True
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Licitación eliminada.')
+        return super().delete(request, *args, **kwargs)
 
 
-# --- CONSULTAS PÚBLICAS ---
-
+# --- CONSULTAS ---
 class ConsultationListView(ListView):
-    """Listado público de Consultas Ciudadanas."""
     model = Consultation
     template_name = 'core/generic_cards_grid.html'
     context_object_name = 'object_list'
-    paginate_by = 9
-    extra_context = {
-        'page_title': 'Consultas Públicas',
-        'page_subtitle': 'Participa en los proyectos normativos y ordenanzas en discusión',
-        'detail_url_name': 'core:consultation_detail',
-        'detail_btn_label': 'Participar / Ver más',
-    }
-
-    def get_queryset(self):
-        return Consultation.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-start_date')
-    raise_exception = True
-
-
+    extra_context = {'page_title': 'Consultas Públicas', 'detail_url_name': 'core:consultation_detail'}
+    def get_queryset(self): return Consultation.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-start_date')
 
 class ConsultationDetailView(DetailView):
-    """Detalle público de una Consulta."""
     model = Consultation
     template_name = 'core/generic_detail.html'
-    context_object_name = 'object'
-
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['sidebar_title'] = 'Otras Consultas'
-        context['recent_items'] = Consultation.objects.filter(is_active=True).exclude(pk=self.object.pk)[:4]
-        context['back_url'] = reverse_lazy('core:consultation_list')
-        context['back_label'] = 'Volver a Consultas'
-        context['detail_url_name'] = 'core:consultation_detail'
-        return context
-    raise_exception = True
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({'sidebar_title': 'Otras Consultas', 'recent_items': Consultation.objects.filter(is_active=True).exclude(pk=self.object.pk)[:4], 'back_url': reverse_lazy('core:consultation_list'), 'detail_url_name': 'core:consultation_detail'})
+        return ctx
 
-class ConsultationManageView(LoginRequiredMixin, ListView):
-    """Gestión de Consultas Públicas."""
+class ConsultationManageView(CanEditHomeMixin, ListView):
     model = Consultation
     template_name = 'core/generic_admin_list.html'
     context_object_name = 'object_list'
-    paginate_by = 15
-    extra_context = {
-        'page_title': 'Gestión de Consultas Públicas',
-        'page_subtitle': 'Administración de procesos de participación ciudadana',
-        'header_icon': 'bi-people',
-        'create_url': 'core:consultation_create',
-        'create_label': 'Nueva Consulta',
-        'detail_url_name': 'core:consultation_detail',
-        'update_url_name': 'core:consultation_update',
-        'delete_url_name': 'core:consultation_delete',
-    }
-
     def get_queryset(self):
-        return Consultation.objects.all().order_by('-start_date')
-    raise_exception = True
+        qs = Consultation.objects.all().order_by('-start_date')
+        q = self.request.GET.get('q', '').strip()
+        if q: qs = qs.filter(title__icontains=q)
+        return qs
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({'page_title': 'Gestión de Consultas', 'header_icon': 'bi-people', 'create_url': 'core:consultation_create', 'update_url_name': 'core:consultation_update', 'delete_url_name': 'core:consultation_delete'})
+        return ctx
 
-
-
-class ConsultationCreateView(LoginRequiredMixin, CreateView):
-    """Creación de Consulta."""
+class ConsultationCreateView(CanEditHomeMixin, CreateView):
     model = Consultation
+    form_class = ConsultationForm
     template_name = 'core/generic_form.html'
-    fields = ['title', 'summary', 'content', 'attached_file', 'start_date', 'end_date', 'is_active', 'status']
     success_url = reverse_lazy('core:manage_consultations')
-    extra_context = {
-        'form_title': 'Registrar Consulta Pública',
-        'form_subtitle': 'Abre un proceso de participación ciudadana',
-        'form_icon': 'bi-person-plus',
-        'submit_label': 'Publicar Consulta',
-        'cancel_url': reverse_lazy('core:manage_consultations'),
-    }
-
     def form_valid(self, form):
-        form.instance.content_type = BaseContent.ContentType.CONSULTATION
-        if self.request.user.is_authenticated:
-            form.instance.created_by = self.request.user
-        messages.success(self.request, "Consulta pública registrada correctamente.")
+        form.instance.created_by = self.request.user
         return super().form_valid(form)
-    raise_exception = True
 
-
-
-class ConsultationUpdateView(LoginRequiredMixin, UpdateView):
-    """Edición de Consulta."""
+class ConsultationUpdateView(CanEditHomeMixin, UpdateView):
     model = Consultation
+    form_class = ConsultationForm
     template_name = 'core/generic_form.html'
-    fields = ['title', 'summary', 'content', 'attached_file', 'start_date', 'end_date', 'is_active', 'status']
     success_url = reverse_lazy('core:manage_consultations')
-    extra_context = {
-        'form_title': 'Editar Consulta Pública',
-        'form_subtitle': 'Modifica las fechas o el contenido de la consulta',
-        'form_icon': 'bi-pencil-square',
-        'submit_label': 'Guardar Cambios',
-        'cancel_url': reverse_lazy('core:manage_consultations'),
-    }
-    raise_exception = True
 
-
-
-class ConsultationDeleteView(LoginRequiredMixin, DeleteView):
-    """Eliminación de Consulta."""
+class ConsultationDeleteView(CanEditHomeMixin, DeleteView):
     model = Consultation
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:manage_consultations')
-    extra_context = {
-        'cancel_url': reverse_lazy('core:manage_consultations'),
-    }
-    raise_exception = True
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Consulta eliminada.')
+        return super().delete(request, *args, **kwargs)
+
 
 # --- EVENTOS ---
-
 class EventListView(ListView):
-    """Listado público de Eventos."""
     model = Event
     template_name = 'core/generic_cards_grid.html'
     context_object_name = 'object_list'
-    paginate_by = 9
-    extra_context = {
-        'page_title': 'Eventos y Agenda Institucional',
-        'page_subtitle': 'Sesiones ordinarias, plenarias y actos solemnes del Concejo',
-        'detail_url_name': 'core:event_detail',
-        'detail_btn_label': 'Ver Evento',
-    }
-
-    def get_queryset(self):
-        return Event.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-start_date')
-    raise_exception = True
+    extra_context = {'page_title': 'Eventos', 'detail_url_name': 'core:event_detail'}
+    def get_queryset(self): return Event.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-start_date')
 
 class EventDetailView(DetailView):
-    """Detalle público de un Evento."""
     model = Event
     template_name = 'core/generic_detail.html'
-    context_object_name = 'object'
-
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['sidebar_title'] = 'Próximos Eventos'
-        context['recent_items'] = Event.objects.filter(is_active=True).exclude(pk=self.object.pk)[:4]
-        context['back_url'] = reverse_lazy('core:event_list')
-        context['back_label'] = 'Volver a Eventos'
-        context['detail_url_name'] = 'core:event_detail'
-        return context
-    raise_exception = True
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({'sidebar_title': 'Próximos Eventos', 'recent_items': Event.objects.filter(is_active=True).exclude(pk=self.object.pk)[:4], 'back_url': reverse_lazy('core:event_list'), 'detail_url_name': 'core:event_detail'})
+        return ctx
 
-
-
-class EventManageView(LoginRequiredMixin, ListView):
-    """Gestión de Eventos."""
+class EventManageView(CanEditHomeMixin, ListView):
     model = Event
     template_name = 'core/generic_admin_list.html'
     context_object_name = 'object_list'
-    paginate_by = 15
-    extra_context = {
-        'page_title': 'Gestión de Eventos Institucionales',
-        'page_subtitle': 'Administración de la agenda legislativa y actos públicos',
-        'header_icon': 'bi-calendar-event',
-        'create_url': 'core:event_create',
-        'create_label': 'Nuevo Evento',
-        'detail_url_name': 'core:event_detail',
-        'update_url_name': 'core:event_update',
-        'delete_url_name': 'core:event_delete',
-    }
-
     def get_queryset(self):
-        return Event.objects.all().order_by('-start_date')
-    raise_exception = True
+        qs = Event.objects.all().order_by('-start_date')
+        q = self.request.GET.get('q', '').strip()
+        if q: qs = qs.filter(title__icontains=q)
+        return qs
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({'page_title': 'Gestión de Eventos', 'header_icon': 'bi-calendar-event', 'create_url': 'core:event_create', 'update_url_name': 'core:event_update', 'delete_url_name': 'core:event_delete'})
+        return ctx
 
-
-
-
-class EventCreateView(LoginRequiredMixin, CreateView):
-    """Creación de Evento."""
+class EventCreateView(CanEditHomeMixin, CreateView):
     model = Event
+    form_class = EventForm
     template_name = 'core/generic_form.html'
-    fields = ['title', 'summary', 'content', 'image', 'start_date', 'end_date', 'is_active', 'status']
     success_url = reverse_lazy('core:manage_events')
-    extra_context = {
-        'form_title': 'Agendar Nuevo Evento',
-        'form_subtitle': 'Añade una actividad o sesión a la agenda municipal',
-        'form_icon': 'bi-calendar-plus',
-        'submit_label': 'Agendar Evento',
-        'cancel_url': reverse_lazy('core:manage_events'),
-    }
-
     def form_valid(self, form):
-        form.instance.content_type = BaseContent.ContentType.EVENT
-        if self.request.user.is_authenticated:
-            form.instance.created_by = self.request.user
-        messages.success(self.request, "Evento registrado con éxito.")
+        form.instance.created_by = self.request.user
         return super().form_valid(form)
-    raise_exception = True
 
-
-
-
-class EventUpdateView(LoginRequiredMixin, UpdateView):
-    """Edición de Evento."""
+class EventUpdateView(CanEditHomeMixin, UpdateView):
     model = Event
+    form_class = EventForm
     template_name = 'core/generic_form.html'
-    fields = ['title', 'summary', 'content', 'image', 'start_date', 'end_date', 'is_active', 'status']
     success_url = reverse_lazy('core:manage_events')
-    extra_context = {
-        'form_title': 'Editar Evento',
-        'form_subtitle': 'Actualiza la fecha, hora o descripción del evento',
-        'form_icon': 'bi-pencil-square',
-        'submit_label': 'Guardar Cambios',
-        'cancel_url': reverse_lazy('core:manage_events'),
-    }
-    raise_exception = True
 
-class EventDeleteView(LoginRequiredMixin, DeleteView):
-    """Eliminación de Evento."""
+class EventDeleteView(CanEditHomeMixin, DeleteView):
     model = Event
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:manage_events')
-    extra_context = {
-        'cancel_url': reverse_lazy('core:manage_events'),
-    }
-    raise_exception = True
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Evento eliminado.')
+        return super().delete(request, *args, **kwargs)
 
 
-
-# --- DOCUMENTOS DESCARGABLES ---
+# --- DESCARGABLES ---
 
 class DownloadableListView(ListView):
-    """Listado público de Documentos Descargables."""
     model = Downloadable
     template_name = 'core/generic_cards_grid.html'
     context_object_name = 'object_list'
-    paginate_by = 12
-    extra_context = {
-        'page_title': 'Documentos y Formatos Descargables',
-        'page_subtitle': 'Formularios, guías y planillas oficiales a disposición del público',
-        'detail_btn_label': 'Descargar PDF',
-    }
-
+    
     def get_queryset(self):
-        return Downloadable.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-created_at')
-    raise_exception = True
+        qs = Downloadable.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-created_at')
+        q = self.request.GET.get('q', '').strip()
+        if q: qs = qs.filter(title__icontains=q)
+        return qs
+        
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            'page_title': 'Descargables', 
+            'detail_btn_label': 'Descargar PDF',
+            'search_url': reverse_lazy('core:downloadable_list') #  Buscador para el público
+        })
+        return ctx
 
 
-
-class DownloadableManageView(LoginRequiredMixin, ListView):
-    """Gestión de Descargables."""
+class DownloadableManageView(CanEditHomeMixin, ListView):
     model = Downloadable
     template_name = 'core/generic_admin_list.html'
     context_object_name = 'object_list'
-    paginate_by = 15
-    extra_context = {
-        'page_title': 'Gestión de Archivos Descargables',
-        'page_subtitle': 'Administración de formularios, planillas y material de consulta pública',
-        'header_icon': 'bi-file-earmark-arrow-down',
-        'create_url': 'core:downloadable_create',
-        'create_label': 'Nuevo Descargable',
-        'update_url_name': 'core:downloadable_update',
-        'delete_url_name': 'core:downloadable_delete',
-    }
-
     def get_queryset(self):
-        return Downloadable.objects.all().order_by('-created_at')
-    raise_exception = True
+        qs = Downloadable.objects.all().order_by('-created_at')
+        q = self.request.GET.get('q', '').strip()
+        if q: qs = qs.filter(title__icontains=q)
+        return qs
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({'page_title': 'Gestión de Descargables', 'header_icon': 'bi-file-earmark-arrow-down', 'create_url': 'core:downloadable_create', 'update_url_name': 'core:downloadable_update', 'delete_url_name': 'core:delete_downloadable'})
+        return ctx
 
 
-
-class DownloadableCreateView(LoginRequiredMixin, CreateView):
-    """Creación de Descargable."""
+class DownloadableCreateView(CanEditHomeMixin, CreateView):
     model = Downloadable
+    form_class = DownloadableForm
     template_name = 'core/generic_form.html'
-    fields = ['title', 'summary', 'attached_file', 'year', 'is_active', 'status']
     success_url = reverse_lazy('core:manage_downloadables')
-    extra_context = {
-        'form_title': 'Subir Nuevo Documento Descargable',
-        'form_subtitle': 'Adjunta archivos en formato PDF para el acceso libre de los ciudadanos',
-        'form_icon': 'bi-cloud-upload',
-        'submit_label': 'Publicar Documento',
-        'cancel_url': reverse_lazy('core:manage_downloadables'),
-    }
-
     def form_valid(self, form):
-        form.instance.content_type = BaseContent.ContentType.DOWNLOADABLE
-        if self.request.user.is_authenticated:
-            form.instance.created_by = self.request.user
-        messages.success(self.request, "Documento descargable publicado.")
+        form.instance.created_by = self.request.user
         return super().form_valid(form)
-    raise_exception = True
 
-
-
-class DownloadableUpdateView(LoginRequiredMixin, UpdateView):
-    """Edición de Descargable."""
+class DownloadableUpdateView(CanEditHomeMixin, UpdateView):
     model = Downloadable
+    form_class = DownloadableForm
     template_name = 'core/generic_form.html'
-    fields = ['title', 'summary', 'attached_file', 'year', 'is_active', 'status']
     success_url = reverse_lazy('core:manage_downloadables')
-    extra_context = {
-        'form_title': 'Editar Documento Descargable',
-        'form_subtitle': 'Actualiza el título, resumen o reemplaza el archivo adjunto',
-        'form_icon': 'bi-pencil-square',
-        'submit_label': 'Guardar Cambios',
-        'cancel_url': reverse_lazy('core:manage_downloadables'),
-    }
-    raise_exception = True
 
-
-class DownloadableDeleteView(LoginRequiredMixin, DeleteView):
-    """Eliminación de Descargable."""
+class DownloadableDeleteView(CanEditHomeMixin, DeleteView):
     model = Downloadable
     template_name = 'core/generic_confirm_delete.html'
     success_url = reverse_lazy('core:manage_downloadables')
-    extra_context = {
-        'cancel_url': reverse_lazy('core:manage_downloadables'),
-    }
-    raise_exception = True
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Descargable eliminado.')
+        return super().delete(request, *args, **kwargs)
+
 
 # ============================================================
-# 10. MÓDULO DE ACTIVIDADES Y SECCIÓN INSTITUCIONAL
+# 9. ACTIVIDADES (SOLO LECTURA) Y SOBRE NOSOTROS
 # ============================================================
-
-# --- ACTIVIDADES ---
 
 class ActivityListView(ListView):
-    """Listado público de actividades del Concejo."""
     model = Activity
     template_name = 'core/generic_cards_grid.html'
     context_object_name = 'object_list'
-    paginate_by = 9
-    extra_context = {
-        'page_title': 'Actividades Institucionales',
-        'page_subtitle': 'Trabajo comunitario, comisiones de calle y gestión en las parroquias',
-        'detail_url_name': 'core:activity_detail',
-        'detail_btn_label': 'Ver Detalle',
-    }
-
-    def get_queryset(self):
-        return Activity.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-created_at')
-    raise_exception = True
-
-
+    extra_context = {'page_title': 'Actividades', 'detail_url_name': 'core:activity_detail'}
+    def get_queryset(self): return Activity.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED).order_by('-created_at')
 
 class ActivityDetailView(DetailView):
-    """Detalle público de una actividad."""
     model = Activity
     template_name = 'core/generic_detail.html'
-    context_object_name = 'object'
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({'sidebar_title': 'Otras Actividades', 'recent_items': Activity.objects.filter(is_active=True).exclude(pk=self.object.pk)[:4], 'back_url': reverse_lazy('core:activity_list'), 'detail_url_name': 'core:activity_detail'})
+        return ctx
+
+class ActivityManageView(CanEditHomeMixin, ListView):
+    model = Activity
+    template_name = 'core/generic_admin_list.html'
+    context_object_name = 'object_list'
+    def get_queryset(self):
+        qs = Activity.objects.all().order_by('-created_at')
+        q = self.request.GET.get('q', '').strip()
+        if q: qs = qs.filter(title__icontains=q)
+        return qs
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['sidebar_title'] = 'Otras Actividades'
-        context['recent_items'] = Activity.objects.filter(is_active=True).exclude(pk=self.object.pk)[:4]
-        context['back_url'] = reverse_lazy('core:activity_list')
-        context['back_label'] = 'Volver a Actividades'
-        context['detail_url_name'] = 'core:activity_detail'
-        return context
-    raise_exception = True
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            'page_title': 'Gestión de Actividades', 
+            'header_icon': 'bi-activity', 
+            'detail_url_name': 'core:activity_detail',
+            'search_url': reverse_lazy('core:manage_activities') # Buscador
+        })
+        return ctx
 
 
-class ActivityManageView(LoginRequiredMixin, ListView):
-    """Gestión administrativa de actividades."""
-    model = Activity
-    template_name = 'core/generic_admin_list.html'
-    context_object_name = 'object_list'
-    paginate_by = 15
-    extra_context = {
-        'page_title': 'Gestión de Actividades',
-        'page_subtitle': 'Administra la publicación de jornadas e inspecciones de campo',
-        'header_icon': 'bi-activity',
-        'create_url': 'core:activity_create',
-        'create_label': 'Nueva Actividad',
-        'detail_url_name': 'core:activity_detail',
-        'update_url_name': 'core:activity_update',
-        'delete_url_name': 'core:activity_delete',
-    }
-
-    def get_queryset(self):
-        return Activity.objects.all().order_by('-created_at')
-    raise_exception = True
-
-
-
-class ActivityCreateView(LoginRequiredMixin, CreateView):
-    """Crear Actividad."""
-    model = Activity
-    template_name = 'core/generic_form.html'
-    fields = ['title', 'summary', 'content', 'image', 'is_featured', 'is_active', 'status']
-    success_url = reverse_lazy('core:manage_activities')
-    extra_context = {
-        'form_title': 'Registrar Nueva Actividad',
-        'form_subtitle': 'Completa la información de la actividad institucional realizada',
-        'form_icon': 'bi-journal-plus',
-        'submit_label': 'Guardar Actividad',
-        'cancel_url': reverse_lazy('core:manage_activities'),
-    }
-
-    def form_valid(self, form):
-        form.instance.content_type = BaseContent.ContentType.ACTIVITY
-        if self.request.user.is_authenticated:
-            form.instance.created_by = self.request.user
-        messages.success(self.request, "Actividad creada exitosamente.")
-        return super().form_valid(form)
-    raise_exception = True
-
-
-
-class ActivityUpdateView(LoginRequiredMixin, UpdateView):
-    """Editar Actividad."""
-    model = Activity
-    template_name = 'core/generic_form.html'
-    fields = ['title', 'summary', 'content', 'image', 'is_featured', 'is_active', 'status']
-    success_url = reverse_lazy('core:manage_activities')
-    extra_context = {
-        'form_title': 'Editar Actividad',
-        'form_subtitle': 'Modifica la información o fotografías de la actividad',
-        'form_icon': 'bi-pencil-square',
-        'submit_label': 'Guardar Cambios',
-        'cancel_url': reverse_lazy('core:manage_activities'),
-    }
-
-    def form_valid(self, form):
-        messages.success(self.request, "Actividad actualizada correctamente.")
-        return super().form_valid(form)
-    raise_exception = True
-
-
-
-class ActivityDeleteView(LoginRequiredMixin, DeleteView):
-    """Eliminar Actividad."""
-    model = Activity
-    template_name = 'core/generic_confirm_delete.html'
-    success_url = reverse_lazy('core:manage_activities')
-    extra_context = {
-        'cancel_url': reverse_lazy('core:manage_activities'),
-    }
-    raise_exception = True
-
-
-
-# --- EDICIÓN ADMINISTRATIVA SOBRE NOSOTROS ---
-
-class AboutUsManageView(LoginRequiredMixin, ListView):
-    """Gestión de textos de Quiénes Somos, Misión y Visión."""
+# ============================================================
+#  SOBRE NOSOTROS (PARKING) Por ahora se usa la version static
+# ============================================================
+class AboutUsManageView(CanEditHomeMixin, ListView):
     model = AboutUs
     template_name = 'core/generic_admin_list.html'
     context_object_name = 'object_list'
-    paginate_by = 10
-    extra_context = {
-        'page_title': 'Gestión de Secciones Institucionales',
-        'page_subtitle': 'Administra los bloques de Misión, Visión e Historia',
-        'header_icon': 'bi-info-circle',
-        'update_url_name': 'core:about_us_update',
-    }
-    raise_exception = True
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({'page_title': 'Gestión Institucional', 'header_icon': 'bi-info-circle', 'update_url_name': 'core:about_us_update'})
+        return ctx
 
-
-class AboutUsUpdateView(LoginRequiredMixin, UpdateView):
-    """Edición de sección institucional."""
+class AboutUsUpdateView(CanEditHomeMixin, UpdateView):
     model = AboutUs
+    form_class = AboutUsForm
     template_name = 'core/generic_form.html'
-    fields = ['title', 'content', 'image', 'is_active', 'status']
     success_url = reverse_lazy('core:manage_about_us')
-    extra_context = {
-        'form_title': 'Editar Sección Institucional',
-        'form_subtitle': 'Actualiza los textos e imágenes oficiales de la institución',
-        'form_icon': 'bi-pencil-square',
-        'submit_label': 'Guardar Cambios',
-        'cancel_url': reverse_lazy('core:manage_about_us'),
-    }
-
-    def form_valid(self, form):
-        messages.success(self.request, "Información institucional actualizada.")
-        return super().form_valid(form)
-    raise_exception = True
 
 
+# ============================================================
+# 10. VISTA DE HISTORIA CORTA DEL MUNICIPIO
+# ============================================================
 class MunicipalHistoryView(TemplateView):
     template_name = 'core/municipal_history.html'

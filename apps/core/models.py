@@ -1,19 +1,4 @@
 """
-Copyright [2026] [Proyecto universitario - Concejo Municipal de Junín]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
-"""
 Modelos de la app core del Concejo Municipal de Junín.
 
 Contiene:
@@ -42,6 +27,7 @@ from django.db import models, IntegrityError
 from django.utils import timezone
 from django.utils.text import slugify
 from django.conf import settings
+from django.core.validators import FileExtensionValidator
 
 from common.models import TimestampedMixin
 
@@ -162,12 +148,14 @@ class BaseContent(TimestampedMixin, models.Model):
         upload_to='contents/images/%Y/%m/',
         blank=True,
         null=True,
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'webp'])], # 🆕 B143
         verbose_name="Imagen / Foto"
     )
     attached_file = models.FileField(
         upload_to='contents/docs/%Y/%m/',
         blank=True,
         null=True,
+        validators=[FileExtensionValidator(allowed_extensions=['pdf'])], # 🆕 B143
         verbose_name="Archivo Adjunto (PDF)"
     )
     show_pdf_inline = models.BooleanField(
@@ -204,7 +192,7 @@ class BaseContent(TimestampedMixin, models.Model):
     year = models.CharField(max_length=4, blank=True, verbose_name="Año (Descargables)")
 
     # --- Relaciones ---
-    # PROTECT: no se puede borrar una categoría o un usuario con contenido asociado.
+    # PROTECT: no se puede borrar una categoría con contenido asociado.
     category = models.ForeignKey(
         'Category',
         on_delete=models.PROTECT,
@@ -233,6 +221,13 @@ class BaseContent(TimestampedMixin, models.Model):
             models.Index(fields=['content_type', 'is_active']),
             models.Index(fields=['subtype', 'is_active']),
         ]
+        # (parcial): permisos custom de core.
+        # Django ya crea add/change/delete/view automáticamente.
+        # can_edit_home se asigna al grupo contentmanager y Administrator en seed_roles.py.
+        permissions = [
+            ('can_edit_home', 'Can edit home content'),
+        ]
+
 
     def save(self, *args, **kwargs):
         """
@@ -246,6 +241,20 @@ class BaseContent(TimestampedMixin, models.Model):
         """
         if not self.slug and self.title:
             self.slug = self._build_unique_slug()
+        
+
+        # Limpieza de archivos al actualizar
+        if self.pk:
+            try:
+                old_obj = BaseContent.objects.get(pk=self.pk)
+                if old_obj.image and self.image != old_obj.image:
+                    old_obj.image.delete(save=False)
+                if old_obj.attached_file and self.attached_file != old_obj.attached_file:
+                    old_obj.attached_file.delete(save=False)
+            except BaseContent.DoesNotExist:
+                pass
+        
+        
         try:
             super().save(*args, **kwargs)
         except IntegrityError:
@@ -333,8 +342,9 @@ class BaseContent(TimestampedMixin, models.Model):
 
     @property
     def full_name(self):
-        """Alias de title (compatibilidad con código previo de Fersan)."""
+        """Alias de title"""
         return self.title
+
 
 
 # ==============================================================================
@@ -646,37 +656,6 @@ class Commission(TimestampedMixin, models.Model):
         }
         return emojis.get(self.number, '📋')
 
-class CommissionMember(models.Model):
-    """Modelo intermedio para asignar concejales a las comisiones permanentes. """
-    commission = models.ForeignKey(
-        'Commission',
-        on_delete=models.CASCADE,
-        related_name='members',
-        verbose_name="Comisión"
-    )
-    councilor = models.ForeignKey(
-        'Councilor',
-        on_delete=models.CASCADE,
-        related_name='commission_memberships',
-        verbose_name="Concejal"
-    )
-    role = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True,
-        verbose_name="Cargo en la Comisión (Ej. Presidente, Vicepresidente)"
-    )
-    class Meta:
-        verbose_name = "Miembro de Comisión"
-        verbose_name_plural = "Miembros de Comisiones"
-        unique_together = ('commission', 'councilor')
-
-    def __str__(self):
-        return f"{self.councilor} - {self.commission} ({self.role or 'Miembro'})"
-
-
-
-    
 
 class Legislature(TimestampedMixin, models.Model):
     """
@@ -701,7 +680,7 @@ class Legislator(TimestampedMixin, models.Model):
     """Miembros de una legislatura."""
     legislature = models.ForeignKey(
         Legislature,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE, #  Cambiado de PROTECT a CASCADE
         related_name='members',
         verbose_name="Legislatura"
     )

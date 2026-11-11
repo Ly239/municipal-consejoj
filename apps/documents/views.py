@@ -6,14 +6,22 @@ Contiene:
 - Vistas CRUD de Gazette (Gacetas).
 - Vistas CRUD de Document (Documentos).
 """
+# 1. Standard library (Python puro)
 import logging
 import operator
+from datetime import date
 from functools import reduce
 from urllib.parse import urlencode
 
+# 2. Third-party (paquetes instalados)
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment
+
+# 3. Django (es third-party, pero se separa por convención)
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import Q
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils.functional import cached_property
@@ -21,6 +29,7 @@ from django.views.generic import (
     ListView, CreateView, UpdateView, DeleteView, DetailView
 )
 
+# 4. Local (apps del proyecto)
 from common.mixins import LoggingMixin
 from .models import Gazette, Document, DocumentType
 from .forms import GazetteForm, DocumentForm
@@ -56,16 +65,21 @@ class SearchListMixin:
         """
         Filtros activos parseados del request (formato 'campo|valor').
         Cacheado para no re-parsear 3 veces por request.
+
+        solo acepta campos declarados en filter_fields (whitelist).
+        Evita FieldError cuando alguien manipula la URL con un campo no permitido.
         """
         filters = []
+        allowed = set(self.filter_fields)   # ← NUEVO
         for item in self.request.GET.getlist('active_filter'):
             if '|' in item:
                 field_name, value = item.split('|', 1)
-                filters.append((field_name, value))
+                if field_name in allowed:   # ← NUEVO
+                    filters.append((field_name, value))
         # Compatibilidad con formato antiguo (?filter=X&value=Y)
         filter_name = self.request.GET.get('filter')
         filter_value = self.request.GET.get('value')
-        if filter_name and filter_value and not filters:
+        if filter_name and filter_value and filter_name in allowed and not filters:
             filters.append((filter_name, filter_value))
         return filters
 
@@ -195,7 +209,30 @@ class SearchListMixin:
         return tags
 
     def get_filter_label(self, field_name, value):
-        """Devuelve el label legible de un valor de filtro."""
+        """
+        Devuelve el label legible de un valor de filtro.
+
+        Traduce booleanos (True/False) a español antes de mostrar.
+        """
+        # B60: traducciones específicas de booleanos
+        TRANSLATIONS = {
+            'is_approved': {
+                True: 'Aprobado',
+                False: 'Pendiente',
+            },
+            'is_annulled': {
+                True: 'Anulado',
+                False: 'Vigente',
+            },
+            'is_extraordinary': {
+                True: 'Extraordinaria',
+                False: 'Ordinaria',
+            },
+        }
+        if field_name in TRANSLATIONS:
+            return TRANSLATIONS[field_name].get(value, value)
+
+        # Fallback: choices del modelo si existen
         try:
             field = self.model._meta.get_field(field_name)
             if getattr(field, 'choices', None):
@@ -214,7 +251,6 @@ class SearchListMixin:
 # ==================================================
 # VISTAS PARA GACETAS
 # ==================================================
-
 class GazetteListView(LoginRequiredMixin, SearchListMixin, ListView):
     """Listado de gacetas con búsqueda y filtros."""
     model = Gazette
@@ -224,6 +260,20 @@ class GazetteListView(LoginRequiredMixin, SearchListMixin, ListView):
     search_fields = ['number', 'year', 'description']
     numeric_fields = ['number', 'year']
     filter_fields = ['year']
+
+    def get_queryset(self):
+        """
+        Filtra por tipo (ordinaria/extraordinaria) además de los
+        filtros heredados del SearchListMixin.
+        """
+        qs = super().get_queryset()
+        tipo = self.request.GET.get('tipo', '')
+        if tipo == 'ordinaria':
+            qs = qs.filter(is_extraordinary=False)
+        elif tipo == 'extraordinaria':
+            qs = qs.filter(is_extraordinary=True)
+        return qs
+        
 
 
 class GazetteCreateView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixin, CreateView):
@@ -283,14 +333,20 @@ class GazetteDeleteView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixi
         messages.error(self.request, "No tienes permiso para eliminar gacetas.")
         return redirect('documents:gazette_list')
 
-    def form_valid(self, form):
+    def delete(self, request, *args, **kwargs):
+        """
+        El mensaje se muestra SOLO si el delete funcionó.
+        Nota: Django 3.2 DeleteView usa delete(), NO form_valid().
+        """
         try:
-            messages.success(self.request, "Gaceta movida a la papelera. Puedes restaurarla si lo deseas.")
-            return super().form_valid(form)
+            response = super().delete(request, *args, **kwargs)   # ← primero la acción
+            messages.success(request, "Gaceta movida a la papelera. Puedes restaurarla si lo deseas.")
+            return response
         except Exception as e:
             logger.error(f"Error al eliminar gaceta: {e}")
-            messages.error(self.request, "Ocurrió un error al mover la gaceta a la papelera.")
+            messages.error(request, "Ocurrió un error al mover la gaceta a la papelera.")
             return redirect('documents:gazette_list')
+
 
 
 class GazetteDetailView(LoginRequiredMixin, LoggingMixin, DetailView):
@@ -405,7 +461,14 @@ class DocumentCreateView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMix
     def handle_no_permission(self):
         messages.error(self.request, "No tienes permiso para crear documentos.")
         return redirect('documents:document_list')
+    
+    def get_form_kwargs(self):
+        """Pasa el usuario al form para controlar campos de aprobación."""
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
+    
     def form_valid(self, form):
         try:
             form.instance.submitted_by = self.request.user
@@ -416,6 +479,7 @@ class DocumentCreateView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMix
             logger.error(f"Error al crear documento: {e}")
             messages.error(self.request, "Ocurrió un error al crear el documento.")
             return self.form_invalid(form)
+
 
 
 class DocumentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMixin, UpdateView):
@@ -452,13 +516,18 @@ class DocumentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, LoggingMix
         messages.error(self.request, "No tienes permiso para eliminar documentos.")
         return redirect('documents:document_list')
 
-    def form_valid(self, form):
+    def delete(self, request, *args, **kwargs):
+        """
+        El mensaje se muestra SOLO si el delete funcionó.
+        Nota: Django 3.2 DeleteView usa delete(), NO form_valid().
+        """
         try:
-            messages.success(self.request, "Documento movido a la papelera. Puedes restaurarla si lo deseas.")
-            return super().form_valid(form)
+            response = super().delete(request, *args, **kwargs)   # ← primero la acción
+            messages.success(request, "Documento movido a la papelera. Puedes restaurarlo si lo deseas.")
+            return response
         except Exception as e:
             logger.error(f"Error al eliminar documento: {e}")
-            messages.error(self.request, "Ocurrió un error al mover el documento a la papelera.")
+            messages.error(request, "Ocurrió un error al mover el documento a la papelera.")
             return redirect('documents:document_list')
 
 
@@ -473,3 +542,238 @@ class DocumentDetailView(LoginRequiredMixin, LoggingMixin, DetailView):
         return super().get_queryset().select_related(
             'gazette', 'document_type', 'issuing_entity', 'submitted_by'
         )
+
+
+
+# ==================================================
+# EXPORT A EXCEL
+# ==================================================
+
+class DocumentExportExcelView(LoginRequiredMixin, PermissionRequiredMixin, SearchListMixin, ListView):
+    """
+    Exporta el listado de documentos a Excel (.xlsx).
+
+    Reutiliza SearchListMixin para heredar búsqueda (q) + filtros activos.
+    Incluye la fecha de publicación en el sistema (publication_date).
+    """
+    model = Document
+    permission_required = 'documents.view_document'
+    search_fields = [
+        'title', 'description',
+        'number', 'gazette__number', 'gazette__year',
+        'document_type__name', 'issuing_entity__name',
+    ]
+    numeric_fields = ['number', 'gazette__number', 'gazette__year']
+    filter_fields = ['document_type__name', 'issuing_entity__name', 'is_approved']
+
+    def handle_no_permission(self):
+        """redirect con mensaje amigable en vez de 403."""
+        messages.error(self.request, "No tienes permiso para exportar documentos.")
+        return redirect('documents:document_list')
+
+    def get_queryset(self):
+        """
+        Reutiliza el queryset del DocumentListView con filtros del template
+        (year, month, doc_type, status, date_from, date_to).
+        """
+        queryset = super().get_queryset().select_related(
+            'gazette', 'document_type', 'issuing_entity', 'submitted_by'
+        )
+
+        # Filtro por año / mes
+        year = self.request.GET.get('year')
+        month = self.request.GET.get('month')
+        if year:
+            queryset = queryset.filter(emission_date__year=year)
+        if month:
+            queryset = queryset.filter(emission_date__month=month)
+
+        # Filtro por rango de fechas
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+        if date_from:
+            queryset = queryset.filter(emission_date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(emission_date__lte=date_to)
+
+        # Filtro por tipo de documento
+        doc_type = self.request.GET.get('doc_type')
+        if doc_type:
+            queryset = queryset.filter(document_type__id=doc_type)
+
+        # Filtro por estado
+        status = self.request.GET.get('status')
+        if status == 'approved':
+            queryset = queryset.filter(is_approved=True, is_annulled=False)
+        elif status == 'pending':
+            queryset = queryset.filter(is_approved=False, is_annulled=False)
+        elif status == 'annulled':
+            queryset = queryset.filter(is_annulled=True)
+
+        return queryset.order_by('-emission_date__year', 'number')
+
+    def get(self, request, *args, **kwargs):
+        """Construye el Excel y lo devuelve como descarga."""
+        queryset = self.get_queryset()
+
+        # Crear workbook
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Documentos"
+
+        # Estilos
+        header_fill = PatternFill(start_color="003B4F", end_color="003B4F", fill_type="solid")
+        header_font = Font(color="FFFFFF", bold=True)
+        header_align = Alignment(horizontal="center", vertical="center")
+
+        # Encabezados (con columna "Publicado en sistema")
+        headers = [
+            'N°', 'Tipo', 'Título', 'Gaceta', 'Ente Emisor',
+            'Fecha Emisión', 'Publicado en sistema', 'Estado',
+            'Subido por', 'Archivo adjunto'
+        ]
+        ws.append(headers)
+
+        # Aplicar estilos a headers
+        for cell in ws[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = header_align
+
+        # Filas
+        for doc in queryset:
+            # Columna de archivo adjunto
+            archivos = []
+            if doc.pdf_file and doc.pdf_file.name:
+                archivos.append('PDF')
+            if doc.image and doc.image.name:
+                archivos.append('Imagen')
+            archivo_label = ' + '.join(archivos) if archivos else 'Sin archivo'
+
+            # Estado legible
+            if doc.is_annulled:
+                estado = 'Anulado'
+            elif doc.is_approved:
+                estado = 'Aprobado'
+            else:
+                estado = 'Pendiente'
+
+            # Año de la gaceta
+            year = doc.gazette.year if doc.gazette else '—'
+
+            ws.append([
+                f"{doc.number:03d}",
+                doc.document_type.name if doc.document_type else '—',
+                doc.title,
+                f"N° {doc.gazette.formatted_number} - {year}" if doc.gazette else '—',
+                doc.issuing_entity.name if doc.issuing_entity else '—',
+                doc.emission_date.strftime('%d/%m/%Y') if doc.emission_date else '—',
+                doc.publication_date.strftime('%d/%m/%Y %I:%M %p') if doc.publication_date else '—',
+                estado,
+                doc.submitted_by.username if doc.submitted_by else '—',
+                archivo_label,
+            ])
+
+        # Ancho de columnas
+        widths = [6, 18, 45, 18, 25, 14, 20, 12, 20, 18]
+        for i, w in enumerate(widths, start=1):
+            ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = w
+
+        # Preparar response
+        filename = f"documentos_{date.today().strftime('%Y-%m-%d')}.xlsx"
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        wb.save(response)
+        return response
+
+        
+        
+class GazetteExportExcelView(LoginRequiredMixin, PermissionRequiredMixin, SearchListMixin, ListView):
+    """
+    Exporta el listado de gacetas a Excel (.xlsx).
+
+    Reutiliza SearchListMixin para heredar búsqueda (q) + filtros activos.
+    Incluye la fecha de publicación en el sistema (publication_date).
+    """
+    model = Gazette
+    permission_required = 'documents.view_gazette'
+    search_fields = ['number', 'year', 'description']
+    numeric_fields = ['number', 'year']
+    filter_fields = ['year']
+
+    def handle_no_permission(self):
+        """redirect con mensaje amigable en vez de 403."""
+        messages.error(self.request, "No tienes permiso para exportar gacetas.")
+        return redirect('documents:gazette_list')
+
+    def get_queryset(self):
+        """
+        Hereda search + active_filters de SearchListMixin.
+        Añade filtro por tipo (B63).
+        """
+        qs = super().get_queryset()
+
+        # Filtro por tipo (B63)
+        tipo = self.request.GET.get('tipo', '')
+        if tipo == 'ordinaria':
+            qs = qs.filter(is_extraordinary=False)
+        elif tipo == 'extraordinaria':
+            qs = qs.filter(is_extraordinary=True)
+
+        return qs.order_by('year', 'number')
+
+    def get(self, request, *args, **kwargs):
+        """Construye el Excel y lo devuelve como descarga."""
+        queryset = self.get_queryset()
+
+        # Crear workbook
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Gacetas"
+
+        # Estilos
+        header_fill = PatternFill(start_color="003B4F", end_color="003B4F", fill_type="solid")
+        header_font = Font(color="FFFFFF", bold=True)
+        header_align = Alignment(horizontal="center", vertical="center")
+
+        # Encabezados (con columna "Publicado en sistema")
+        headers = [
+            'N°', 'Tipo', 'Año', 'Fecha Emisión',
+            'Publicado en sistema', 'Descripción', 'N° Documentos'
+        ]
+        ws.append(headers)
+
+        # Aplicar estilos a headers
+        for cell in ws[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = header_align
+
+        # Filas
+        for gazette in queryset:
+            tipo = 'Extraordinaria' if gazette.is_extraordinary else 'Ordinaria'
+            ws.append([
+                gazette.formatted_number,
+                tipo,
+                gazette.year,
+                gazette.emission_date.strftime('%d/%m/%Y') if gazette.emission_date else '—',
+                gazette.publication_date.strftime('%d/%m/%Y %I:%M %p') if gazette.publication_date else '—',
+                gazette.description or '—',
+                gazette.documents.count(),
+            ])
+
+        # Ancho de columnas
+        widths = [8, 16, 8, 14, 20, 50, 14]
+        for i, w in enumerate(widths, start=1):
+            ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = w
+
+        # Preparar response
+        filename = f"gacetas_{date.today().strftime('%Y-%m-%d')}.xlsx"
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        wb.save(response)
+        return response    
