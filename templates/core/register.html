@@ -14,11 +14,7 @@
 {% block cancel_url %}{% url 'users:user_list' %}{% endblock %}
 
 {% block form_fields %}
-  <!-- Logo institucional -->
-  <img src="{% static 'core/img/logo_concejo.jpg' %}"
-      alt="Concejo Municipal de Junín"
-      class="auth-logo">
-
+ 
   <div class="alert alert-info py-2 mb-4" style="border-left: 4px solid var(--color-dark-blue);">
     <i class="fas fa-shield-alt me-1"></i>
     <strong>Registro Administrativo:</strong> Crea la cuenta corporativa del usuario. Posteriormente podrás asignarle su rol específico (Grupo) desde el panel de edición.
