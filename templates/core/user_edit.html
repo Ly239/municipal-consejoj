@@ -6,8 +6,8 @@
 {% block breadcrumb_list %}Usuarios{% endblock %}
 {% block form_entity %}Usuario{% endblock %}
 {% block form_icon %}fas fa-user-edit{% endblock %}
-{% block form_heading %}Editar Usuario: {{ object.username }}{% endblock %}
-{% block form_heading2 %}Editar Usuario{% endblock %}
+{% block form_heading %}Usuario: {{ object.username }}{% endblock %}
+{% block form_heading2 %}Usuario{% endblock %}
 
 {% block back_url %}{% url 'users:user_list' %}{% endblock %}
 {% block volver_url %}{% url 'users:user_list' %}{% endblock %}
