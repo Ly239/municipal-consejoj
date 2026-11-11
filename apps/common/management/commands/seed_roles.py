@@ -73,7 +73,7 @@ class Command(BaseCommand):
                 # Catálogos
                 'view_documenttype', 'view_issuingentity',
                 # Usuarios (CRUD y Hard Delete desde papelera)
-                'add_user', 'change_user', 'delete_user', 'view_user', 
+                'add_user', 'change_user', 'delete_user', 'restore_user', 'view_user', 
                 # Custom (documentos y usuarios)
                 'can_approve_document', 'can_reject_document', 'can_manage_users',
                 # Custom (core / Home)
