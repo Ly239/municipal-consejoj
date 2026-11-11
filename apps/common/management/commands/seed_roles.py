@@ -72,6 +72,8 @@ class Command(BaseCommand):
                 'soft_delete_gazette', 'restore_gazette',
                 # Catálogos
                 'view_documenttype', 'view_issuingentity',
+                # Usuarios (CRUD y Hard Delete desde papelera)
+                'add_user', 'change_user', 'delete_user', 'view_user', 
                 # Custom (documentos y usuarios)
                 'can_approve_document', 'can_reject_document', 'can_manage_users',
                 # Custom (core / Home)
