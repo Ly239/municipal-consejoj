@@ -147,7 +147,17 @@ class CouncilorForm(PublicableForm):
             'image': forms.ClearableFileInput(),
             'social_media_url': forms.URLInput(attrs={'placeholder': 'https://instagram.com/...'}),
         }
-
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # SALVAVIDAS: Si el dato viejo no está en la lista, lo inyectamos temporalmente
+        if self.instance and self.instance.pk and self.instance.author:
+            current_author = self.instance.author
+            choices = list(self.fields['author'].choices)
+            if current_author not in [c[0] for c in choices]:
+                choices.append((current_author, current_author))
+                self.fields['author'].choices = choices
+    
     def clean_author(self):
         """Valida que no existan cargos únicos duplicados."""
         author = self.cleaned_data.get('author')
@@ -160,7 +170,7 @@ class CouncilorForm(PublicableForm):
                 raise forms.ValidationError(f"Ya existe un {author} registrado. Si deseas cambiarlo, edita el registro anterior.")
         
         return author
-
+        
 
 class CategoryForm(BaseBootstrapForm):
     class Meta:

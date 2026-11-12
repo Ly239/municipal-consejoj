@@ -517,20 +517,19 @@ class CouncilorListView(ListView):
     def get_queryset(self):
         return Councilor.objects.filter(is_active=True, status=BaseContent.Status.PUBLISHED)
 
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         qs = self.get_queryset()
 
-        # Separación por jerarquía usando el campo author (Cargo)
-        context['presidente'] = qs.filter(author='Presidente').first()
-        context['vicepresidente'] = qs.filter(author='Vicepresidente').first()
+        # Usamos __icontains para atrapar variaciones de texto viejas
+        context['presidente'] = qs.filter(author__icontains='Presidente').first()
+        context['vicepresidente'] = qs.filter(author__icontains='Vicepresidente').first()
+        context['concejales'] = qs.filter(author__icontains='Concejal').order_by('title') 
         
-        # Los concejales se ordenan alfabéticamente por su nombre
-        context['concejales'] = qs.filter(author='Concejal').order_by('title') 
-        
-        # Síndico y Secretaria (usamos filter en lugar de first para permitir varios si los hay)
-        context['sindico'] = qs.filter(author='Síndico Procurador')
-        context['secretario'] = qs.filter(author='Secretario(a)')
+        # Buscamos "Síndico" y "Secretari@" para atrapar ambos géneros
+        context['sindico'] = qs.filter(author__icontains='Síndico')
+        context['secretario'] = qs.filter(author__icontains='Secretari')
 
         return context
 
