@@ -32,8 +32,18 @@
             <i class="fas fa-book me-1"></i>Gacetas
           </a>
         </li>
+
+        <!-- ENLACE DE USUARIOS (Solo Admin) -->
+        {% if user.is_superuser or user|has_group:"Administrator" %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'users:user_list' %}" title="Gestión de usuarios">
+              <i class="fas fa-users me-1"></i>Usuarios
+            </a>
+          </li>
+        {% endif %}
+
         <!-- ============================================ -->
-        <!-- 🗑️ PAPELERA (solo Superadmin, Administrator y Employee) -->
+        <!--  PAPELERA (solo Superadmin, Administrator y Employee) -->
         <!-- ============================================ -->
         {% if user.is_authenticated %}
           {% if user.is_superuser or user|has_group:"Administrator" or user|has_group:"Employee" %}
