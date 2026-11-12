@@ -33,7 +33,8 @@
 
   <div class="mb-3">
     <label for="id_rol" class="form-label fw-bold">Rol del usuario</label>
-    <select name="rol" id="id_rol" class="form-select">
+    <!-- 🆕 Validación visual: Deshabilitar si el usuario se está editando a sí mismo -->
+    <select name="rol" id="id_rol" class="form-select" {% if is_self %}disabled{% endif %}>
       {% for group in role_choices %}
         <option value="{{ group.name }}"
           {% for g in object.groups.all %}
@@ -43,6 +44,12 @@
         </option>
       {% endfor %}
     </select>
+    
+    {% if is_self %}
+      <div class="form-text text-danger mt-1">
+        <i class="fas fa-lock me-1"></i> Por seguridad, no puedes cambiar tu propio rol.
+      </div>
+    {% endif %}
   </div>
 
   <div class="mb-3 form-check">
