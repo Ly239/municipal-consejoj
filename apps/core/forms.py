@@ -86,18 +86,24 @@ class EventForm(PublicableForm):
 class AnnouncementForm(PublicableForm):
     class Meta:
         model = Announcement
-        fields = ['title', 'summary', 'content', 'attached_file', 'start_date', 'end_date']
+        # Agregamos code y law_reference
+        fields = ['title', 'summary', 'content', 'code', 'law_reference', 'attached_file', 'start_date', 'end_date']
         widgets = {
             'title': forms.TextInput(attrs={'placeholder': 'Título de la licitación'}),
             'summary': forms.Textarea(attrs={'rows': 2}),
             'content': forms.Textarea(attrs={'rows': 5}),
+            'code': forms.TextInput(attrs={'placeholder': 'Ej. CMEH/CCP/CA/2026/008'}),
+            'law_reference': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Ej. Artículos 78, 79 y 80...'}),
         }
+
+
     def clean(self):
         cleaned_data = super().clean()
         start, end = cleaned_data.get('start_date'), cleaned_data.get('end_date')
         if start and end and end < start:
             raise ValidationError("La fecha de cierre debe ser posterior al inicio.")
         return cleaned_data
+
 
 class ConsultationForm(PublicableForm):
     class Meta:

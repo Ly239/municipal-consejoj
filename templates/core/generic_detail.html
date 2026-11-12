@@ -88,6 +88,19 @@
                 {% endif %}
 
 
+                <!-- Código y Base Legal (Licitaciones) -->
+                {% if object.code or object.law_reference %}
+                <div class="alert alert-light border shadow-sm p-3 mb-4">
+                    {% if object.code %}
+                        <p class="mb-2 small text-dark"><strong>Código de Licitación:</strong> {{ object.code }}</p>
+                    {% endif %}
+                    {% if object.law_reference %}
+                        <p class="mb-0 small text-dark"><strong>Base Legal:</strong> {{ object.law_reference }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+
                 <!-- Mostrar Enlace Web si existe -->
                 {% if object.social_media_url %}
                 <div class="alert alert-light border d-flex justify-content-between align-items-center shadow-sm p-3 mb-4">
